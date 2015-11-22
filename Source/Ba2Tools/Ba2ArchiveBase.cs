@@ -1,0 +1,94 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Ba2Tools
+{
+    public class Ba2ArchiveBase : IBa2Archive
+    {
+        /// <summary>
+        /// Archive version defined in header.
+        /// </summary>
+        public UInt32 Version { get; internal set; }
+
+        /// <summary>
+        /// Number of files stored in archive.
+        /// </summary>
+        public UInt32 TotalFiles { get; internal set; }
+
+        /// <summary>
+        /// Offset to table where all filenames are listed.
+        /// </summary>
+        protected internal UInt64 NameTableOffset { get; internal set; }
+
+        /// <summary>
+        /// Path to file that was opened.
+        /// </summary>
+        public string FilePath { get; internal set; }
+
+        /// <summary>
+        /// ListFiles() cache.
+        /// </summary>
+        protected string[] _fileListCache = null;
+
+        public virtual void ExtractAll(string destination, bool overwriteFiles = false)
+        {
+            throw new NotSupportedException("Cannot extract any files because archive type is not known.");
+        }
+
+        public virtual void Extract(string fileName, string destination, bool overwriteFile = false)
+        {
+            throw new NotSupportedException("Cannot extract any files because archive type is not known.");
+        }
+
+        /// <summary>
+        /// Lists all files in archive.
+        /// </summary>
+        /// <see cref="ExtractFile(string, string)"/>
+        /// <param name="forceListFiles">Force list of files in archive instead of returning cached copy.</param>
+        /// <returns>Array of file paths</returns>
+        public virtual string[] ListFiles(bool forceListFiles = false)
+        {
+            if (_fileListCache != null && forceListFiles == false)
+                return _fileListCache;
+
+            List<string> strings = new List<string>();
+
+            using (var fileStream = File.OpenRead(FilePath)) {
+                using (var reader = new BinaryReader(fileStream, Encoding.ASCII)) {
+                    long nameTableLength = fileStream.Length - fileStream.Position;
+
+                    fileStream.Seek((long)NameTableOffset, SeekOrigin.Begin);
+                    fileStream.Lock((long)NameTableOffset, nameTableLength);
+
+                    while (fileStream.Length - fileStream.Position >= 2)
+                    {
+                        int remainingBytes = (int)(fileStream.Length - fileStream.Position);
+
+                        UInt16 stringLength = reader.ReadUInt16();
+                        byte[] rawstring = reader.ReadBytes(stringLength > remainingBytes ? remainingBytes : stringLength);
+
+                        strings.Add(Encoding.ASCII.GetString(rawstring));
+                    }
+
+                    fileStream.Unlock((long)NameTableOffset, nameTableLength);
+                }
+            }
+
+            // Is all files in archive were listed? (excepted "FileCount" files)
+            System.Diagnostics.Debug.Assert(TotalFiles == strings.Count);
+
+            _fileListCache = strings.ToArray();
+            return _fileListCache;
+        }
+
+        internal virtual void PreloadData(BinaryReader reader)
+        {
+
+        }
+    }
+}
