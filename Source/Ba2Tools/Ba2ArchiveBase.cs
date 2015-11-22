@@ -90,5 +90,19 @@ namespace Ba2Tools
         {
 
         }
+
+        public virtual bool ContainsFile(string fileName)
+        {
+            if (_fileListCache == null)
+                ListFiles();
+
+            for (int i = 0; i < _fileListCache.Length; i++)
+            {
+                if (fileName.Equals(_fileListCache[i], StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+
+            return false;
+        }
     }
 }
