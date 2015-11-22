@@ -30,6 +30,8 @@ namespace Ba2Tools
         /// <param name="overwriteFiles">Overwrite files on disk with extracted ones?</param>
         void ExtractAll(string destination, bool overwriteFiles = false);
 
+        bool ContainsFile(string fileName);
+
         /// <summary>
         /// Shows all file paths in archive.
         /// </summary>

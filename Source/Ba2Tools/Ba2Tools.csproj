@@ -48,7 +48,7 @@
     <Compile Include="ArchiveTypes\Ba2GeneralArchive.cs" />
     <Compile Include="ArchiveTypes\Ba2GeneralFileEntry.cs" />
     <Compile Include="ArchiveTypes\Ba2TextureArchive.cs" />
-    <Compile Include="Ba2Utility.cs" />
+    <Compile Include="Ba2ArchiveLoaderUtility.cs" />
     <Compile Include="ArchiveTypes\Ba2ArchiveType.cs" />
     <Compile Include="IBa2Archive.cs" />
     <Compile Include="Internal\ByteSequenceEqualityComparer.cs" />
