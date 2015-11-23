@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -16,11 +17,10 @@ namespace Ba2Tools.ArchiveTypes
 
         public override void ExtractAll(string destination, bool overwriteFiles = false)
         {
-            //if (!Directory.Exists(destination))
-            //    Directory.CreateDirectory(destination);
+            ExtractFiles(ListFiles(), destination, overwriteFiles);
         }
 
-        private Ba2GeneralFileEntry GetEntryFromName(ref string fileName)
+        private Ba2GeneralFileEntry? GetEntryFromName(ref string fileName)
         {
             if (_fileListCache == null)
                 ListFiles();
@@ -35,21 +35,59 @@ namespace Ba2Tools.ArchiveTypes
                 }
             }
 
-            throw new NotSupportedException();
+            return null;
+        }
+
+        public override void ExtractFiles(string[] fileNames, string destination, bool overwriteFiles = false)
+        {
+            if (fileNames == null)
+                throw new ArgumentNullException("fileNames is null");
+            if (string.IsNullOrWhiteSpace(destination))
+                throw new ArgumentException("destination is invalid");
+            if (fileNames.Length > TotalFiles)
+                throw new Ba2ArchiveExtractionException("fileNames length is more than total files in archive");
+
+            if (fileNames.Length == 1) { 
+                Extract(fileNames[0], destination, overwriteFiles);
+                return;
+            }
+
+            using (var archiveStream = File.OpenRead(FilePath))
+            {
+                for (int i = 0; i < fileNames.Length; i++)
+                {
+                    var name = fileNames[i];
+                    var entry = GetEntryFromName(ref name);
+                    if (!entry.HasValue)
+                        throw new Ba2ArchiveExtractionException("File \"" + name + "\" is not found in archive");
+
+                    string finalFilename = Path.Combine(destination, name);
+                    if (overwriteFiles == false && File.Exists(finalFilename))
+                        throw new Ba2ArchiveExtractionException("File \"" + name + "\" exists.");
+
+                    string finalDestDir = Path.GetDirectoryName(finalFilename);
+                    if (!Directory.Exists(finalDestDir))
+                        Directory.CreateDirectory(finalDestDir);
+
+                    var eentry = entry.Value;
+                    ExtractFileInternal(ref eentry, ref finalFilename, archiveStream);
+                }
+            }
         }
 
         /// <summary>
-        /// Extract single file from archive;
+        /// Extract single file from archive
         /// </summary>
-        /// <param name="fileName">Filename in archive</param>
+        /// <seealso cref="Ba2ArchiveExtractionException"/>
+        /// <param name="fileName">File name in archive</param>
         /// <param name="destination">Destination directory</param>
         /// <param name="overwriteFile">Overwrite destination file if exists? Default: false</param>
         public override void Extract(string fileName, string destination, bool overwriteFile = false)
         {
             if (string.IsNullOrWhiteSpace(fileName))
-                throw new ArgumentException(nameof(fileName) + " is invalid");
+                throw new ArgumentException("fileName is invalid");
             if (string.IsNullOrWhiteSpace(destination))
-                throw new ArgumentException(nameof(destination) + " is invalid");
+                throw new ArgumentException("destination is invalid");
 
             if (!Directory.Exists(destination))
                 Directory.CreateDirectory(destination);
@@ -57,24 +95,11 @@ namespace Ba2Tools.ArchiveTypes
             if (_fileListCache == null)
                 ListFiles(true);
 
-            // fileEntries[] position
-            int fileEntryPosition = -1;
-            // Should replace this with hash search
-            for (int i = 0; i < _fileListCache.Length; i++)
-            {
-                string name = _fileListCache[i];
+            Ba2GeneralFileEntry? fileEntryNullable = GetEntryFromName(ref fileName);
+            if (!fileEntryNullable.HasValue)
+                throw new Ba2ArchiveExtractionException("Cannot find file name \"" + fileName + "\" in archive");
 
-                if (name.Equals(fileName, StringComparison.OrdinalIgnoreCase)) {
-                    fileEntryPosition = i;
-                    break;
-                }
-            }
-
-            if (fileEntryPosition == -1)
-                throw new Ba2ArchiveExtractionException("Cannot find file name " + fileName + " in archive");
-
-            var fileEntry = fileEntries[fileEntryPosition];
-            bool isPacked = (fileEntry.PackedLength != 0);
+            var fileEntry = fileEntryNullable.Value;
 
             string extension = new string(fileEntry.Extension).Trim('\0');
             string finalPath = Path.Combine(destination, fileName);
@@ -86,49 +111,43 @@ namespace Ba2Tools.ArchiveTypes
             if (File.Exists(finalPath) && overwriteFile == false)
                 throw new Ba2ArchiveExtractionException("Overwrite is not permitted.");
 
-            byte[] rawData = null;
-
-            using (var archiveStream = File.OpenRead(FilePath))
-            {
-                archiveStream.Seek((long)fileEntry.Offset, SeekOrigin.Begin);
-
-                var bytesToRead = isPacked ? (int)fileEntry.PackedLength : (int)fileEntry.UnpackedLength;
-                rawData = new byte[bytesToRead];
-                archiveStream.Read(rawData, 0, bytesToRead);
+            using (var archiveStream = File.OpenRead(FilePath)) { 
+                ExtractFileInternal(ref fileEntry, ref finalPath, archiveStream);
             }
-
-            ExtractFileInternal(rawData, ref fileEntry, ref finalPath);
         }
 
-        private void ExtractFileInternal(byte[] data, ref Ba2GeneralFileEntry fileEntry, ref string destFilename)
+        private void ExtractFileInternal(ref Ba2GeneralFileEntry fileEntry, ref string destFilename, Stream archiveStream)
         {
-            UInt64 dataOffset = fileEntry.Offset;
-            UInt32 packedLength = fileEntry.PackedLength;
-            UInt32 unpackedLength = fileEntry.UnpackedLength;
+            // DeflateStream throws exception when
+            // reads zlib compressed file header
+            const int zlibHeaderLength = 2;
 
-            bool isPacked = (packedLength != 0);
+            UInt64 dataOffset = fileEntry.Offset + zlibHeaderLength;
+            UInt32 dataLength = fileEntry.IsCompressed() ? fileEntry.PackedLength - zlibHeaderLength : fileEntry.UnpackedLength;
 
-            using (var extractedFileStream = File.Create(destFilename, 4096, FileOptions.SequentialScan)) {
-                if (isPacked)
+            archiveStream.Seek((long)dataOffset, SeekOrigin.Begin);
+
+            int bytesToRead = (int)dataLength;
+            byte[] rawData = new byte[fileEntry.UnpackedLength];
+
+            using (var extractedFileStream = File.Create(destFilename, 4096, FileOptions.SequentialScan))
+            {
+                if (fileEntry.IsCompressed())
                 {
-                    using (var uncompressStream = new DeflateStream(extractedFileStream, CompressionMode.Decompress))
+                    using (var uncompressStream = new DeflateStream(archiveStream, CompressionMode.Decompress, leaveOpen: true))
                     {
-                        var decompressedData = new byte[uncompressStream.Length];
-                        var bytesReaden = uncompressStream.Read(decompressedData, 0, (int)uncompressStream.Length);
-
-                        extractedFileStream.Write(decompressedData, 0, decompressedData.Length);
-                        extractedFileStream.Flush();
-                        extractedFileStream.Close();
-
-                        System.Diagnostics.Debug.Assert(bytesReaden == unpackedLength);
+                        var bytesReaden = uncompressStream.Read(rawData, 0, (int)dataLength);
+                        Debug.Assert(bytesReaden == dataLength);
                     }
                 }
                 else
                 {
-                    extractedFileStream.Write(data, 0, data.Length);
-                    extractedFileStream.Flush();
-                    extractedFileStream.Close();
+                    archiveStream.Read(rawData, 0, (int)fileEntry.UnpackedLength);
                 }
+
+                extractedFileStream.Write(rawData, 0, rawData.Length);
+                extractedFileStream.Flush();
+                extractedFileStream.Close();
             }
         }
 

@@ -20,6 +20,8 @@ namespace Ba2Tools
         /// <param name="overwriteFile">Overwrite existing file in directory with extracted one?</param>
         void Extract(string fileName, string destination, bool overwriteFile = false);
 
+        void ExtractFiles(string[] fileNames, string destination, bool overwriteFiles = false);
+
         // byte[] GetFileData(string fileName);
 
         /// <summary>

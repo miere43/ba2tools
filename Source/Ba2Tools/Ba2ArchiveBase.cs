@@ -40,6 +40,17 @@ namespace Ba2Tools
             throw new NotSupportedException("Cannot extract any files because archive type is not known.");
         }
 
+        public virtual void ExtractFiles(string[] fileNames, string destination, bool overwriteFiles = false)
+        {
+            throw new NotSupportedException("Cannot extract any files because archive type is not known.");
+        }
+
+        /// <summary>
+        /// Extract single file from archive.
+        /// </summary>
+        /// <param name="fileName">File path, directories separated with backslash (\)</param>
+        /// <param name="destination">Destination directory where file will be extracted to.</param>
+        /// <param name="overwriteFile">Overwrite existing file with extracted one?</param>
         public virtual void Extract(string fileName, string destination, bool overwriteFile = false)
         {
             throw new NotSupportedException("Cannot extract any files because archive type is not known.");
@@ -104,5 +115,7 @@ namespace Ba2Tools
 
             return false;
         }
+
+
     }
 }
