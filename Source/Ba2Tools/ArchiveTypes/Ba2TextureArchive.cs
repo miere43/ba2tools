@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Ba2Tools.ArchiveTypes
 {
-    public class Ba2TextureArchive : Ba2ArchiveBase
+    public sealed class Ba2TextureArchive : Ba2ArchiveBase
     {
     }
 }
