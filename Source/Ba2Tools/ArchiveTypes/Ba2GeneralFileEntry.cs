@@ -13,6 +13,11 @@ namespace Ba2Tools.ArchiveTypes
     /// <seealso cref="Ba2GeneralArchive"/>
     public struct Ba2GeneralFileEntry
     {
+        /// <summary>
+        /// Size of structure.
+        /// </summary>
+        public readonly static int Size = 4 + 4 + 4 + 4 + 8 + 4 + 4 + 4;
+
         public UInt32 Unknown0;
 
         /// <summary>
