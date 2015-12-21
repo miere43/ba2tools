@@ -78,18 +78,25 @@ namespace Ba2Tools
             if (_fileListCache != null && forceListFiles == false)
                 return _fileListCache;
 
+            // Not valid name table offset was given
+            if (NameTableOffset < Ba2ArchiveLoader.HeaderSize)
+            {
+                _fileListCache = new string[0];
+                return _fileListCache;
+            }
+
             List<string> strings = new List<string>();
 
-            using (var fileStream = File.OpenRead(FilePath)) {
-                using (var reader = new BinaryReader(fileStream, Encoding.ASCII)) {
-                    long nameTableLength = fileStream.Length - fileStream.Position;
+            using (var stream = File.OpenRead(FilePath)) {
+                using (var reader = new BinaryReader(stream, Encoding.ASCII)) {
+                    long nameTableLength = stream.Length - (long)NameTableOffset;
 
-                    fileStream.Seek((long)NameTableOffset, SeekOrigin.Begin);
-                    fileStream.Lock((long)NameTableOffset, nameTableLength);
+                    stream.Seek((long)NameTableOffset, SeekOrigin.Begin);
+                    stream.Lock((long)NameTableOffset, nameTableLength);
 
-                    while (fileStream.Length - fileStream.Position >= 2)
+                    while (stream.Length - stream.Position >= 2)
                     {
-                        int remainingBytes = (int)(fileStream.Length - fileStream.Position);
+                        int remainingBytes = (int)(stream.Length - stream.Position);
 
                         UInt16 stringLength = reader.ReadUInt16();
                         byte[] rawstring = reader.ReadBytes(stringLength > remainingBytes ? remainingBytes : stringLength);
@@ -97,7 +104,7 @@ namespace Ba2Tools
                         strings.Add(Encoding.ASCII.GetString(rawstring));
                     }
 
-                    fileStream.Unlock((long)NameTableOffset, nameTableLength);
+                    stream.Unlock((long)NameTableOffset, nameTableLength);
                 }
             }
 
