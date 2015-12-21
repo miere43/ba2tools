@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace Ba2Tools
 {
+    /// <summary>
+    /// BA2 archive loader exception for errors during archive loading.
+    /// </summary>
     [Serializable]
     public class Ba2ArchiveLoadException : Exception
     {

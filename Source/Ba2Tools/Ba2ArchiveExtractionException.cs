@@ -6,7 +6,9 @@ using System.Threading.Tasks;
 
 namespace Ba2Tools
 {
-
+    /// <summary>
+    /// Exception for BA2 archive extraction errors.
+    /// </summary>
     [Serializable]
     public class Ba2ArchiveExtractionException : Exception
     {

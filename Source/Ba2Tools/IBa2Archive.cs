@@ -20,6 +20,12 @@ namespace Ba2Tools
         /// <param name="overwriteFile">Overwrite existing file in directory with extracted one?</param>
         void Extract(string fileName, string destination, bool overwriteFile = false);
 
+        /// <summary>
+        /// Extract all files from archive.
+        /// </summary>
+        /// <seealso cref="Ba2ArchiveExtractionException"/>
+        /// <param name="destination">Directory where extracted files will be placed.</param>
+        /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
         void ExtractFiles(string[] fileNames, string destination, bool overwriteFiles = false);
 
         // byte[] GetFileData(string fileName);
@@ -32,13 +38,17 @@ namespace Ba2Tools
         /// <param name="overwriteFiles">Overwrite files on disk with extracted ones?</param>
         void ExtractAll(string destination, bool overwriteFiles = false);
 
+        /// <summary>
+        /// Check file existance in archive.
+        /// </summary>
+        /// <param name="fileName">File to check in archive</param>
+        /// <remarks>Case-insensitive</remarks>
         bool ContainsFile(string fileName);
 
         /// <summary>
         /// Shows all file paths in archive.
         /// </summary>
         /// <param name="forceListFiles">Force list files in archive instead of returning cached copy.</param>
-        /// <returns></returns>
         string[] ListFiles(bool forceListFiles = false);
     }
 }
