@@ -12,14 +12,42 @@ namespace Ba2Tools.Tests
     {
         public static string DataFolder = "../../Data/";
 
+        public static string TempFolder = "../../Temp/";
+
         public static byte[] ArchiveMagic = new byte[] { 0x42, 0x54, 0x44, 0x58 };
 
         public static byte[] GeneralArchiveTypeMagic = new byte[] { 0x47, 0x4E, 0x52, 0x4C };
+
+        public static string CreateTempDirectory()
+        {
+            string path = Path.Combine(TempFolder, Path.GetRandomFileName());
+            Directory.CreateDirectory(path);
+            return path;
+        }
+
+        public static void CleanupTemp()
+        {
+            foreach (var dir in Directory.EnumerateDirectories(TempFolder))
+            {
+                Directory.Delete(dir, true);
+            }
+        }
     }
 
     [TestClass()]
     public class Ba2ArchiveLoader_Tests
     {
+        private void CreateTempDirectory()
+        {
+
+        }
+
+        [TestCleanup]
+        public void Cleanup()
+        {
+            SharedData.CleanupTemp();
+        }
+
         [TestMethod()]
         public void TestGeneralOneFile()
         {
@@ -35,6 +63,12 @@ namespace Ba2Tools.Tests
             string[] files = archive.ListFiles();
             Assert.AreEqual(1, files.Length);
             Assert.AreEqual(true, archive.ContainsFile("test.txt"));
+
+            var folder = SharedData.CreateTempDirectory();
+
+            archive.Extract("test.txt", folder);
+            Assert.IsTrue(File.Exists(Path.Combine(folder, "test.txt")));
+            // Assert.IsTrue(File.ReadAllLines)
         }
 
         [TestMethod()]
@@ -47,6 +81,9 @@ namespace Ba2Tools.Tests
             Assert.AreEqual(1U, header.Version);
             Assert.IsTrue(header.ArchiveType.SequenceEqual(SharedData.GeneralArchiveTypeMagic));
             Assert.AreEqual(0U, header.TotalFiles);
+
+            var files = archive.ListFiles();
+            Assert.AreEqual(0, files.Length);
             // Assert.AreEqual(69UL, header.NameTableOffset);
         }
     }
