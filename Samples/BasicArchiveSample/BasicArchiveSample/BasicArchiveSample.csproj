@@ -4,16 +4,18 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{4716F53B-DB26-4B24-B5DF-F0EE73938F1A}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <ProjectGuid>{ECB5B022-AF97-432C-9458-851D98057480}</ProjectGuid>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Ba2Tools</RootNamespace>
-    <AssemblyName>Ba2Tools</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <RootNamespace>BasicArchiveSample</RootNamespace>
+    <AssemblyName>BasicArchiveSample</AssemblyName>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -21,14 +23,17 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -41,23 +46,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ArchiveTypes\Ba2TextureFileEntry.cs" />
-    <Compile Include="ArchiveTypes\TextureChunk.cs" />
-    <Compile Include="Ba2ArchiveExtractionException.cs" />
-    <Compile Include="Ba2ArchiveLoader.cs" />
-    <Compile Include="Ba2ArchiveBase.cs" />
-    <Compile Include="Ba2ArchiveLoadException.cs" />
-    <Compile Include="ArchiveTypes\Ba2GeneralArchive.cs" />
-    <Compile Include="ArchiveTypes\Ba2GeneralFileEntry.cs" />
-    <Compile Include="ArchiveTypes\Ba2TextureArchive.cs" />
-    <Compile Include="Ba2ArchiveLoaderUtility.cs" />
-    <Compile Include="ArchiveTypes\Ba2ArchiveType.cs" />
-    <Compile Include="IBa2Archive.cs" />
-    <Compile Include="Internal\ByteSequenceEqualityComparer.cs" />
-    <Compile Include="Internal\Dds.cs" />
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Source\Ba2Tools\Ba2Tools.csproj">
+      <Project>{4716f53b-db26-4b24-b5df-f0ee73938f1a}</Project>
+      <Name>Ba2Tools</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

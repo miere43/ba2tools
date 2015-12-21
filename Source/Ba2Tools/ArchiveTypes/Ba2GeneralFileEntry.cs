@@ -31,9 +31,9 @@ namespace Ba2Tools.ArchiveTypes
             return (PackedLength != 0);
         }
 
-        public UInt32 GetDataLength()
-        {
-            return IsCompressed() ? PackedLength : UnpackedLength;
-        }
+        //public UInt32 GetDataLength()
+        //{
+        //    return IsCompressed() ? PackedLength : UnpackedLength;
+        //}
     }
 }
