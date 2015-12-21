@@ -8,6 +8,9 @@ using System.Threading.Tasks;
 
 namespace Ba2Tools
 {
+    /// <summary>
+    /// Represents base BA2 archive type. Contains everything that other archive types contain.
+    /// </summary>
     public class Ba2ArchiveBase : IBa2Archive
     {
         /// <summary>
@@ -37,12 +40,18 @@ namespace Ba2Tools
 
         public virtual void ExtractAll(string destination, bool overwriteFiles = false)
         {
-            throw new NotSupportedException("Cannot extract any files because archive type is not known.");
+            throw new NotSupportedException("Cannot extract any files because archive type is unknown.");
         }
 
+        /// <summary>
+        /// Extract all files from archive.
+        /// </summary>
+        /// <seealso cref="Ba2ArchiveExtractionException"/>
+        /// <param name="destination">Directory where extracted files will be placed.</param>
+        /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
         public virtual void ExtractFiles(string[] fileNames, string destination, bool overwriteFiles = false)
         {
-            throw new NotSupportedException("Cannot extract any files because archive type is not known.");
+            throw new NotSupportedException("Cannot extract any files because archive type is unknown.");
         }
 
         /// <summary>

@@ -9,6 +9,10 @@ using System.Threading.Tasks;
 
 namespace Ba2Tools.ArchiveTypes
 {
+    /// <summary>
+    /// Represents texture BA2 archive type.
+    /// </summary>
+    /// <remarks>Should not be used, work in progress.</remarks>
     public sealed class Ba2TextureArchive : Ba2ArchiveBase
     {
         private void ExtractToStream(ref Ba2TextureFileEntry entry, Stream sourceStream, Stream destStream)

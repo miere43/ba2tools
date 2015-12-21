@@ -37,6 +37,11 @@ namespace Ba2Tools
             return Ba2ArchiveType.Unknown;
         }
 
+        /// <summary>
+        /// Resolve archive type from Ba2ArchiveBase derived class instance.
+        /// </summary>
+        /// <param name="signature">Archive signature</param>
+        /// <returns>Archive type or unknown</returns>
         public static Ba2ArchiveType GetArchiveType(Ba2ArchiveBase archive)
         {
             var archiveType = archive.GetType();
@@ -48,6 +53,11 @@ namespace Ba2Tools
             return Ba2ArchiveType.Unknown;
         }
 
+        /// <summary>
+        /// Resolve archive type from file.
+        /// </summary>
+        /// <param name="signature">Archive signature</param>
+        /// <returns>Archive type or unknown</returns>
         public static Ba2ArchiveType GetArchiveType(string filePath)
         {
             Ba2ArchiveHeader header;

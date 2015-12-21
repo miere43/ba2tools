@@ -9,17 +9,29 @@ using System.Threading.Tasks;
 
 namespace Ba2Tools.ArchiveTypes
 {
+    /// <summary>
+    /// Represents general BA2 archive type.
+    /// </summary>
     public sealed class Ba2GeneralArchive : Ba2ArchiveBase
     {
-        public static readonly uint FileEntrySize = 36u;
-
         private Ba2GeneralFileEntry[] fileEntries = null;
 
+        /// <summary>
+        /// Extract all files from archive.
+        /// </summary>
+        /// <seealso cref="Ba2ArchiveExtractionException"/>
+        /// <param name="destination">Directory where extracted files will be placed.</param>
+        /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
         public override void ExtractAll(string destination, bool overwriteFiles = false)
         {
             ExtractFiles(ListFiles(), destination, overwriteFiles);
         }
 
+        /// <summary>
+        /// Converts file name in archive to Ba2GeneralFileEntry.
+        /// </summary>
+        /// <param name="fileName">Filename in archive.</param>
+        /// <returns>Ba2GeneralFileEntry or null if not found.</returns>
         private Ba2GeneralFileEntry? GetEntryFromName(ref string fileName)
         {
             if (_fileListCache == null)
@@ -38,6 +50,14 @@ namespace Ba2Tools.ArchiveTypes
             return null;
         }
 
+        /// <summary>
+        /// Extract specified files to directory.
+        /// </summary>
+        /// <seealso cref="Ba2ArchiveExtractionException"/>
+        /// <seealso cref="Ba2ArchiveBase.ListFiles(bool)"/>
+        /// <param name="fileNames">Files from archive to extract.</param>
+        /// <param name="destination">Directory where extracted files will be placed.</param>
+        /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
         public override void ExtractFiles(string[] fileNames, string destination, bool overwriteFiles = false)
         {
             if (fileNames == null)
@@ -76,12 +96,12 @@ namespace Ba2Tools.ArchiveTypes
         }
 
         /// <summary>
-        /// Extract single file from archive
+        /// Extract single file from archive.
         /// </summary>
         /// <seealso cref="Ba2ArchiveExtractionException"/>
         /// <param name="fileName">File name in archive</param>
-        /// <param name="destination">Destination directory</param>
-        /// <param name="overwriteFile">Overwrite destination file if exists? Default: false</param>
+        /// <param name="destination">Directory where files will be placed.</param>
+        /// <param name="overwriteFile">Overwrite existing file in extraction directory?</param>
         public override void Extract(string fileName, string destination, bool overwriteFile = false)
         {
             if (string.IsNullOrWhiteSpace(fileName))
@@ -116,13 +136,17 @@ namespace Ba2Tools.ArchiveTypes
             }
         }
 
+        /// <summary>
+        /// Base extraction function for all extraction methods.
+        /// </summary>
         private void ExtractFileInternal(ref Ba2GeneralFileEntry fileEntry, ref string destFilename, Stream archiveStream)
         {
             // DeflateStream throws exception when
             // reads zlib compressed file header
             const int zlibHeaderLength = 2;
 
-            UInt64 dataOffset = fileEntry.Offset + zlibHeaderLength;
+            // offset to file data
+            UInt64 dataOffset = fileEntry.IsCompressed() ? fileEntry.Offset + zlibHeaderLength : fileEntry.Offset;
             UInt32 dataLength = fileEntry.IsCompressed() ? fileEntry.PackedLength - zlibHeaderLength : fileEntry.UnpackedLength;
 
             archiveStream.Seek((long)dataOffset, SeekOrigin.Begin);
@@ -151,6 +175,10 @@ namespace Ba2Tools.ArchiveTypes
             }
         }
 
+        /// <summary>
+        /// Preload file entries. Should be called only once.
+        /// </summary>
+        /// <param name="reader"></param>
         internal override void PreloadData(BinaryReader reader = null)
         {
             reader.BaseStream.Seek(Ba2ArchiveLoader.HeaderSize, SeekOrigin.Begin);
