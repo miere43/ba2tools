@@ -14,70 +14,118 @@ namespace BasicArchiveSample
     {
         static void Main(string[] args)
         {
-            //Stopwatch t = new Stopwatch();
-            //t.Start();
-            var temp = Ba2ArchiveLoader.Load(@"D:\Games\Fallout 4\Data\Fallout4 - Startup.ba2", Ba2ArchiveLoaderFlags.None);
-            var s = temp.ListFiles();
-            temp.ExtractAll("D:\\Vlad\\TestExtract", true);
+            Inner(args);
 
-            // temp.Extract(s, "D:\\");
+            Console.WriteLine("Done.");
+#if DEBUG
+            Console.ReadLine();
+#endif
+        }
+
+        static void Inner(string[] args)
+        {
+            string archivePath = args.Length == 0 ? @"D:\Games\Fallout 4\Data\Fallout4 - Startup.ba2" : args[0];
+
+            // Load archive
+            Ba2ArchiveBase archive;
+            try
+            {
+                archive = Ba2ArchiveLoader.Load(archivePath, Ba2ArchiveLoaderFlags.None);
+            }
+            catch (Ba2ArchiveLoadException e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.BackgroundColor = ConsoleColor.DarkRed;
+                Console.WriteLine("Cannot read archive " + archivePath + ": " + e.Message);
+                Console.ResetColor();
+                return;
+            }
+            // Base archive was loaded: you don't know what type of archive is (general or texture);
+
+            // You anyway can list files in archive because all archives contains filenames;
+            var filesInArchive = archive.ListFiles();
+            var listFileCount = Math.Min(5, filesInArchive.Length);
+
+            Console.WriteLine("First " + listFileCount + " files in archive: ");
+            for (int i = 0; i < listFileCount; i++)
+            {
+                Console.WriteLine(i + 1 + ". " + filesInArchive[i]);
+            }
+
+            // Find out what archive type is it:
+            if (archive as Ba2GeneralArchive != null)
+            {
+                Console.WriteLine("archive type is general");
+            }
+            else if (archive.GetType() == typeof(Ba2TextureArchive))
+            {
+                Console.WriteLine("archive type is texture");
+            }
+            else
+            {
+                var archiveType = Ba2ArchiveLoader.GetArchiveType(archive);
+                Console.WriteLine("not supported archive type: " + archiveType);
+                return;
+            }
+
+            Console.Write("Extract " + archive.TotalFiles + " files to \"D:\\Extract\"? (y/n)\n> ");
+            if (Console.ReadLine().Trim() == "y")
+                archive.ExtractAll("D:\\TestExtract", overwriteFiles: true);
+
+
+            //temp.Extract(s, "D:\\");
             //Debug.WriteLine(s);
             //Debug.WriteLine(temp.ContainsFile("Interface\\BarterMenu.swf"));
             //temp.ExtractFile(@"interface\bartermenu.swf", @"D:\test", true);
             //t.Stop();
-           // Debug.WriteLine($"Time elapsed: {t.Elapsed.Seconds}.{t.Elapsed.Milliseconds}");
-//            if (args.Length < 1)
-//            {
-//                Console.WriteLine("Usage: <archive path>");
-//                return;
-//            }
+            //Debug.WriteLine($"Time elapsed: {t.Elapsed.Seconds}.{t.Elapsed.Milliseconds}");
+            //if (args.Length < 1)
+            //{
+            //    Console.WriteLine("Usage: <archive path>");
+            //    return;
+            //}
 
-            //            string archivePath = args[0];
+            //string archivePath = args[0];
 
-            //            if (!File.Exists(archivePath))
-            //            {
-            //                Console.WriteLine("File \"{0}\" does not exists", archivePath);
-            //                return;
-            //            }
+            //if (!File.Exists(archivePath))
+            //{
+            //    Console.WriteLine("File \"{0}\" does not exists", archivePath);
+            //    return;
+            //}
 
-            //            Ba2ArchiveBase archive;
-            //            try
-            //            { 
-            //                archive = Ba2ArchiveLoader.Load(archivePath, 
-            //                    Ba2ArchiveLoaderFlags.LoadUnknownArchiveTypes |
-            //                    Ba2ArchiveLoaderFlags.IgnoreVersion);
-            //            }
-            //            catch (Ba2ArchiveLoadException e)
-            //            {
-            //                Console.WriteLine("Cannot load archive: " + e.Message);
-            //                return;
-            //            }
+            //Ba2ArchiveBase archive;
+            //try
+            //{
+            //    archive = Ba2ArchiveLoader.Load(archivePath,
+            //        Ba2ArchiveLoaderFlags.LoadUnknownArchiveTypes |
+            //        Ba2ArchiveLoaderFlags.IgnoreVersion);
+            //}
+            //catch (Ba2ArchiveLoadException e)
+            //{
+            //    Console.WriteLine("Cannot load archive: " + e.Message);
+            //    return;
+            //}
 
-            //            // Console.WriteLine("Signature: " + Encoding.ASCII.GetString(archive.Signature));
-            //            Console.WriteLine("Version: " + archive.Version);
+            //// Console.WriteLine("Signature: " + Encoding.ASCII.GetString(archive.Signature));
+            //Console.WriteLine("Version: " + archive.Version);
 
-            //            Console.Write("Archive type: ");
-            //            if (archive.GetType() == typeof(Ba2GeneralArchive))
-            //                Console.WriteLine("General");
-            //            else if (archive.GetType() == typeof(Ba2TextureArchive))
-            //                Console.WriteLine("Texture");
-            //            else
-            //                Console.WriteLine("Unknown");
+            //Console.Write("Archive type: ");
+            //if (archive.GetType() == typeof(Ba2GeneralArchive))
+            //    Console.WriteLine("General");
+            //else if (archive.GetType() == typeof(Ba2TextureArchive))
+            //    Console.WriteLine("Texture");
+            //else
+            //    Console.WriteLine("Unknown");
 
-            //            Console.WriteLine("Total files: " + archive.FileCount);
+            //Console.WriteLine("Total files: " + archive.FileCount);
 
-            //            Console.ReadKey();
+            //Console.ReadKey();
 
-            //            Console.WriteLine("File names: ");
-            //            foreach (var name in archive.ListFiles())
-            //            {
-            //                Console.WriteLine(name);
-            //            }
-
-            //#if DEBUG
-            //            Console.WriteLine("Done. Press any key to continue...");
-            //            Console.ReadKey();
-            //#endif
+            //Console.WriteLine("File names: ");
+            //foreach (var name in archive.ListFiles())
+            //{
+            //    Console.WriteLine(name);
+            //}
         }
     }
 }
