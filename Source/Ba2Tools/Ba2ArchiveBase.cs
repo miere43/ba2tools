@@ -16,22 +16,24 @@ namespace Ba2Tools
         /// <summary>
         /// Archive version defined in header.
         /// </summary>
-        public UInt32 Version { get; internal set; }
+        public UInt32 Version { get { return Header.Version; } }
 
         /// <summary>
         /// Number of files stored in archive.
         /// </summary>
-        public UInt32 TotalFiles { get; internal set; }
+        public UInt32 TotalFiles { get { return Header.TotalFiles; } }
 
         /// <summary>
         /// Offset to table where all filenames are listed.
         /// </summary>
-        protected internal UInt64 NameTableOffset { get; internal set; }
+        protected internal UInt64 NameTableOffset { get { return Header.NameTableOffset; } }
 
         /// <summary>
         /// Path to file that was opened.
         /// </summary>
         public string FilePath { get; internal set; }
+
+        public Ba2ArchiveLoader.Ba2ArchiveHeader Header { get; internal set; }
 
         /// <summary>
         /// ListFiles() cache.

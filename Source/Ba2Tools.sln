@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ba2Tools", "Ba2Tools\Ba2Tools.csproj", "{4716F53B-DB26-4B24-B5DF-F0EE73938F1A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ba2ToolsTests", "Ba2ToolsTests\Ba2ToolsTests.csproj", "{E8F5348A-C12D-4177-A871-8EC6DD3888D9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{4716F53B-DB26-4B24-B5DF-F0EE73938F1A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4716F53B-DB26-4B24-B5DF-F0EE73938F1A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4716F53B-DB26-4B24-B5DF-F0EE73938F1A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E8F5348A-C12D-4177-A871-8EC6DD3888D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E8F5348A-C12D-4177-A871-8EC6DD3888D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E8F5348A-C12D-4177-A871-8EC6DD3888D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E8F5348A-C12D-4177-A871-8EC6DD3888D9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

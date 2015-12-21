@@ -41,7 +41,7 @@ namespace Ba2Tools
         /// </summary>
         internal static readonly uint ArchiveVersion = 1;
 
-        private struct Ba2ArchiveHeader
+        public struct Ba2ArchiveHeader
         {
             public byte[] Signature;
 
@@ -142,9 +142,7 @@ namespace Ba2Tools
                         break;
                 }
 
-                archive.TotalFiles = header.TotalFiles;
-                archive.Version = header.Version;
-                archive.NameTableOffset = header.NameTableOffset;
+                archive.Header = header;
                 archive.FilePath = filePath;
 
                 archive.PreloadData(reader);
