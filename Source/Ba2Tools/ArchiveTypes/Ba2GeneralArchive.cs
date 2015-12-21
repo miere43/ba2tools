@@ -153,7 +153,6 @@ namespace Ba2Tools.ArchiveTypes
 
         internal override void PreloadData(BinaryReader reader = null)
         {
-            if (reader == null)
             reader.BaseStream.Seek(Ba2ArchiveLoader.HeaderSize, SeekOrigin.Begin);
             fileEntries = new Ba2GeneralFileEntry[TotalFiles];
 
