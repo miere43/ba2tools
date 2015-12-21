@@ -1,0 +1,53 @@
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Ba2Tools;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.IO;
+
+namespace Ba2Tools.Tests
+{
+    public static class SharedData
+    {
+        public static string DataFolder = "../../Data/";
+
+        public static byte[] ArchiveMagic = new byte[] { 0x42, 0x54, 0x44, 0x58 };
+
+        public static byte[] GeneralArchiveTypeMagic = new byte[] { 0x47, 0x4E, 0x52, 0x4C };
+    }
+
+    [TestClass()]
+    public class Ba2ArchiveLoader_Tests
+    {
+        [TestMethod()]
+        public void TestGeneralOneFile()
+        {
+            var archive = Ba2ArchiveLoader.Load(Path.Combine(SharedData.DataFolder, "GeneralOneFile.ba2"));
+            var header = archive.Header;
+
+            Assert.IsTrue(header.Signature.SequenceEqual(SharedData.ArchiveMagic));
+            Assert.AreEqual(1U, header.Version);
+            Assert.IsTrue(header.ArchiveType.SequenceEqual(SharedData.GeneralArchiveTypeMagic));
+            Assert.AreEqual(1U, header.TotalFiles);
+            Assert.AreEqual(69UL, header.NameTableOffset);
+
+            string[] files = archive.ListFiles();
+            Assert.AreEqual(1, files.Length);
+            Assert.AreEqual(true, archive.ContainsFile("test.txt"));
+        }
+
+        [TestMethod()]
+        public void TestGeneralHeaderOnly()
+        {
+            var archive = Ba2ArchiveLoader.Load(Path.Combine(SharedData.DataFolder, "GeneralHeaderOnly.ba2"));
+            var header = archive.Header;
+
+            Assert.IsTrue(header.Signature.SequenceEqual(SharedData.ArchiveMagic));
+            Assert.AreEqual(1U, header.Version);
+            Assert.IsTrue(header.ArchiveType.SequenceEqual(SharedData.GeneralArchiveTypeMagic));
+            Assert.AreEqual(0U, header.TotalFiles);
+            // Assert.AreEqual(69UL, header.NameTableOffset);
+        }
+    }
+}
