@@ -40,7 +40,7 @@ using (var stream = new System.IO.MemoryStream()) {
 	using (var textureArchive = BA2Loader.Load(@"Fallout4 - Textures1.ba2")) {
 		var firstFile = textureArchive.ListFiles()[0];
 
-		textureArchive.ExtractToStream(stream);
+		textureArchive.ExtractToStream(firstFile, stream);
 	}
 
 	// ensure proper position.
