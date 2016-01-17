@@ -2,7 +2,7 @@
 
 Provides managed access to BA2 archives.
 
-**Use dev branch, master branch is not really functional**
+[Changelog](CHANGELOG.md).
 
 Current features:
 * Extract files from general archives, including packed files.
