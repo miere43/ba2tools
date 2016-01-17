@@ -10,12 +10,12 @@ namespace Ba2Tools
     /// BA2 archive loader exception for errors during archive loading.
     /// </summary>
     [Serializable]
-    public class Ba2ArchiveLoadException : Exception
+    public class BA2LoadException : Exception
     {
-        public Ba2ArchiveLoadException() { }
-        public Ba2ArchiveLoadException(string message) : base(message) { }
-        public Ba2ArchiveLoadException(string message, Exception inner) : base(message, inner) { }
-        protected Ba2ArchiveLoadException(
+        public BA2LoadException() { }
+        public BA2LoadException(string message) : base(message) { }
+        public BA2LoadException(string message, Exception inner) : base(message, inner) { }
+        protected BA2LoadException(
           System.Runtime.Serialization.SerializationInfo info,
           System.Runtime.Serialization.StreamingContext context) : base(info, context)
         { }

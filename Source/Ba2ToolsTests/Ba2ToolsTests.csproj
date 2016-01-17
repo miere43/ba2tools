@@ -62,7 +62,9 @@
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
+    <None Include="Data\GeneralHeaderOnly.ba2" />
     <None Include="Data\GeneralOneFile.ba2" />
+    <None Include="Data\README.md" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

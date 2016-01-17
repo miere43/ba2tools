@@ -5,13 +5,13 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Ba2Tools.ArchiveTypes
+namespace Ba2Tools
 {
     /// <summary>
     /// Represents file entry in general BA2 archive.
     /// </summary>
-    /// <seealso cref="Ba2GeneralArchive"/>
-    public struct Ba2GeneralFileEntry
+    /// <seealso cref="BA2GeneralArchive"/>
+    public struct BA2GeneralFileEntry
     {
         /// <summary>
         /// Size of structure.

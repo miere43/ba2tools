@@ -37,11 +37,6 @@ namespace Ba2Tools.Tests
     [TestClass()]
     public class Ba2ArchiveLoader_Tests
     {
-        private void CreateTempDirectory()
-        {
-
-        }
-
         [TestCleanup]
         public void Cleanup()
         {
@@ -51,7 +46,7 @@ namespace Ba2Tools.Tests
         [TestMethod()]
         public void TestGeneralOneFile()
         {
-            var archive = Ba2ArchiveLoader.Load(Path.Combine(SharedData.DataFolder, "GeneralOneFile.ba2"));
+            var archive = BA2Loader.Load(Path.Combine(SharedData.DataFolder, "GeneralOneFile.ba2"));
             var header = archive.Header;
 
             Assert.IsTrue(header.Signature.SequenceEqual(SharedData.ArchiveMagic));
@@ -74,7 +69,7 @@ namespace Ba2Tools.Tests
         [TestMethod()]
         public void TestGeneralHeaderOnly()
         {
-            var archive = Ba2ArchiveLoader.Load(Path.Combine(SharedData.DataFolder, "GeneralHeaderOnly.ba2"));
+            var archive = BA2Loader.Load(Path.Combine(SharedData.DataFolder, "GeneralHeaderOnly.ba2"));
             var header = archive.Header;
 
             Assert.IsTrue(header.Signature.SequenceEqual(SharedData.ArchiveMagic));
@@ -85,6 +80,23 @@ namespace Ba2Tools.Tests
             var files = archive.ListFiles();
             Assert.AreEqual(0, files.Length);
             // Assert.AreEqual(69UL, header.NameTableOffset);
+        }
+
+        [TestMethod()]
+        public void TestStreamExtraction()
+        {
+            var archive = BA2Loader.Load(Path.Combine(SharedData.DataFolder, "GeneralOneFile.ba2"));
+            using (var stream = new MemoryStream())
+            {
+                bool status = archive.ExtractToStream("test.txt", stream);
+                Assert.IsTrue(status);
+
+                byte[] buffer = new byte[stream.Length];
+                stream.Read(buffer, 0, (int)stream.Length);
+
+                Assert.IsTrue(Encoding.ASCII.GetString(buffer).Equals("test text", StringComparison.OrdinalIgnoreCase));
+            }
+                
         }
     }
 }

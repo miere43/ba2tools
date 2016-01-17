@@ -43,23 +43,29 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ArchiveTypes\Ba2TextureFileEntry.cs" />
-    <Compile Include="ArchiveTypes\TextureChunk.cs" />
-    <Compile Include="Ba2ArchiveExtractionException.cs" />
-    <Compile Include="Ba2ArchiveLoader.cs" />
-    <Compile Include="Ba2ArchiveBase.cs" />
-    <Compile Include="Ba2ArchiveLoadException.cs" />
-    <Compile Include="ArchiveTypes\Ba2GeneralArchive.cs" />
-    <Compile Include="ArchiveTypes\Ba2GeneralFileEntry.cs" />
-    <Compile Include="ArchiveTypes\Ba2TextureArchive.cs" />
-    <Compile Include="Ba2ArchiveLoaderUtility.cs" />
-    <Compile Include="ArchiveTypes\Ba2ArchiveType.cs" />
-    <Compile Include="IBa2Archive.cs" />
-    <Compile Include="Internal\ByteSequenceEqualityComparer.cs" />
-    <Compile Include="Internal\Dds.cs" />
+    <Compile Include="BA2TextureFileEntry.cs" />
+    <Compile Include="Textures\TextureChunk.cs" />
+    <Compile Include="BA2ExtractionException.cs" />
+    <Compile Include="BA2Header.cs" />
+    <Compile Include="BA2Loader.cs" />
+    <Compile Include="BA2Archive.cs" />
+    <Compile Include="BA2LoadException.cs" />
+    <Compile Include="BA2GeneralArchive.cs" />
+    <Compile Include="BA2GeneralFileEntry.cs" />
+    <Compile Include="BA2TextureArchive.cs" />
+    <Compile Include="BA2LoaderUtil.cs" />
+    <Compile Include="BA2Type.cs" />
+    <Compile Include="BA2Writer.cs" />
+    <Compile Include="IBA2Archive.cs" />
+    <Compile Include="Textures\ByteSequenceEqualityComparer.cs" />
+    <Compile Include="Textures\Dds.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Writers\BA2WriteException.cs" />
+    <Compile Include="Writers\BA2GeneralWriter.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="ArchiveTypes\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

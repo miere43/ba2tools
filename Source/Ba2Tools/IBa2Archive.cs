@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,7 +10,7 @@ namespace Ba2Tools
     /// <summary>
     /// Defines basic methods for all BA2 archives.
     /// </summary>
-    public interface IBa2Archive
+    public interface IBA2Archive
     {
         /// <summary>
         /// Extract single file to destination directory.
@@ -23,12 +24,17 @@ namespace Ba2Tools
         /// <summary>
         /// Extract all files from archive.
         /// </summary>
-        /// <seealso cref="Ba2ArchiveExtractionException"/>
+        /// <seealso cref="BA2ExtractionException"/>
         /// <param name="destination">Directory where extracted files will be placed.</param>
         /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
         void ExtractFiles(string[] fileNames, string destination, bool overwriteFiles = false);
 
-        // byte[] GetFileData(string fileName);
+        /// <summary>
+        /// Extract file contents to stream.
+        /// </summary>
+        /// <param name="fileName">File name or file path from archive.</param>
+        /// <returns>Success is true, failure is false.</returns>
+        bool ExtractToStream(string fileName, Stream stream);
 
         /// <summary>
         /// Extract all files from archive to specified directory.

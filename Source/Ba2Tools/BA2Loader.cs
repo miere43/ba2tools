@@ -1,4 +1,4 @@
-﻿using Ba2Tools.ArchiveTypes;
+﻿using Ba2Tools;
 using Ba2Tools.Internal;
 using System;
 using System.Collections.Generic;
@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace Ba2Tools
 {
     [Flags]
-    public enum Ba2ArchiveLoaderFlags
+    public enum BA2LoaderFlags
     {
         None = 0,
         /// <summary>
@@ -24,7 +24,7 @@ namespace Ba2Tools
         LoadUnknownArchiveTypes = 2,
     }
 
-    public static partial class Ba2ArchiveLoader
+    public static partial class BA2Loader
     {
         /// <summary>
         /// BA2 header signature (BTDX)
@@ -41,30 +41,17 @@ namespace Ba2Tools
         /// </summary>
         internal static readonly uint ArchiveVersion = 1;
 
-        public struct Ba2ArchiveHeader
-        {
-            public byte[] Signature;
-
-            public UInt32 Version;
-
-            public byte[] ArchiveType;
-
-            public UInt32 TotalFiles;
-
-            public UInt64 NameTableOffset;
-        }
-
         /// <summary>
         /// Fills Ba2ArchiveHeader struct using BinaryReader.
         /// </summary>
         /// <param name="reader">BinaryReader instance.</param>
         /// <returns></returns>
-        private static Ba2ArchiveHeader LoadHeader(BinaryReader reader)
+        private static BA2Header LoadHeader(BinaryReader reader)
         {
             if (reader == null)
                 throw new ArgumentNullException("reader");
 
-            return new Ba2ArchiveHeader()
+            return new BA2Header()
             {
                 Signature = reader.ReadBytes(4),
                 Version = reader.ReadUInt32(),
@@ -79,65 +66,65 @@ namespace Ba2Tools
         /// </summary>
         /// <param name="filePath">Path to archive.</param>
         /// <returns>BA2ArchiveBase instance.</returns>
-        public static Ba2ArchiveBase Load(string filePath)
+        public static BA2Archive Load(string filePath)
         {
-            return Load(filePath, Ba2ArchiveLoaderFlags.None);
+            return Load(filePath, BA2LoaderFlags.None);
         }
 
         /// <summary>
         /// Loads archive from path using custom settings.
         /// </summary>
-        /// <see cref="Ba2ArchiveLoadException"/>
+        /// <see cref="BA2LoadException"/>
         /// <param name="filePath">Path to archive.</param>
         /// <param name="flags">Flags for loader.</param>
         /// <returns>BA2ArchiveBase instance.</returns>
-        public static Ba2ArchiveBase Load(string filePath, Ba2ArchiveLoaderFlags flags)
+        public static BA2Archive Load(string filePath, BA2LoaderFlags flags)
         {
             FileStream archiveStream = null;
             try {
                 archiveStream = File.OpenRead(filePath);
             } catch (IOException e) {
-                throw new Ba2ArchiveLoadException("Cannot open file \"" + filePath + "\": " + e.Message, e);
+                throw new BA2LoadException("Cannot open file \"" + filePath + "\": " + e.Message, e);
             }
 
             // file cannot be valid archive if header is less than HeaderSize
             if (archiveStream.Length - archiveStream.Position < HeaderSize)
-                throw new Ba2ArchiveLoadException("\"" + filePath + "\" cannot be valid BA2 archive");
+                throw new BA2LoadException("\"" + filePath + "\" cannot be valid BA2 archive");
 
-            Ba2ArchiveBase archive = null;
+            BA2Archive archive = null;
             using (BinaryReader reader = new BinaryReader(archiveStream, Encoding.ASCII))
             {
                 archiveStream.Lock(0, HeaderSize);
 
-                Ba2ArchiveHeader header = LoadHeader(reader);
+                BA2Header header = LoadHeader(reader);
 
                 archiveStream.Unlock(0, HeaderSize);
 
                 if (!HeaderSignature.SequenceEqual(header.Signature))
-                    throw new Ba2ArchiveLoadException("Archive has invalid signature");
+                    throw new BA2LoadException("Archive has invalid signature");
 
-                if (header.Version != ArchiveVersion && !flags.HasFlag(Ba2ArchiveLoaderFlags.IgnoreVersion))
-                    throw new Ba2ArchiveLoadException("Version of archive is not valid (\"" + header.Version.ToString() + "\")");
+                if (header.Version != ArchiveVersion && !flags.HasFlag(BA2LoaderFlags.IgnoreVersion))
+                    throw new BA2LoadException("Version of archive is not valid (\"" + header.Version.ToString() + "\")");
 
                 // compare excepted signature and file signature
                 switch (GetArchiveType(header.ArchiveType))
                 {
-                    case Ba2ArchiveType.General:
-                        archive = new Ba2GeneralArchive();
+                    case BA2Type.General:
+                        archive = new BA2GeneralArchive();
                         break;
-                    case Ba2ArchiveType.Texture:
+                    case BA2Type.Texture:
                         // TODO
-                        archive = new Ba2TextureArchive();
+                        archive = new BA2TextureArchive();
                         break;
-                    case Ba2ArchiveType.Unknown:
+                    case BA2Type.Unknown:
                     default:
-                        if (flags.HasFlag(Ba2ArchiveLoaderFlags.LoadUnknownArchiveTypes))
+                        if (flags.HasFlag(BA2LoaderFlags.LoadUnknownArchiveTypes))
                         {
-                            archive = new Ba2ArchiveBase();
+                            archive = new BA2Archive();
                         }
                         else
                         {
-                            throw new Ba2ArchiveLoadException("Archive of type \"" + Encoding.ASCII.GetString(header.ArchiveType) + "\" is not supported");
+                            throw new BA2LoadException("Archive of type \"" + Encoding.ASCII.GetString(header.ArchiveType) + "\" is not supported");
                         }
                         break;
                 }
