@@ -11,7 +11,7 @@ namespace Ba2Tools
     /// <summary>
     /// Represents base BA2 archive type. Contains everything that other archive types contain.
     /// </summary>
-    public class BA2Archive : IBA2Archive
+    public class BA2Archive : IBA2Archive, IDisposable
     {
         /// <summary>
         /// Archive version defined in header.
@@ -31,7 +31,9 @@ namespace Ba2Tools
         /// <summary>
         /// Path to file that was opened.
         /// </summary>
-        public string FilePath { get; internal set; }
+        //public string FilePath { get; internal set; }
+
+        public Stream ArchiveStream { get; internal set; }
 
         public BA2Header Header { get; internal set; }
 
@@ -84,33 +86,28 @@ namespace Ba2Tools
                 return _fileListCache;
 
             // Not valid name table offset was given
-            if (NameTableOffset < BA2Loader.HeaderSize)
+            if (NameTableOffset < (UInt64)BA2Loader.HeaderSize)
             {
                 goto invalidNameTableProviden;
             }
 
             List<string> strings = new List<string>();
 
-            using (var stream = File.OpenRead(FilePath)) {
-                using (var reader = new BinaryReader(stream, Encoding.ASCII)) {
-                    long nameTableLength = stream.Length - (long)NameTableOffset;
-                    if (nameTableLength < 0)
-                        goto invalidNameTableProviden;
+            ArchiveStream.Seek((long)NameTableOffset, SeekOrigin.Begin);
+            using (var reader = new BinaryReader(ArchiveStream, Encoding.ASCII, leaveOpen: true))
+            {
+                long nameTableLength = ArchiveStream.Length - (long)NameTableOffset;
+                if (nameTableLength < 0)
+                    goto invalidNameTableProviden;
 
-                    stream.Seek((long)NameTableOffset, SeekOrigin.Begin);
-                    stream.Lock((long)NameTableOffset, nameTableLength);
+                while (ArchiveStream.Length - ArchiveStream.Position >= 2)
+                {
+                    int remainingBytes = (int)(ArchiveStream.Length - ArchiveStream.Position);
 
-                    while (stream.Length - stream.Position >= 2)
-                    {
-                        int remainingBytes = (int)(stream.Length - stream.Position);
+                    UInt16 stringLength = reader.ReadUInt16();
+                    byte[] rawstring = reader.ReadBytes(stringLength > remainingBytes ? remainingBytes : stringLength);
 
-                        UInt16 stringLength = reader.ReadUInt16();
-                        byte[] rawstring = reader.ReadBytes(stringLength > remainingBytes ? remainingBytes : stringLength);
-
-                        strings.Add(Encoding.ASCII.GetString(rawstring));
-                    }
-
-                    stream.Unlock((long)NameTableOffset, nameTableLength);
+                    strings.Add(Encoding.ASCII.GetString(rawstring));
                 }
             }
 
@@ -144,6 +141,15 @@ namespace Ba2Tools
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Disposes BA2Archive instance and frees its resources.
+        /// After this call BA2Archive is not usable anymore.
+        /// </summary>
+        public void Dispose()
+        {
+            ArchiveStream.Dispose();
         }
     }
 }

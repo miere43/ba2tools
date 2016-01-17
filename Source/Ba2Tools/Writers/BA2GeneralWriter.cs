@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using Ba2Tools;
 using System.IO;
-using Ba2Tools;
 
 namespace Ba2Tools.Writers
 {

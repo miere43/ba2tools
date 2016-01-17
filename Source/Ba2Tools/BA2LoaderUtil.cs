@@ -10,6 +10,10 @@ namespace Ba2Tools
 {
     public static partial class BA2Loader
     {
+        /// <summary>
+        /// Contains all known BA2 archive signatures and their representation in
+        /// BA2Tools library.
+        /// </summary>
         private static readonly Dictionary<byte[], BA2Type> ArchiveSignatures;
 
         static BA2Loader()
@@ -27,8 +31,9 @@ namespace Ba2Tools
         /// <summary>
         /// Resolve archive type from header signature.
         /// </summary>
-        /// <param name="signature">Archive signature</param>
-        /// <returns>Archive type or unknown</returns>
+        /// <param name="signature">Archive signature.</param>
+        /// <returns>Archive type.</returns>
+        /// <see cref="BA2Type"/>
         public static BA2Type GetArchiveType(byte[] signature)
         {
             if (ArchiveSignatures.ContainsKey(signature))
@@ -41,7 +46,8 @@ namespace Ba2Tools
         /// Resolve archive type from Ba2ArchiveBase derived class instance.
         /// </summary>
         /// <param name="signature">Archive signature</param>
-        /// <returns>Archive type or unknown</returns>
+        /// <returns>Archive type.</returns>
+        /// <see cref="BA2Type"/>
         public static BA2Type GetArchiveType(BA2Archive archive)
         {
             var archiveType = archive.GetType();
@@ -56,8 +62,8 @@ namespace Ba2Tools
         /// <summary>
         /// Resolve archive type from file.
         /// </summary>
-        /// <param name="signature">Archive signature</param>
-        /// <returns>Archive type or unknown</returns>
+        /// <param name="filePath">Path to the archive.</param>
+        /// <returns>Archive type.</returns>
         public static BA2Type GetArchiveType(string filePath)
         {
             BA2Header header;
@@ -66,7 +72,7 @@ namespace Ba2Tools
                 if (stream.Length < BA2Loader.HeaderSize)
                     return BA2Type.Unknown;
 
-                using (var reader = new BinaryReader(stream, Encoding.ASCII)) {
+                using (var reader = new BinaryReader(stream, Encoding.ASCII, leaveOpen: true)) {
                     header = LoadHeader(reader);
                 }
             }

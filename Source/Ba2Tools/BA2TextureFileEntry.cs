@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Ba2Tools
 {
     /// <summary>
-    /// Represents texture BA2 archive file entry.
+    /// Represents BA2TextureArchive file entry.
     /// <seealso cref="BA2TextureArchive"/>
     /// </summary>
     public struct BA2TextureFileEntry
@@ -14,7 +11,7 @@ namespace Ba2Tools
         public UInt32 Unknown0;
 
         /// <summary>
-        /// File extension.
+        /// File extension. Must contain 4 chars.
         /// </summary>
         public char[] Extension;
 
@@ -22,8 +19,14 @@ namespace Ba2Tools
 
         public byte Unknown2;
 
+        /// <summary>
+        /// Number of chunks in texture.
+        /// </summary>
         public byte NumberOfChunks;
 
+        /// <summary>
+        /// Header size of each chunk.
+        /// </summary>
         public UInt16 ChunkHeaderSize;
 
         /// <summary>
@@ -42,7 +45,7 @@ namespace Ba2Tools
         public byte NumberOfMipmaps;
 
         /// <summary>
-        /// Texture format.
+        /// Texture format (DXGI_FORMAT)
         /// </summary>
         public byte Format;
 

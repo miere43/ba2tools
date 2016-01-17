@@ -50,14 +50,6 @@ namespace Ba2Tools
         /// Checks file entry being compressed.
         /// </summary>
         /// <returns>True if file is compressed, false otherwise.</returns>
-        public bool IsCompressed()
-        {
-            return (PackedLength != 0);
-        }
-
-        //public UInt32 GetDataLength()
-        //{
-        //    return IsCompressed() ? PackedLength : UnpackedLength;
-        //}
+        public bool IsCompressed() => (PackedLength != 0);
     }
 }

@@ -72,26 +72,23 @@ namespace Ba2Tools
                 return;
             }
 
-            using (var archiveStream = File.OpenRead(FilePath))
+            for (int i = 0; i < fileNames.Length; i++)
             {
-                for (int i = 0; i < fileNames.Length; i++)
-                {
-                    var name = fileNames[i];
-                    var entry = GetEntryFromName(ref name);
-                    if (!entry.HasValue)
-                        throw new BA2ExtractionException("File \"" + name + "\" is not found in archive");
+                var name = fileNames[i];
+                var entry = GetEntryFromName(ref name);
+                if (!entry.HasValue)
+                    throw new BA2ExtractionException("File \"" + name + "\" is not found in archive");
 
-                    string finalFilename = Path.Combine(destination, name);
-                    if (overwriteFiles == false && File.Exists(finalFilename))
-                        throw new BA2ExtractionException("File \"" + name + "\" exists.");
+                string finalFilename = Path.Combine(destination, name);
+                if (overwriteFiles == false && File.Exists(finalFilename))
+                    throw new BA2ExtractionException("File \"" + name + "\" exists.");
 
-                    string finalDestDir = Path.GetDirectoryName(finalFilename);
-                    if (!Directory.Exists(finalDestDir))
-                        Directory.CreateDirectory(finalDestDir);
+                string finalDestDir = Path.GetDirectoryName(finalFilename);
+                if (!Directory.Exists(finalDestDir))
+                    Directory.CreateDirectory(finalDestDir);
 
-                    var eentry = entry.Value;
-                    ExtractFileInternal(ref eentry, ref finalFilename, archiveStream);
-                }
+                var eentry = entry.Value;
+                ExtractFileInternal(ref eentry, ref finalFilename);
             }
         }
 
@@ -131,9 +128,7 @@ namespace Ba2Tools
             if (File.Exists(finalPath) && overwriteFile == false)
                 throw new BA2ExtractionException("Overwrite is not permitted.");
 
-            using (var archiveStream = File.OpenRead(FilePath)) { 
-                ExtractFileInternal(ref fileEntry, ref finalPath, archiveStream);
-            }
+            ExtractFileInternal(ref fileEntry, ref finalPath);
         }
 
         public override bool ExtractToStream(string fileName, Stream stream)
@@ -150,14 +145,12 @@ namespace Ba2Tools
             if (!entry.HasValue)
                 return false;
 
-            using (var archiveStream = File.OpenRead(FilePath)) {
-                var e = entry.Value;
-                ExtractFileInternal2(ref e, archiveStream, stream);
-                return true;
-            }
+            var e = entry.Value;
+            ExtractFileInternal2(ref e, stream);
+            return true;
         }
 
-        private void ExtractFileInternal2(ref BA2GeneralFileEntry entry, Stream archiveStream, Stream destStream)
+        private void ExtractFileInternal2(ref BA2GeneralFileEntry entry, Stream destStream)
         {
             // DeflateStream throws exception when
             // reads zlib compressed file header
@@ -167,14 +160,14 @@ namespace Ba2Tools
             UInt64 dataOffset = entry.IsCompressed() ? entry.Offset + zlibHeaderLength : entry.Offset;
             UInt32 dataLength = entry.IsCompressed() ? entry.PackedLength - zlibHeaderLength : entry.UnpackedLength;
 
-            archiveStream.Seek((long)dataOffset, SeekOrigin.Begin);
+            ArchiveStream.Seek((long)dataOffset, SeekOrigin.Begin);
 
             int bytesToRead = (int)dataLength;
             byte[] rawData = new byte[entry.UnpackedLength];
 
             if (entry.IsCompressed())
             {
-                using (var uncompressStream = new DeflateStream(archiveStream, CompressionMode.Decompress, leaveOpen: true))
+                using (var uncompressStream = new DeflateStream(ArchiveStream, CompressionMode.Decompress, leaveOpen: true))
                 {
                     var bytesReaden = uncompressStream.Read(rawData, 0, (int)dataLength);
                     Debug.Assert(bytesReaden == dataLength);
@@ -182,7 +175,7 @@ namespace Ba2Tools
             }
             else
             {
-                archiveStream.Read(rawData, 0, (int)entry.UnpackedLength);
+                ArchiveStream.Read(rawData, 0, (int)entry.UnpackedLength);
             }
 
             destStream.Write(rawData, 0, rawData.Length);
@@ -194,10 +187,10 @@ namespace Ba2Tools
     /// <summary>
     /// Base extraction function for all extraction methods.
     /// </summary>
-    private void ExtractFileInternal(ref BA2GeneralFileEntry fileEntry, ref string destFilename, Stream archiveStream)
+    private void ExtractFileInternal(ref BA2GeneralFileEntry fileEntry, ref string destFilename)
         {
             using (var stream = new MemoryStream()) {
-                ExtractFileInternal2(ref fileEntry, archiveStream, stream);
+                ExtractFileInternal2(ref fileEntry, stream);
 
                 using (var extractedFileStream = File.Create(destFilename, 4096, FileOptions.SequentialScan))
                 {
@@ -212,7 +205,7 @@ namespace Ba2Tools
         /// Preload file entries. Should be called only once.
         /// </summary>
         /// <param name="reader"></param>
-        internal override void PreloadData(BinaryReader reader = null)
+        internal override void PreloadData(BinaryReader reader)
         {
             reader.BaseStream.Seek(BA2Loader.HeaderSize, SeekOrigin.Begin);
             fileEntries = new BA2GeneralFileEntry[TotalFiles];
