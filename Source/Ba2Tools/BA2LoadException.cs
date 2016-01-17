@@ -8,6 +8,7 @@ namespace Ba2Tools
 {
     /// <summary>
     /// BA2 archive loader exception for errors during archive loading.
+    /// <see cref="BA2Loader"/>
     /// </summary>
     [Serializable]
     public class BA2LoadException : Exception

@@ -46,7 +46,6 @@ namespace Ba2Tools.Tests
         {
             var archive = BA2Loader.Load(Path.Combine(SharedData.DataFolder, "GeneralOneFile.ba2"));
             var header = archive.Header;
-
             
             Assert.IsTrue(header.Signature.SequenceEqual(SharedData.ArchiveMagic));
             Assert.AreEqual(1U, header.Version);

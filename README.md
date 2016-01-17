@@ -16,12 +16,14 @@ Upcoming features:
 
 Sample:
 ```c#
-var archive = Ba2ArchiveLoader.Load("D:\\Games\\Steam\\steamapps\\Fallout 4\\Data\\Fallout 4 - Interface.ba2");
-string[] filesInArchive = archive.ListFiles();
-
-if (filesInArchive.Length > 1)
+using (var archive = BA2Loader.Load("D:\\Games\\Steam\\steamapps\\Fallout 4\\Data\\Fallout 4 - Interface.ba2"))
 {
-	archive.Extract(filesInArchive[0], "D:\\Modding\\Fallout 4 Data\\Interface");
+	string[] filesInArchive = archive.ListFiles();
+
+	if (filesInArchive.Length > 1)
+	{
+		archive.Extract(filesInArchive[0], "D:\\Modding\\Fallout 4 Data\\Interface");
+	}
 }
 ```
 
@@ -41,7 +43,7 @@ I want to mention that disk speed is huge bottleneck.
 
 ## Prerequisites
 
-* .NET Framework 4
+* .NET Framework 4.5
 
 ## Doxygen
 
