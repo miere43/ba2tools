@@ -52,13 +52,10 @@
     <Compile Include="BA2TextureArchive.cs" />
     <Compile Include="BA2LoaderUtil.cs" />
     <Compile Include="BA2Type.cs" />
-    <Compile Include="BA2Writer.cs" />
     <Compile Include="IBA2Archive.cs" />
     <Compile Include="Textures\ByteSequenceEqualityComparer.cs" />
     <Compile Include="Textures\Dds.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Writers\BA2WriteException.cs" />
-    <Compile Include="Writers\BA2GeneralWriter.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
