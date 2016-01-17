@@ -16,6 +16,7 @@ using (var archive = BA2Loader.Load(@"Fallout4 - Startup.ba2")) {
 using (var archive = BA2Loader.Load(@"Fallout4 - Startup.ba2")) {
 	Console.WriteLine("Total files in archive: " + archive.TotalFiles);
 }
+```
 
 ## Get archive type
 ```c#
