@@ -11,7 +11,7 @@ namespace Ba2Tools
     /// <summary>
     /// Represents base BA2 archive type. Contains everything that other archive types contain.
     /// </summary>
-    public class Ba2ArchiveBase : IBa2Archive
+    public class BA2Archive : IBA2Archive
     {
         /// <summary>
         /// Archive version defined in header.
@@ -33,7 +33,7 @@ namespace Ba2Tools
         /// </summary>
         public string FilePath { get; internal set; }
 
-        public Ba2ArchiveLoader.Ba2ArchiveHeader Header { get; internal set; }
+        public BA2Header Header { get; internal set; }
 
         /// <summary>
         /// ListFiles() cache.
@@ -48,10 +48,15 @@ namespace Ba2Tools
         /// <summary>
         /// Extract all files from archive.
         /// </summary>
-        /// <seealso cref="Ba2ArchiveExtractionException"/>
+        /// <seealso cref="BA2ExtractionException"/>
         /// <param name="destination">Directory where extracted files will be placed.</param>
         /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
         public virtual void ExtractFiles(string[] fileNames, string destination, bool overwriteFiles = false)
+        {
+            throw new NotSupportedException("Cannot extract any files because archive type is unknown.");
+        }
+
+        public virtual bool ExtractToStream(string fileName, Stream stream)
         {
             throw new NotSupportedException("Cannot extract any files because archive type is unknown.");
         }
@@ -79,10 +84,9 @@ namespace Ba2Tools
                 return _fileListCache;
 
             // Not valid name table offset was given
-            if (NameTableOffset < Ba2ArchiveLoader.HeaderSize)
+            if (NameTableOffset < BA2Loader.HeaderSize)
             {
-                _fileListCache = new string[0];
-                return _fileListCache;
+                goto invalidNameTableProviden;
             }
 
             List<string> strings = new List<string>();
@@ -90,6 +94,8 @@ namespace Ba2Tools
             using (var stream = File.OpenRead(FilePath)) {
                 using (var reader = new BinaryReader(stream, Encoding.ASCII)) {
                     long nameTableLength = stream.Length - (long)NameTableOffset;
+                    if (nameTableLength < 0)
+                        goto invalidNameTableProviden;
 
                     stream.Seek((long)NameTableOffset, SeekOrigin.Begin);
                     stream.Lock((long)NameTableOffset, nameTableLength);
@@ -113,11 +119,17 @@ namespace Ba2Tools
 
             _fileListCache = strings.ToArray();
             return _fileListCache;
+
+            /// goto case when invalid name table offset was providen
+            invalidNameTableProviden: {
+                _fileListCache = new string[0];
+                return _fileListCache;
+            }
         }
 
         internal virtual void PreloadData(BinaryReader reader)
         {
-
+            // No data to preload.
         }
 
         public virtual bool ContainsFile(string fileName)
@@ -133,7 +145,5 @@ namespace Ba2Tools
 
             return false;
         }
-
-
     }
 }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Ba2Tools.ArchiveTypes
+namespace Ba2Tools
 {
     public struct TextureChunk
     {
@@ -17,6 +17,6 @@ namespace Ba2Tools.ArchiveTypes
 
         public UInt16 EndMipmap;
 
-        // UInt32 Unknown // 0xBAADF00D
+        public UInt32 Unknown; // 0xBAADF00D
     }
 }

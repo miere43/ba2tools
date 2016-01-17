@@ -4,10 +4,10 @@ Provides managed access to BA2 archives.
 
 Current features:
 * Extract files from general archives, including packed files.
+* Extract files from texture archives.
 * List files in archive
 
 Upcoming features:
-* Extract files from texture archives
 * Write BA2 archives
 
 Sample:

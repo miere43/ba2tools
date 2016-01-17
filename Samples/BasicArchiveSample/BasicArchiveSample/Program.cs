@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using Ba2Tools;
-using Ba2Tools.ArchiveTypes;
 using System.Diagnostics;
 
 namespace BasicArchiveSample
@@ -24,15 +23,15 @@ namespace BasicArchiveSample
 
         static void Inner(string[] args)
         {
-            string archivePath = args.Length == 0 ? @"D:\Games\Fallout 4\Data\Fallout4 - Startup.ba2" : args[0];
+            string archivePath = args.Length == 0 ? @"D:\Games\Fallout 4\Data\Fallout4 - Textures1.ba2" : args[0];
 
             // Load archive
-            Ba2ArchiveBase archive;
+            BA2Archive archive;
             try
             {
-                archive = Ba2ArchiveLoader.Load(archivePath, Ba2ArchiveLoaderFlags.None);
+                archive = BA2Loader.Load(archivePath, BA2LoaderFlags.None);
             }
-            catch (Ba2ArchiveLoadException e)
+            catch (BA2LoadException e)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.BackgroundColor = ConsoleColor.DarkRed;
@@ -53,24 +52,30 @@ namespace BasicArchiveSample
             }
 
             // Find out what archive type is it:
-            if (archive as Ba2GeneralArchive != null)
+            if (archive as BA2GeneralArchive != null)
             {
                 Console.WriteLine("archive type is general");
             }
-            else if (archive.GetType() == typeof(Ba2TextureArchive))
+            else if (archive.GetType() == typeof(BA2TextureArchive))
             {
                 Console.WriteLine("archive type is texture");
             }
             else
             {
-                var archiveType = Ba2ArchiveLoader.GetArchiveType(archive);
+                var archiveType = BA2Loader.GetArchiveType(archive);
                 Console.WriteLine("not supported archive type: " + archiveType);
                 return;
             }
 
-            Console.Write("Extract " + archive.TotalFiles + " files to \"D:\\Extract\"? (y/n)\n> ");
-            if (Console.ReadLine().Trim() == "y")
-                archive.ExtractAll("D:\\TestExtract", overwriteFiles: true);
+            Stopwatch s = new Stopwatch();
+            s.Start();
+            archive.ExtractAll(@"D:\Hello", true);
+            s.Stop();
+            Debug.WriteLine("elapsed: " + s.ElapsedMilliseconds);
+
+            //Console.Write("Extract " + archive.TotalFiles + " files to \"D:\\Extract\"? (y/n)\n> ");
+            //if (Console.ReadLine().Trim() == "y")
+            //    archive.ExtractAll("D:\\TestExtract", overwriteFiles: true);
 
 
             //temp.Extract(s, "D:\\");

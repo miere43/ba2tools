@@ -10,12 +10,12 @@ namespace Ba2Tools
     /// Exception for BA2 archive extraction errors.
     /// </summary>
     [Serializable]
-    public class Ba2ArchiveExtractionException : Exception
+    public class BA2ExtractionException : Exception
     {
-        public Ba2ArchiveExtractionException() { }
-        public Ba2ArchiveExtractionException(string message) : base(message) { }
-        public Ba2ArchiveExtractionException(string message, Exception inner) : base(message, inner) { }
-        protected Ba2ArchiveExtractionException(
+        public BA2ExtractionException() { }
+        public BA2ExtractionException(string message) : base(message) { }
+        public BA2ExtractionException(string message, Exception inner) : base(message, inner) { }
+        protected BA2ExtractionException(
           System.Runtime.Serialization.SerializationInfo info,
           System.Runtime.Serialization.StreamingContext context) : base(info, context)
         { }

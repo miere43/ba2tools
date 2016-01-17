@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Ba2Tools.ArchiveTypes
+namespace Ba2Tools
 {
     /// <summary>
     /// Represents texture BA2 archive file entry.
-    /// <seealso cref="Ba2TextureArchive"/>
+    /// <seealso cref="BA2TextureArchive"/>
     /// </summary>
-    public struct Ba2TextureFileEntry
+    public struct BA2TextureFileEntry
     {
         public UInt32 Unknown0;
 
@@ -22,7 +22,7 @@ namespace Ba2Tools.ArchiveTypes
 
         public byte Unknown2;
 
-        public UInt16 NumberOfChunks;
+        public byte NumberOfChunks;
 
         public UInt16 ChunkHeaderSize;
 
