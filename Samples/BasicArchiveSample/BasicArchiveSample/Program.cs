@@ -67,70 +67,9 @@ namespace BasicArchiveSample
                 return;
             }
 
-            Stopwatch s = new Stopwatch();
-            s.Start();
-            archive.ExtractAll(@"D:\Hello", true);
-            s.Stop();
-            Debug.WriteLine("elapsed: " + s.ElapsedMilliseconds);
-
-            //Console.Write("Extract " + archive.TotalFiles + " files to \"D:\\Extract\"? (y/n)\n> ");
-            //if (Console.ReadLine().Trim() == "y")
-            //    archive.ExtractAll("D:\\TestExtract", overwriteFiles: true);
-
-
-            //temp.Extract(s, "D:\\");
-            //Debug.WriteLine(s);
-            //Debug.WriteLine(temp.ContainsFile("Interface\\BarterMenu.swf"));
-            //temp.ExtractFile(@"interface\bartermenu.swf", @"D:\test", true);
-            //t.Stop();
-            //Debug.WriteLine($"Time elapsed: {t.Elapsed.Seconds}.{t.Elapsed.Milliseconds}");
-            //if (args.Length < 1)
-            //{
-            //    Console.WriteLine("Usage: <archive path>");
-            //    return;
-            //}
-
-            //string archivePath = args[0];
-
-            //if (!File.Exists(archivePath))
-            //{
-            //    Console.WriteLine("File \"{0}\" does not exists", archivePath);
-            //    return;
-            //}
-
-            //Ba2ArchiveBase archive;
-            //try
-            //{
-            //    archive = Ba2ArchiveLoader.Load(archivePath,
-            //        Ba2ArchiveLoaderFlags.LoadUnknownArchiveTypes |
-            //        Ba2ArchiveLoaderFlags.IgnoreVersion);
-            //}
-            //catch (Ba2ArchiveLoadException e)
-            //{
-            //    Console.WriteLine("Cannot load archive: " + e.Message);
-            //    return;
-            //}
-
-            //// Console.WriteLine("Signature: " + Encoding.ASCII.GetString(archive.Signature));
-            //Console.WriteLine("Version: " + archive.Version);
-
-            //Console.Write("Archive type: ");
-            //if (archive.GetType() == typeof(Ba2GeneralArchive))
-            //    Console.WriteLine("General");
-            //else if (archive.GetType() == typeof(Ba2TextureArchive))
-            //    Console.WriteLine("Texture");
-            //else
-            //    Console.WriteLine("Unknown");
-
-            //Console.WriteLine("Total files: " + archive.FileCount);
-
-            //Console.ReadKey();
-
-            //Console.WriteLine("File names: ");
-            //foreach (var name in archive.ListFiles())
-            //{
-            //    Console.WriteLine(name);
-            //}
+            Console.Write("Extract " + archive.TotalFiles + " files to \"D:\\TestExtract\"? (y/n)\n> ");
+            if (Console.ReadLine().Trim() == "y")
+                archive.ExtractAll("D:\\TestExtract", overwriteFiles: true);
         }
     }
 }
