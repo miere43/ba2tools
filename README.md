@@ -5,10 +5,12 @@ Provides managed access to BA2 archives.
 Current features:
 * Extract files from general archives, including packed files.
 * Extract files from texture archives.
+* Supports extracting to Stream, not only in file system.
 * List files in archive
 
 Upcoming features:
 * Write BA2 archives
+* Faster extraction speed
 
 Sample:
 ```c#
@@ -22,6 +24,18 @@ if (filesInArchive.Length > 1)
 ```
 
 [Show me more samples](Samples/).
+
+## Speed
+
+Extraction speed test on Fallout4 - Textures1.ba2 (extract all files task)
+
+| Language | Tool              | Extraction time | Notes
+| -------- | ----------------- | --------------- | -----
+| C++      | ba2extract v0003  | 0 min 32 secs   |
+| C++      | B.A.E. v0.0.4     | 1 min 9 secs    | rough GUI measurement
+| C#       | Ba2Tools v0.2.0   | 1 min 35 secs   |
+
+I want to mention that disk speed is huge bottleneck.
 
 ## Prerequisites
 
