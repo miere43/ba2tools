@@ -2,6 +2,8 @@
 
 Provides managed access to BA2 archives.
 
+[Changelog](CHANGELOG.md).
+
 Current features:
 * Extract files from general archives, including packed files.
 * Extract files from texture archives.
