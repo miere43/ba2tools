@@ -16,8 +16,6 @@ namespace Ba2Tools.Tests
 
         public static byte[] ArchiveMagic = new byte[] { 0x42, 0x54, 0x44, 0x58 };
 
-        public static byte[] GeneralArchiveTypeMagic = new byte[] { 0x47, 0x4E, 0x52, 0x4C };
-
         public static string CreateTempDirectory()
         {
             string path = Path.Combine(TempFolder, Path.GetRandomFileName());
@@ -49,9 +47,10 @@ namespace Ba2Tools.Tests
             var archive = BA2Loader.Load(Path.Combine(SharedData.DataFolder, "GeneralOneFile.ba2"));
             var header = archive.Header;
 
+            
             Assert.IsTrue(header.Signature.SequenceEqual(SharedData.ArchiveMagic));
             Assert.AreEqual(1U, header.Version);
-            Assert.IsTrue(header.ArchiveType.SequenceEqual(SharedData.GeneralArchiveTypeMagic));
+            Assert.IsTrue(BA2Loader.GetArchiveType(header.ArchiveType) == BA2Type.General);
             Assert.AreEqual(1U, header.TotalFiles);
             Assert.AreEqual(69UL, header.NameTableOffset);
 
@@ -74,7 +73,7 @@ namespace Ba2Tools.Tests
 
             Assert.IsTrue(header.Signature.SequenceEqual(SharedData.ArchiveMagic));
             Assert.AreEqual(1U, header.Version);
-            Assert.IsTrue(header.ArchiveType.SequenceEqual(SharedData.GeneralArchiveTypeMagic));
+            Assert.IsTrue(BA2Loader.GetArchiveType(header.ArchiveType) == BA2Type.General);
             Assert.AreEqual(0U, header.TotalFiles);
 
             var files = archive.ListFiles();
@@ -96,7 +95,6 @@ namespace Ba2Tools.Tests
 
                 Assert.IsTrue(Encoding.ASCII.GetString(buffer).Equals("test text", StringComparison.OrdinalIgnoreCase));
             }
-                
         }
     }
 }
