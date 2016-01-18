@@ -18,6 +18,9 @@ namespace Ba2Tools
         /// </summary>
         public readonly static int Size = 4 + 4 + 4 + 4 + 8 + 4 + 4 + 4;
 
+        /// <summary>
+        /// Probably file hash.
+        /// </summary>
         public UInt32 Unknown0;
 
         /// <summary>
@@ -25,8 +28,14 @@ namespace Ba2Tools
         /// </summary>
         public char[] Extension;
 
+        /// <summary>
+        /// Probably directory hash.
+        /// </summary>
         public UInt32 Unknown1;
 
+        /// <summary>
+        /// Probably file flags.
+        /// </summary>
         public UInt32 Unknown2;
 
         /// <summary>
@@ -44,6 +53,9 @@ namespace Ba2Tools
         /// </summary>
         public UInt32 UnpackedLength;
 
+        /// <summary>
+        /// File entry ending, always 0xBAADF00D
+        /// </summary>
         public UInt32 Unknown3;
 
         /// <summary>

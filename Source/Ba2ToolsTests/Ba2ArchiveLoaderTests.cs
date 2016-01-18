@@ -1,37 +1,12 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Ba2Tools;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
 
-namespace Ba2Tools.Tests
+namespace Ba2ToolsTests
 {
-    public static class SharedData
-    {
-        public static string DataFolder = "../../Data/";
-
-        public static string TempFolder = "../../Temp/";
-
-        public static byte[] ArchiveMagic = new byte[] { 0x42, 0x54, 0x44, 0x58 };
-
-        public static string CreateTempDirectory()
-        {
-            string path = Path.Combine(TempFolder, Path.GetRandomFileName());
-            Directory.CreateDirectory(path);
-            return path;
-        }
-
-        public static void CleanupTemp()
-        {
-            foreach (var dir in Directory.EnumerateDirectories(TempFolder))
-            {
-                Directory.Delete(dir, true);
-            }
-        }
-    }
-
     [TestClass()]
     public class Ba2ArchiveLoader_Tests
     {
@@ -41,10 +16,13 @@ namespace Ba2Tools.Tests
             SharedData.CleanupTemp();
         }
 
+        /// <summary>
+        /// Test name table, extraction methods.
+        /// </summary>
         [TestMethod()]
         public void TestGeneralOneFile()
         {
-            var archive = BA2Loader.Load(Path.Combine(SharedData.DataFolder, "GeneralOneFile.ba2"));
+            var archive = BA2Loader.Load(SharedData.GetDataPath("GeneralOneFile.ba2"));
             var header = archive.Header;
             
             Assert.IsTrue(header.Signature.SequenceEqual(SharedData.ArchiveMagic));
@@ -64,10 +42,13 @@ namespace Ba2Tools.Tests
             // Assert.IsTrue(File.ReadAllLines)
         }
 
+        /// <summary>
+        /// Test that header-only archives are valid.
+        /// </summary>
         [TestMethod()]
         public void TestGeneralHeaderOnly()
         {
-            var archive = BA2Loader.Load(Path.Combine(SharedData.DataFolder, "GeneralHeaderOnly.ba2"));
+            var archive = BA2Loader.Load(SharedData.GetDataPath("GeneralHeaderOnly.ba2"));
             var header = archive.Header;
 
             Assert.IsTrue(header.Signature.SequenceEqual(SharedData.ArchiveMagic));
@@ -80,10 +61,13 @@ namespace Ba2Tools.Tests
             // Assert.AreEqual(69UL, header.NameTableOffset);
         }
 
+        /// <summary>
+        /// Test extraction to stream.
+        /// </summary>
         [TestMethod()]
         public void TestStreamExtraction()
         {
-            var archive = BA2Loader.Load(Path.Combine(SharedData.DataFolder, "GeneralOneFile.ba2"));
+            var archive = BA2Loader.Load(SharedData.GetDataPath("GeneralOneFile.ba2"));
             using (var stream = new MemoryStream())
             {
                 bool status = archive.ExtractToStream("test.txt", stream);
@@ -94,6 +78,69 @@ namespace Ba2Tools.Tests
 
                 Assert.IsTrue(Encoding.ASCII.GetString(buffer).Equals("test text", StringComparison.OrdinalIgnoreCase));
             }
+        }
+
+        /// <summary>
+        /// Test to ensure general archive is threaten as general.
+        /// </summary>
+        [TestMethod()]
+        public void TestGeneralArchiveType()
+        {
+            var archive = BA2Loader.Load(SharedData.GetDataPath("GeneralOneFile.ba2"));
+            Assert.IsInstanceOfType(archive, typeof(BA2GeneralArchive));
+        }
+
+        /// <summary>
+        /// Test to ensure exception is thrown for non-archives
+        /// </summary>
+        [TestMethod()]
+        [ExpectedException(typeof(BA2LoadException))]
+        public void TestInvalidArchive()
+        {
+            var archive = BA2Loader.Load(Path.Combine(SharedData.DataFolder, "InvalidArchive.txt"));
+        }
+
+        /// <summary>
+        /// Test to ensures exception being thrown for invalid versions.
+        /// </summary>
+        [TestMethod()]
+        [ExpectedException(typeof(BA2LoadException))]
+        public void TestInvalidVersion()
+        {
+            var archive = BA2Loader.Load(SharedData.GetDataPath("GeneralHeaderOnlyInvalidVersion.ba2"));
+        }
+
+        /// <summary>
+        /// Test to ensure no exception being thrown for invalid archive
+        /// type when <c>LoadUnknownArchiveTypes</c> is set.
+        /// </summary>
+        [TestMethod()]
+        [ExpectedException(typeof(BA2LoadException))]
+        public void TestInvalidArchiveType()
+        {
+            var archive = BA2Loader.Load(SharedData.GetDataPath("GeneralHeaderOnlyInvalidType.ba2"));
+        }
+
+        /// <summary>
+        /// Test to ensure no exception being thrown for invalid versions
+        /// when <c>IgnoreVersion</c> flag is set in loader.
+        /// </summary>
+        [TestMethod()]
+        public void TestKnownInvalidVersion()
+        {
+            var path = SharedData.GetDataPath("GeneralHeaderOnlyInvalidVersion.ba2");
+            var archive = BA2Loader.Load(path, BA2LoaderFlags.IgnoreVersion);
+        }
+
+        /// <summary>
+        /// Test to ensure no exception being thrown for invalid archive
+        /// type when <c>LoadUnknownArchiveTypes</c> is set.
+        /// </summary>
+        [TestMethod()]
+        public void TestKnownInvalidArchiveType()
+        {
+            var path = SharedData.GetDataPath("GeneralHeaderOnlyInvalidType.ba2");
+            var archive = BA2Loader.Load(path, BA2LoaderFlags.LoadUnknownArchiveTypes);
         }
     }
 }

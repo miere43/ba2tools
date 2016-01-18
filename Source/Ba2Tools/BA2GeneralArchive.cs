@@ -184,27 +184,24 @@ namespace Ba2Tools
             destStream.Seek(0, SeekOrigin.Begin);
         }
 
-    /// <summary>
-    /// Base extraction function for all extraction methods.
-    /// </summary>
-    private void ExtractFileInternal(ref BA2GeneralFileEntry fileEntry, ref string destFilename)
+        /// <summary>
+        /// Base extraction function for all extraction methods.
+        /// </summary>
+        /// <param name="fileEntry">Archives file entry.</param>
+        /// <param name="destFilename">Destination filename.</param>
+        private void ExtractFileInternal(ref BA2GeneralFileEntry fileEntry, ref string destFilename)
         {
-            using (var stream = new MemoryStream()) {
+            using (var stream = File.Create(destFilename, 4096, FileOptions.None))
+            {
+                stream.SetLength(fileEntry.UnpackedLength);
                 ExtractFileInternal2(ref fileEntry, stream);
-
-                using (var extractedFileStream = File.Create(destFilename, 4096, FileOptions.SequentialScan))
-                {
-                    extractedFileStream.Write(stream.GetBuffer(), 0, (int)stream.Length);
-                    extractedFileStream.Flush();
-                    extractedFileStream.Close();
-                }
             }
         }
 
         /// <summary>
         /// Preload file entries. Should be called only once.
         /// </summary>
-        /// <param name="reader"></param>
+        /// <param name="reader">BinaryReader instance.</param>
         internal override void PreloadData(BinaryReader reader)
         {
             reader.BaseStream.Seek(BA2Loader.HeaderSize, SeekOrigin.Begin);

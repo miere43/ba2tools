@@ -5,6 +5,12 @@ using System.Text;
 
 namespace Ba2Tools.Internal
 {
+    /// <summary>
+    /// Represents DDS_PIXELFORMAT struct.
+    /// </summary>
+    /// <remarks>
+    /// https://msdn.microsoft.com/ru-ru/library/windows/desktop/bb943984(v=vs.85).aspx
+    /// </remarks>
     public struct DdsPixelFormat
     {
         public UInt32 dwSize;
@@ -17,6 +23,12 @@ namespace Ba2Tools.Internal
         public UInt32 dwABitMask;
     }
 
+    /// <summary>
+    /// Represents DXGI_FORMAT enum.
+    /// </summary>
+    /// <remarks>
+    /// https://msdn.microsoft.com/en-us/library/windows/desktop/bb173059(v=vs.85).aspx
+    /// </remarks>
     public enum DxgiFormat : int
     {
         R8_UNORM = 61,
@@ -28,6 +40,12 @@ namespace Ba2Tools.Internal
         B8G8R8A8_UNORM = 87,
     }
 
+    /// <summary>
+    /// Represents header of DDS texture.
+    /// </summary>
+    /// <remarks>
+    /// https://msdn.microsoft.com/ru-ru/library/windows/desktop/bb943982(v=vs.85).aspx
+    /// </remarks>
     public struct DdsHeader
     {
         public UInt32 dwSize;
@@ -44,27 +62,41 @@ namespace Ba2Tools.Internal
         //public UInt32[] dwReserved2;
     }
 
+    /// <summary>
+    /// Collecion of methods and constants for DDS texture format.
+    /// </summary>
     public static class Dds
     {
-        public static UInt32 DDS_MAGIC = 0x20534444; // "DDS " //MakeFourCC((byte)'D', (byte)'D', (byte)'S', (byte)'\0');
+        /// <summary>
+        /// Magic for DDS files.
+        /// Same as MakeFourCC('D', 'D', 'S', '\0');
+        /// </summary>
+        public static readonly UInt32 DDS_MAGIC = 0x20534444; 
 
-        public static UInt32 DDS_RGB = 0x00000040;
+        public static readonly UInt32 DDS_RGB = 0x00000040;
 
-        public static UInt32 DDS_RGBA = 0x00000041;
+        public static readonly UInt32 DDS_RGBA = 0x00000041;
 
-        public static UInt32 DDS_FOURCC = 0x00000004;
+        public static readonly UInt32 DDS_FOURCC = 0x00000004;
 
-        public static UInt32 DDS_HEADER_FLAGS_TEXTURE = 0x00001007;
+        public static readonly UInt32 DDS_HEADER_FLAGS_TEXTURE = 0x00001007;
 
-        public static UInt32 DDS_HEADER_FLAGS_LINEARSIZE = 0x00080000;
+        public static readonly UInt32 DDS_HEADER_FLAGS_LINEARSIZE = 0x00080000;
 
-        public static UInt32 DDS_HEADER_FLAGS_MIPMAP = 0x00020000;
+        public static readonly UInt32 DDS_HEADER_FLAGS_MIPMAP = 0x00020000;
 
-        public static UInt32 DDS_SURFACE_FLAGS_TEXTURE = 0x00001000;
+        public static readonly UInt32 DDS_SURFACE_FLAGS_TEXTURE = 0x00001000;
 
-        public static UInt32 DDS_SURFACE_FLAGS_MIPMAP = 0x00400008;
+        public static readonly UInt32 DDS_SURFACE_FLAGS_MIPMAP = 0x00400008;
 
-        // https://msdn.microsoft.com/en-us/library/windows/desktop/bb153349(v=vs.85).aspx
+        /// <summary>
+        /// Creates FourCC code for DDS header.
+        /// </summary>
+        /// <param name="ch0">ASCII char 1.</param>
+        /// <param name="ch1">ASCII char 2.</param>
+        /// <param name="ch2">ASCII char 3.</param>
+        /// <param name="ch3">ASCII char 4.</param>
+        /// <returns>FourCC code.</returns>
         public static int MakeFourCC(int ch0, int ch1, int ch2, int ch3)
         {
             return ((int)(byte)(ch0) | ((int)(byte)(ch1) << 8) | ((int)(byte)(ch2) << 16) | ((int)(byte)(ch3) << 24));

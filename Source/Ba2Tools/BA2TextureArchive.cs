@@ -126,8 +126,13 @@ namespace Ba2Tools
             if (File.Exists(finalPath) && overwriteFile == false)
                 throw new BA2ExtractionException("Overwrite is not permitted.");
 
-            using (var fileStream = File.OpenWrite(finalPath))
+            using (var fileStream = File.Create(finalPath, 4096, FileOptions.None))
             {
+                long fileLength = 128;
+                for (int i = 0; i < fileEntry.Chunks.Length; i++)
+                    fileLength += fileEntry.Chunks[i].UnpackedLength;
+
+                fileStream.SetLength(fileLength);
                 ExtractToStream(ref fileEntry, fileStream);
             }
         }

@@ -8,6 +8,9 @@ namespace Ba2Tools
     /// </summary>
     public struct BA2TextureFileEntry
     {
+        /// <summary>
+        /// Probably file hash.
+        /// </summary>
         public UInt32 Unknown0;
 
         /// <summary>
@@ -15,6 +18,9 @@ namespace Ba2Tools
         /// </summary>
         public char[] Extension;
 
+        /// <summary>
+        /// Probably directory hash.
+        /// </summary>
         public UInt32 Unknown1;
 
         public byte Unknown2;
@@ -45,10 +51,13 @@ namespace Ba2Tools
         public byte NumberOfMipmaps;
 
         /// <summary>
-        /// Texture format (DXGI_FORMAT)
+        /// Texture format (DXGI_FORMAT).
         /// </summary>
         public byte Format;
 
+        /// <summary>
+        /// File entry ending, always 0x0800
+        /// </summary>
         public UInt16 Unknown3;
 
         /// <summary>

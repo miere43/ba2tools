@@ -39,37 +39,42 @@ namespace BasicArchiveSample
                 Console.ResetColor();
                 return;
             }
-            // Base archive was loaded: you don't know what type of archive is (general or texture);
+            //// Base archive was loaded: you don't know what type of archive is (general or texture);
 
-            // You anyway can list files in archive because all archives contains filenames;
-            var filesInArchive = archive.ListFiles();
-            var listFileCount = Math.Min(5, filesInArchive.Length);
+            //// You anyway can list files in archive because all archives contains filenames;
+            //var filesInArchive = archive.ListFiles();
+            //var listFileCount = Math.Min(5, filesInArchive.Length);
 
-            Console.WriteLine("First " + listFileCount + " files in archive: ");
-            for (int i = 0; i < listFileCount; i++)
-            {
-                Console.WriteLine(i + 1 + ". " + filesInArchive[i]);
-            }
+            //Console.WriteLine("First " + listFileCount + " files in archive: ");
+            //for (int i = 0; i < listFileCount; i++)
+            //{
+            //    Console.WriteLine(i + 1 + ". " + filesInArchive[i]);
+            //}
 
-            // Find out what archive type is it:
-            if (archive as BA2GeneralArchive != null)
-            {
-                Console.WriteLine("archive type is general");
-            }
-            else if (archive.GetType() == typeof(BA2TextureArchive))
-            {
-                Console.WriteLine("archive type is texture");
-            }
-            else
-            {
-                var archiveType = BA2Loader.GetArchiveType(archive);
-                Console.WriteLine("not supported archive type: " + archiveType);
-                return;
-            }
+            //// Find out what archive type is it:
+            //if (archive as BA2GeneralArchive != null)
+            //{
+            //    Console.WriteLine("archive type is general");
+            //}
+            //else if (archive.GetType() == typeof(BA2TextureArchive))
+            //{
+            //    Console.WriteLine("archive type is texture");
+            //}
+            //else
+            //{
+            //    var archiveType = BA2Loader.GetArchiveType(archive);
+            //    Console.WriteLine("not supported archive type: " + archiveType);
+            //    return;
+            //}
 
-            Console.Write("Extract " + archive.TotalFiles + " files to \"D:\\TestExtract\"? (y/n)\n> ");
-            if (Console.ReadLine().Trim() == "y")
-                archive.ExtractAll("D:\\TestExtract", overwriteFiles: true);
+            //Console.Write("Extract " + archive.TotalFiles + " files to \"D:\\TestExtract\"? (y/n)\n> ");
+            //if (Console.ReadLine().Trim() == "y")
+            Stopwatch s = new Stopwatch();
+            s.Start();
+                archive.ExtractAll("D:\\azaza2", overwriteFiles: true);
+            s.Stop();
+            Console.WriteLine($"{s.Elapsed.Minutes} m {s.Elapsed.Seconds} s {s.Elapsed.Milliseconds} ms");
+            Environment.Exit(0);
         }
     }
 }
