@@ -6,7 +6,7 @@ namespace Ba2Tools
     /// Represents BA2TextureArchive file entry.
     /// <seealso cref="BA2TextureArchive"/>
     /// </summary>
-    public struct BA2TextureFileEntry
+    public class BA2TextureFileEntry
     {
         /// <summary>
         /// Probably file hash.

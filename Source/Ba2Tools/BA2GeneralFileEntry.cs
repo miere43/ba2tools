@@ -11,7 +11,7 @@ namespace Ba2Tools
     /// Represents file entry in general BA2 archive.
     /// </summary>
     /// <seealso cref="BA2GeneralArchive"/>
-    public struct BA2GeneralFileEntry
+    public class BA2GeneralFileEntry
     {
         /// <summary>
         /// Size of structure.
