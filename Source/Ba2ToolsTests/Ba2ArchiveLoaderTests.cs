@@ -24,15 +24,15 @@ namespace Ba2ToolsTests
         {
             var archive = BA2Loader.Load(SharedData.GetDataPath("GeneralOneFile.ba2"));
             var header = archive.Header;
-            
+
             Assert.IsTrue(header.Signature.SequenceEqual(SharedData.ArchiveMagic));
             Assert.AreEqual(1U, header.Version);
             Assert.IsTrue(BA2Loader.GetArchiveType(header.ArchiveType) == BA2Type.General);
             Assert.AreEqual(1U, header.TotalFiles);
             Assert.AreEqual(69UL, header.NameTableOffset);
 
-            string[] files = archive.ListFiles();
-            Assert.AreEqual(1, files.Length);
+            var files = archive.ListFiles();
+            Assert.AreEqual(1, files.Count);
             Assert.AreEqual(true, archive.ContainsFile("test.txt"));
 
             var folder = SharedData.CreateTempDirectory();
@@ -57,7 +57,7 @@ namespace Ba2ToolsTests
             Assert.AreEqual(0U, header.TotalFiles);
 
             var files = archive.ListFiles();
-            Assert.AreEqual(0, files.Length);
+            Assert.AreEqual(0, files.Count);
             // Assert.AreEqual(69UL, header.NameTableOffset);
         }
 
