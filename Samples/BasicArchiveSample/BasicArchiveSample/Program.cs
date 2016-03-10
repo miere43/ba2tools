@@ -6,9 +6,54 @@ using System.Threading.Tasks;
 using System.IO;
 using Ba2Tools;
 using System.Diagnostics;
+using System.Threading;
 
 namespace BasicArchiveSample
 {
+    class ConsoleProgress : IProgress<int>
+    {
+        int value = 0;
+
+        int totalFiles = 1;
+
+        int prevCursorTop = 0;
+
+        int prevCursorLeft = 0;
+
+        double totalSizeInMB = 1;
+
+        public ConsoleProgress(int totalFiles, uint totalSizeInBytes)
+        {
+            this.totalFiles = totalFiles;
+            this.totalSizeInMB = (double)totalSizeInBytes / 1024 / 1024;
+        }
+
+        public void Start()
+        {
+            prevCursorTop = Console.CursorTop;
+            prevCursorLeft = Console.CursorLeft;
+        }
+
+        public void Finish()
+        {
+
+        }
+
+        public void Report(int value)
+        {
+            this.value = value;
+            Console.SetCursorPosition(prevCursorLeft, prevCursorTop);
+            Console.WriteLine("Hit any key to cancel.");
+            double percent = (double)value / totalFiles;
+            Console.WriteLine("{0:P2} | {1}/{2} | {3:0.00}/{4:0.00} MB",
+                percent,
+                value,
+                totalFiles,
+                totalSizeInMB * percent,
+                totalSizeInMB);
+        }
+    }
+
     class Program
     {
         static void Main(string[] args)
@@ -39,42 +84,79 @@ namespace BasicArchiveSample
                 Console.ResetColor();
                 return;
             }
-            //// Base archive was loaded: you don't know what type of archive is (general or texture);
+            // Base archive was loaded: you don't know what type of archive is (general or texture);
 
-            //// You anyway can list files in archive because all archives contains filenames;
-            //var filesInArchive = archive.ListFiles();
-            //var listFileCount = Math.Min(5, filesInArchive.Length);
+            // You anyway can list files in archive because all archives contains filenames;
+            var filesInArchive = archive.ListFiles();
+            var listFileCount = Math.Min(5, filesInArchive.Count);
 
-            //Console.WriteLine("First " + listFileCount + " files in archive: ");
-            //for (int i = 0; i < listFileCount; i++)
-            //{
-            //    Console.WriteLine(i + 1 + ". " + filesInArchive[i]);
-            //}
+            Console.WriteLine("First " + listFileCount + " files in archive: ");
+            for (int i = 0; i < listFileCount; i++)
+            {
+                Console.WriteLine(i + 1 + ". " + filesInArchive[i]);
+            }
 
-            //// Find out what archive type is it:
-            //if (archive as BA2GeneralArchive != null)
-            //{
-            //    Console.WriteLine("archive type is general");
-            //}
-            //else if (archive.GetType() == typeof(BA2TextureArchive))
-            //{
-            //    Console.WriteLine("archive type is texture");
-            //}
-            //else
-            //{
-            //    var archiveType = BA2Loader.GetArchiveType(archive);
-            //    Console.WriteLine("not supported archive type: " + archiveType);
-            //    return;
-            //}
+            // Find out what archive type is it:
+            if (archive as BA2GeneralArchive != null)
+            {
+                Console.WriteLine("archive type is general");
+            }
+            else if (archive.GetType() == typeof(BA2TextureArchive))
+            {
+                Console.WriteLine("archive type is texture");
+            }
+            else
+            {
+                var archiveType = BA2Loader.GetArchiveType(archive);
+                Console.WriteLine("not supported archive type: " + archiveType);
+                return;
+            }
 
-            //Console.Write("Extract " + archive.TotalFiles + " files to \"D:\\TestExtract\"? (y/n)\n> ");
-            //if (Console.ReadLine().Trim() == "y")
-            Stopwatch s = new Stopwatch();
-            s.Start();
-                archive.ExtractAll("D:\\azaza2", overwriteFiles: true);
-            s.Stop();
-            Console.WriteLine($"{s.Elapsed.Minutes} m {s.Elapsed.Seconds} s {s.Elapsed.Milliseconds} ms");
-            Environment.Exit(0);
+            Console.Write("Extract " + archive.TotalFiles + " files to \"D:\\TestExtract\"? (y/n)\n> ");
+            if (Console.ReadLine().Trim().ToLower() == "y")
+            {
+                var cancel = new CancellationTokenSource();
+                var progress = new ConsoleProgress((int)archive.TotalFiles, (uint)archive.ArchiveStream.Length);
+                ManualResetEvent ev = new ManualResetEvent(false);
+                bool cancelled = false;
+
+                Thread thread = new Thread(() =>
+                {
+                    try {
+                        progress.Start();
+                        // extract
+                        archive.ExtractAll("D:\\TestExtract", cancel.Token, progress, true);
+                        // manual exit from thread after extracting.
+                        ev.Set();
+                    }
+                    catch (OperationCanceledException e)
+                    {
+                        cancelled = true;
+                        ev.Set();
+                    }
+                    finally
+                    {
+                        progress.Finish();
+                        ev.Set();
+                    }
+                });
+
+                thread.Start();
+
+                var key = Console.ReadKey();
+                if (!cancelled)
+                {
+                    Console.WriteLine("Cancelling...");
+                    cancel.Cancel();
+                }
+
+                ev.WaitOne();
+
+                if (cancelled)
+                {
+                    Console.WriteLine("Cancelled.");
+                }
+            }
         }
     }
 }

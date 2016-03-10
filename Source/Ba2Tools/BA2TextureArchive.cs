@@ -119,7 +119,7 @@ namespace Ba2Tools
 
             foreach (var name in fileNames)
             {
-                Extract(name, destination, false);
+                Extract(name, destination, overwriteFiles);
 
                 counter++;
                 if (counter >= nextUpdate)
