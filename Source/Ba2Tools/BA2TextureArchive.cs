@@ -57,28 +57,25 @@ namespace Ba2Tools
             if (!stream.CanWrite)
                 return false;
 
-            var entry = GetEntryFromName(fileName);
-            if (!entry.HasValue)
+            BA2TextureFileEntry entry = null;
+            if (!GetEntryFromName(fileName, out entry))
                 return false;
 
-            var e = entry.Value;
-            ExtractToStream(ref e, stream);
+            ExtractToStream(entry, stream);
             return true;
         }
 
-        public override void ExtractFiles(string[] fileNames, string destination, bool overwriteFiles = false)
+        public override void ExtractFiles(IEnumerable<string> fileNames, string destination, bool overwriteFiles = false)
         {
             if (fileNames == null)
                 throw new ArgumentNullException("fileNames is null");
             if (string.IsNullOrWhiteSpace(destination))
                 throw new ArgumentException("destination is invalid");
-            if (fileNames.Length > TotalFiles)
+            if (fileNames.Count() > TotalFiles)
                 throw new BA2ExtractionException("fileNames length is more than total files in archive");
 
-            for (int i = 0; i < fileNames.Length; i++)
-            {
-                Extract(fileNames[i], destination, false);
-            }
+            foreach (var name in fileNames)
+                Extract(name, destination, false);
         }
 
         /// <summary>
@@ -110,13 +107,11 @@ namespace Ba2Tools
             if (_fileListCache == null)
                 ListFiles(true);
 
-            BA2TextureFileEntry? fileEntryNullable = GetEntryFromName(ref fileName);
-            if (!fileEntryNullable.HasValue)
+            BA2TextureFileEntry entry = null;
+            if (!GetEntryFromName(fileName, out entry))
                 throw new BA2ExtractionException("Cannot find file name \"" + fileName + "\" in archive");
 
-            var fileEntry = fileEntryNullable.Value;
-
-            string extension = new string(fileEntry.Extension).Trim('\0');
+            string extension = new string(entry.Extension).Trim('\0');
             string finalPath = Path.Combine(destination, fileName);
 
             string finalDest = Path.GetDirectoryName(finalPath);
@@ -128,7 +123,7 @@ namespace Ba2Tools
 
             using (var fileStream = File.OpenWrite(finalPath))
             {
-                ExtractToStream(ref fileEntry, fileStream);
+                ExtractToStream(entry, fileStream);
             }
         }
 
@@ -200,40 +195,20 @@ namespace Ba2Tools
         /// Nullable BA2TextureFileEntry. 
         /// Contains null if matching entry for file name was not found.
         /// </returns>
-        private BA2TextureFileEntry? GetEntryFromName(ref string fileName)
+        private bool GetEntryFromName(string fileName, out BA2TextureFileEntry entry)
         {
             if (_fileListCache == null)
                 ListFiles();
 
-            for (int i = 0; i < _fileListCache.Length; i++)
+            int index = _fileListCache.FindIndex(x => x.Equals(fileName, StringComparison.InvariantCultureIgnoreCase));
+            if (index == -1)
             {
-                string name = _fileListCache[i];
-
-                if (name.Equals(fileName, StringComparison.OrdinalIgnoreCase))
-                {
-                    return fileEntries[i];
-                }
+                entry = null;
+                return false;
             }
 
-            return null;
-        }
-
-        private BA2TextureFileEntry? GetEntryFromName(string fileName)
-        {
-            if (_fileListCache == null)
-                ListFiles();
-
-            for (int i = 0; i < _fileListCache.Length; i++)
-            {
-                string name = _fileListCache[i];
-
-                if (name.Equals(fileName, StringComparison.OrdinalIgnoreCase))
-                {
-                    return fileEntries[i];
-                }
-            }
-
-            return null;
+            entry = fileEntries[index];
+            return true;
         }
 
         /// <summary>
@@ -243,7 +218,7 @@ namespace Ba2Tools
         /// <param name="archiveStream">Archive stream.</param>
         /// <param name="destStream">Destination stream where ready texture will be placed.</param>
         /// <remarks>No validation of arguments performed.</remarks>
-        private void ExtractToStream(ref BA2TextureFileEntry entry, Stream destStream)
+        private void ExtractToStream(BA2TextureFileEntry entry, Stream destStream)
         {
             using (BinaryWriter writer = new BinaryWriter(destStream, Encoding.ASCII, leaveOpen: true))
             {

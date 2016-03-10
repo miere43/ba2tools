@@ -5,6 +5,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ba2Tools
@@ -32,22 +33,24 @@ namespace Ba2Tools
         /// </summary>
         /// <param name="fileName">Filename in archive.</param>
         /// <returns>Ba2GeneralFileEntry or null if not found.</returns>
-        private BA2GeneralFileEntry? GetEntryFromName(ref string fileName)
+        private bool GetEntryFromName(string fileName, out BA2GeneralFileEntry entry)
         {
             if (_fileListCache == null)
                 ListFiles();
 
-            for (int i = 0; i < _fileListCache.Length; i++)
+            int index = _fileListCache.FindIndex(x => x.Equals(fileName, StringComparison.InvariantCultureIgnoreCase));
+            if (index == -1)
             {
-                string name = _fileListCache[i];
-
-                if (name.Equals(fileName, StringComparison.OrdinalIgnoreCase))
-                {
-                    return fileEntries[i];
-                }
+                entry = null;
+                return false;
             }
+            entry = fileEntries[index];
+            return true;
+        }
 
-            return null;
+        public override void ExtractFiles(IEnumerable<string> fileNames, string destination, CancellationToken cancellationToken, bool overwriteFiles = false)
+        {
+            base.ExtractFiles(fileNames, destination, cancellationToken, overwriteFiles);
         }
 
         /// <summary>
@@ -58,25 +61,25 @@ namespace Ba2Tools
         /// <param name="fileNames">Files from archive to extract.</param>
         /// <param name="destination">Directory where extracted files will be placed.</param>
         /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
-        public override void ExtractFiles(string[] fileNames, string destination, bool overwriteFiles = false)
+        public override void ExtractFiles(IEnumerable<string> fileNames, string destination, bool overwriteFiles = false)
         {
             if (fileNames == null)
                 throw new ArgumentNullException("fileNames is null");
             if (string.IsNullOrWhiteSpace(destination))
                 throw new ArgumentException("destination is invalid");
-            if (fileNames.Length > TotalFiles)
+            if (fileNames.Count() > TotalFiles)
                 throw new BA2ExtractionException("fileNames length is more than total files in archive");
 
-            if (fileNames.Length == 1) { 
-                Extract(fileNames[0], destination, overwriteFiles);
+            if (fileNames.Count() == 1)
+            {
+                Extract(fileNames.FirstOrDefault(), destination, overwriteFiles);
                 return;
             }
 
-            for (int i = 0; i < fileNames.Length; i++)
+            BA2GeneralFileEntry entry = null;
+            foreach (var name in fileNames)
             {
-                var name = fileNames[i];
-                var entry = GetEntryFromName(ref name);
-                if (!entry.HasValue)
+                if (!GetEntryFromName(name, out entry))
                     throw new BA2ExtractionException("File \"" + name + "\" is not found in archive");
 
                 string finalFilename = Path.Combine(destination, name);
@@ -87,8 +90,7 @@ namespace Ba2Tools
                 if (!Directory.Exists(finalDestDir))
                     Directory.CreateDirectory(finalDestDir);
 
-                var eentry = entry.Value;
-                ExtractFileInternal(ref eentry, ref finalFilename);
+                ExtractFileInternal(ref entry, ref finalFilename);
             }
         }
 
@@ -112,13 +114,12 @@ namespace Ba2Tools
             if (_fileListCache == null)
                 ListFiles(true);
 
-            BA2GeneralFileEntry? fileEntryNullable = GetEntryFromName(ref fileName);
-            if (!fileEntryNullable.HasValue)
+            BA2GeneralFileEntry entry = null;
+
+            if (!GetEntryFromName(fileName, out entry))
                 throw new BA2ExtractionException("Cannot find file name \"" + fileName + "\" in archive");
 
-            var fileEntry = fileEntryNullable.Value;
-
-            string extension = new string(fileEntry.Extension).Trim('\0');
+            string extension = new string(entry.Extension).Trim('\0');
             string finalPath = Path.Combine(destination, fileName);
 
             string finalDest = Path.GetDirectoryName(finalPath);
@@ -128,7 +129,7 @@ namespace Ba2Tools
             if (File.Exists(finalPath) && overwriteFile == false)
                 throw new BA2ExtractionException("Overwrite is not permitted.");
 
-            ExtractFileInternal(ref fileEntry, ref finalPath);
+            ExtractFileInternal(ref entry, ref finalPath);
         }
 
         public override bool ExtractToStream(string fileName, Stream stream)
@@ -141,12 +142,11 @@ namespace Ba2Tools
             if (_fileListCache == null)
                 ListFiles();
 
-            BA2GeneralFileEntry? entry = GetEntryFromName(ref fileName);
-            if (!entry.HasValue)
+            BA2GeneralFileEntry entry = null;
+            if (!GetEntryFromName(fileName, out entry))
                 return false;
 
-            var e = entry.Value;
-            ExtractFileInternal2(ref e, stream);
+            ExtractFileInternal2(ref entry, stream);
             return true;
         }
 
@@ -184,12 +184,13 @@ namespace Ba2Tools
             destStream.Seek(0, SeekOrigin.Begin);
         }
 
-    /// <summary>
-    /// Base extraction function for all extraction methods.
-    /// </summary>
-    private void ExtractFileInternal(ref BA2GeneralFileEntry fileEntry, ref string destFilename)
+        /// <summary>
+        /// Base extraction function for all extraction methods.
+        /// </summary>
+        private void ExtractFileInternal(ref BA2GeneralFileEntry fileEntry, ref string destFilename)
         {
-            using (var stream = new MemoryStream()) {
+            using (var stream = new MemoryStream())
+            {
                 ExtractFileInternal2(ref fileEntry, stream);
 
                 using (var extractedFileStream = File.Create(destFilename, 4096, FileOptions.SequentialScan))
@@ -214,14 +215,14 @@ namespace Ba2Tools
             {
                 BA2GeneralFileEntry entry = new BA2GeneralFileEntry()
                 {
-                    Unknown0       = reader.ReadUInt32(),
-                    Extension      = Encoding.ASCII.GetChars(reader.ReadBytes(4)),
-                    Unknown1       = reader.ReadUInt32(),
-                    Unknown2       = reader.ReadUInt32(),
-                    Offset         = reader.ReadUInt64(),
-                    PackedLength   = reader.ReadUInt32(),
+                    Unknown0 = reader.ReadUInt32(),
+                    Extension = Encoding.ASCII.GetChars(reader.ReadBytes(4)),
+                    Unknown1 = reader.ReadUInt32(),
+                    Unknown2 = reader.ReadUInt32(),
+                    Offset = reader.ReadUInt64(),
+                    PackedLength = reader.ReadUInt32(),
                     UnpackedLength = reader.ReadUInt32(),
-                    Unknown3       = reader.ReadUInt32(),
+                    Unknown3 = reader.ReadUInt32(),
                 };
 
                 // 3131961357 = 0xBAADF00D as uint little-endian (0x0DF0ADBA)
