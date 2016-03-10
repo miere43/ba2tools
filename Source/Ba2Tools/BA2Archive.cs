@@ -4,7 +4,6 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ba2Tools
@@ -41,29 +40,9 @@ namespace Ba2Tools
         /// <summary>
         /// ListFiles() cache.
         /// </summary>
-        protected List<string> _fileListCache = null;
+        protected string[] _fileListCache = null;
 
-        /// <summary>
-        /// Extract all files from archive to specified directory.
-        /// </summary>
-        /// <seealso cref="ExtractFiles(IEnumerable{string}, string, bool)"/>
-        /// <seealso cref="Extract(string, string, bool)"/>
-        /// <param name="destination">Destination directory where extracted files will be placed.</param>
-        /// <param name="overwriteFiles">Overwrite files on disk with extracted ones?</param>
         public virtual void ExtractAll(string destination, bool overwriteFiles = false)
-        {
-            ExtractAll(destination, CancellationToken.None, overwriteFiles);
-        }
-
-        /// <summary>
-        /// Extract all files from archive to specified directory.
-        /// </summary>
-        /// <seealso cref="ExtractFiles(IEnumerable{string}, string, bool)"/>
-        /// <seealso cref="Extract(string, string, bool)"/>
-        /// <param name="destination">Destination directory where extracted files will be placed.</param>
-        /// <param name="cancellationToken">Cancellation token.</param>
-        /// <param name="overwriteFiles">Overwrite files on disk with extracted ones?</param>
-        public virtual void ExtractAll(string destination, CancellationToken cancellationToken, bool overwriteFiles = false)
         {
             throw new NotSupportedException("Cannot extract any files because archive type is unknown.");
         }
@@ -74,12 +53,7 @@ namespace Ba2Tools
         /// <seealso cref="BA2ExtractionException"/>
         /// <param name="destination">Directory where extracted files will be placed.</param>
         /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
-        public virtual void ExtractFiles(IEnumerable<string> fileNames, string destination, bool overwriteFiles = false)
-        {
-            ExtractFiles(fileNames, destination, CancellationToken.None, overwriteFiles);
-        }
-
-        public virtual void ExtractFiles(IEnumerable<string> fileNames, string destination, CancellationToken cancellationToken, bool overwriteFiles = false)
+        public virtual void ExtractFiles(string[] fileNames, string destination, bool overwriteFiles = false)
         {
             throw new NotSupportedException("Cannot extract any files because archive type is unknown.");
         }
@@ -106,7 +80,7 @@ namespace Ba2Tools
         /// <see cref="ExtractFile(string, string)"/>
         /// <param name="forceListFiles">Force list of files in archive instead of returning cached copy.</param>
         /// <returns>Array of file paths</returns>
-        public virtual IList<string> ListFiles(bool forceListFiles = false)
+        public virtual string[] ListFiles(bool forceListFiles = false)
         {
             if (_fileListCache != null && forceListFiles == false)
                 return _fileListCache;
@@ -117,7 +91,7 @@ namespace Ba2Tools
                 goto invalidNameTableProviden;
             }
 
-            List<string> strings = new List<string>(Math.Min(10000, (int)TotalFiles));
+            List<string> strings = new List<string>();
 
             ArchiveStream.Seek((long)NameTableOffset, SeekOrigin.Begin);
             using (var reader = new BinaryReader(ArchiveStream, Encoding.ASCII, leaveOpen: true))
@@ -140,12 +114,12 @@ namespace Ba2Tools
             // Is all files in archive were listed? (excepted "FileCount" files)
             System.Diagnostics.Debug.Assert(TotalFiles == strings.Count);
 
-            _fileListCache = strings;
+            _fileListCache = strings.ToArray();
             return _fileListCache;
 
             /// goto case when invalid name table offset was providen
             invalidNameTableProviden: {
-                _fileListCache = new List<string>(0);
+                _fileListCache = new string[0];
                 return _fileListCache;
             }
         }
@@ -160,7 +134,7 @@ namespace Ba2Tools
             if (_fileListCache == null)
                 ListFiles();
 
-            for (int i = 0; i < _fileListCache.Count; i++)
+            for (int i = 0; i < _fileListCache.Length; i++)
             {
                 if (fileName.Equals(_fileListCache[i], StringComparison.OrdinalIgnoreCase))
                     return true;

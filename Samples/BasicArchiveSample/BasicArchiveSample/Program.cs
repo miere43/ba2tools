@@ -42,43 +42,34 @@ namespace BasicArchiveSample
             // Base archive was loaded: you don't know what type of archive is (general or texture);
 
             // You anyway can list files in archive because all archives contains filenames;
-            //var filesInArchive = archive.ListFiles();
-            //var listFileCount = Math.Min(5, filesInArchive.Count);
+            var filesInArchive = archive.ListFiles();
+            var listFileCount = Math.Min(5, filesInArchive.Length);
 
-            //Console.WriteLine("First " + listFileCount + " files in archive: ");
-            //for (int i = 0; i < listFileCount; i++)
-            //{
-            //    Console.WriteLine(i + 1 + ". " + filesInArchive[i]);
-            //}
+            Console.WriteLine("First " + listFileCount + " files in archive: ");
+            for (int i = 0; i < listFileCount; i++)
+            {
+                Console.WriteLine(i + 1 + ". " + filesInArchive[i]);
+            }
 
-            //// Find out what archive type is it:
-            //if (archive as BA2GeneralArchive != null)
-            //{
-            //    Console.WriteLine("archive type is general");
-            //}
-            //else if (archive.GetType() == typeof(BA2TextureArchive))
-            //{
-            //    Console.WriteLine("archive type is texture");
-            //}
-            //else
-            //{
-            //    var archiveType = BA2Loader.GetArchiveType(archive);
-            //    Console.WriteLine("not supported archive type: " + archiveType);
-            //    return;
-            //}
+            // Find out what archive type is it:
+            if (archive as BA2GeneralArchive != null)
+            {
+                Console.WriteLine("archive type is general");
+            }
+            else if (archive.GetType() == typeof(BA2TextureArchive))
+            {
+                Console.WriteLine("archive type is texture");
+            }
+            else
+            {
+                var archiveType = BA2Loader.GetArchiveType(archive);
+                Console.WriteLine("not supported archive type: " + archiveType);
+                return;
+            }
 
-            //Console.Write("Extract " + archive.TotalFiles + " files to \"D:\\TestExtract\"? (y/n)\n> ");
-            //if (Console.ReadLine().Trim() == "y")
-            //    archive.ExtractAll("D:\\TestExtract", overwriteFiles: true);
-
-            Console.ReadLine();
-            Stopwatch watch = new Stopwatch();
-            watch.Start();
-            archive.ExtractAll("D:\\TestExtract2");
-            watch.Stop();
-            Debug.WriteLine("{0}m {1}s {2}ms", watch.Elapsed.Minutes, watch.Elapsed.Seconds, watch.Elapsed.Milliseconds);
-            Console.WriteLine("{0}m {1}s {2}ms", watch.Elapsed.Minutes, watch.Elapsed.Seconds, watch.Elapsed.Milliseconds);
-            Console.ReadLine();
+            Console.Write("Extract " + archive.TotalFiles + " files to \"D:\\TestExtract\"? (y/n)\n> ");
+            if (Console.ReadLine().Trim() == "y")
+                archive.ExtractAll("D:\\TestExtract", overwriteFiles: true);
         }
     }
 }
