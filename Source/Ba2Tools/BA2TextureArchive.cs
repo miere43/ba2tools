@@ -7,6 +7,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace Ba2Tools
 {
@@ -20,19 +21,113 @@ namespace Ba2Tools
         /// </summary>
         private BA2TextureFileEntry[] fileEntries = null;
 
+        #region Extract methods
         /// <summary>
-        /// Extracts all textures from archive to destination folder.
+        /// Extract all files from archive to specified directory.
         /// </summary>
-        /// <param name="destination">Folder where extracted files will be placed.</param>
-        /// <param name="overwriteFiles">Overwrite files with extracted in destination directory?</param>
+        /// <seealso cref="ExtractFiles(IEnumerable{string}, string, bool)"/>
+        /// <seealso cref="Extract(string, string, bool)"/>
+        /// <param name="destination">Absolute or relative directory path directory where extracted files will be placed.</param>
+        /// <param name="overwriteFiles">Overwrite files on disk with extracted ones?</param>
         public override void ExtractAll(string destination, bool overwriteFiles = false)
         {
-            if (_fileListCache == null)
-                ListFiles();
+            this.ExtractFiles(ListFiles(), destination, CancellationToken.None, null, overwriteFiles);
+        }
 
-            foreach (var fileName in _fileListCache)
+        /// <summary>
+        /// Extract all files from archive to specified directory with
+        /// cancellation token.
+        /// </summary>
+        /// <seealso cref="ExtractFiles(IEnumerable{string}, string, bool)"/>
+        /// <seealso cref="Extract(string, string, bool)"/>
+        /// <param name="destination">Absolute or relative directory path directory where extracted files will be placed.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <param name="overwriteFiles">Overwrite files on disk with extracted ones?</param>
+        public override void ExtractAll(string destination, CancellationToken cancellationToken, bool overwriteFiles = false)
+        {
+            this.ExtractFiles(ListFiles(), destination, CancellationToken.None, null, overwriteFiles);
+        }
+
+        /// <summary>
+        /// Extract all files from archive to specified directory with
+        /// cancellation token and progress reporter.
+        /// </summary>
+        /// <seealso cref="ExtractFiles(IEnumerable{string}, string, bool)"/>
+        /// <seealso cref="Extract(string, string, bool)"/>
+        /// <param name="destination">Absolute or relative directory path directory where extracted files will be placed.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <param name="progress">Progress reporter ranged from 0 to archive's total files count.</param>
+        /// <param name="overwriteFiles">Overwrite files on disk with extracted ones?</param>
+        public override void ExtractAll(string destination, CancellationToken cancellationToken, IProgress<int> progress, bool overwriteFiles = false)
+        {
+            this.ExtractFiles(ListFiles(), destination, cancellationToken, progress, overwriteFiles);
+        }
+
+        /// <summary>
+        /// Extract all files from archive to specified directory.
+        /// </summary>
+        /// <seealso cref="BA2ExtractionException"/>
+        /// <param name="fileNames">Files to extract.</param>
+        /// <param name="destination">Absolute or relative directory path where extracted files will be placed.</param>
+        /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
+        public override void ExtractFiles(IEnumerable<string> fileNames, string destination, bool overwriteFiles = false)
+        {
+            this.ExtractFiles(fileNames, destination, CancellationToken.None, null, overwriteFiles);
+        }
+
+        /// <summary>
+        /// Extract all files from archive to destination directory
+        /// with cancellation token.
+        /// </summary>
+        /// <seealso cref="BA2ExtractionException"/>
+        /// <param name="fileNames">Files to extract.</param>
+        /// <param name="destination">Absolute or relative directory path where extracted files will be placed.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
+        public override void ExtractFiles(IEnumerable<string> fileNames, string destination, CancellationToken cancellationToken, bool overwriteFiles = false)
+        {
+            this.ExtractFiles(fileNames, destination, cancellationToken, null, overwriteFiles);
+        }
+
+        /// <summary>
+        /// Extract all files from archive to specified directory
+        /// with cancellation token and progress reporter.
+        /// </summary>
+        /// <seealso cref="BA2ExtractionException"/>
+        /// <param name="fileNames">Files to extract.</param>
+        /// <param name="destination">Absolute or relative directory path where extracted files will be placed.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <param name="progress">Progress reporter ranged from 0 to archive total files count.</param>
+        /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
+        public override void ExtractFiles(
+            IEnumerable<string> fileNames,
+            string destination,
+            CancellationToken cancellationToken,
+            IProgress<int> progress,
+            bool overwriteFiles = false)
+        {
+            if (fileNames == null)
+                throw new ArgumentNullException("fileNames is null");
+            if (string.IsNullOrWhiteSpace(destination))
+                throw new ArgumentException("destination is invalid");
+            if (fileNames.Count() > TotalFiles)
+                throw new BA2ExtractionException("fileNames length is more than total files in archive");
+
+            int counter = 0;
+            int updateFrequency = Math.Max(1, fileNames.Count() / 100);
+            int nextUpdate = updateFrequency;
+
+            foreach (var name in fileNames)
             {
-                Extract(fileName, destination, overwriteFiles);
+                Extract(name, destination, false);
+
+                counter++;
+                if (counter >= nextUpdate)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    progress?.Report(counter);
+                    nextUpdate += updateFrequency;
+                }
             }
         }
 
@@ -63,19 +158,6 @@ namespace Ba2Tools
 
             ExtractToStream(entry, stream);
             return true;
-        }
-
-        public override void ExtractFiles(IEnumerable<string> fileNames, string destination, bool overwriteFiles = false)
-        {
-            if (fileNames == null)
-                throw new ArgumentNullException("fileNames is null");
-            if (string.IsNullOrWhiteSpace(destination))
-                throw new ArgumentException("destination is invalid");
-            if (fileNames.Count() > TotalFiles)
-                throw new BA2ExtractionException("fileNames length is more than total files in archive");
-
-            foreach (var name in fileNames)
-                Extract(name, destination, false);
         }
 
         /// <summary>
@@ -126,6 +208,7 @@ namespace Ba2Tools
                 ExtractToStream(entry, fileStream);
             }
         }
+#endregion
 
         /// <summary>
         /// Preload file entries. Should be called only once.

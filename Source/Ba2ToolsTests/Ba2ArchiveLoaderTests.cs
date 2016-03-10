@@ -4,6 +4,7 @@ using System;
 using System.Linq;
 using System.Text;
 using System.IO;
+using System.Threading;
 
 namespace Ba2ToolsTests
 {
@@ -141,6 +142,36 @@ namespace Ba2ToolsTests
         {
             var path = SharedData.GetDataPath("GeneralHeaderOnlyInvalidType.ba2");
             var archive = BA2Loader.Load(path, BA2LoaderFlags.LoadUnknownArchiveTypes);
+        }
+
+        /// <summary>
+        /// Test to ensure progress is being called properly.
+        /// </summary>
+        [TestMethod()]
+        public void TestGeneralArchiveExtractionWithProgress()
+        {
+            var path = SharedData.GetDataPath("GeneralOneFile.ba2");
+            var archive = BA2Loader.Load(path);
+            var temp = SharedData.CreateTempDirectory();
+            int progressValue = 0;
+            bool progressReceived = false;
+            var progressHandler = new Progress<int>(x =>
+            {
+                progressReceived = true;
+                progressValue = x;
+            });
+            archive.ExtractAll(temp, CancellationToken.None, progressHandler);
+
+            // workaround of dumb test execution
+            int waits = 0;
+            while (!progressReceived)
+            {
+                if (waits > 3)
+                    break;
+                Thread.Sleep(25);
+                waits++;
+            }
+            Assert.AreEqual(1, progressValue);
         }
     }
 }
