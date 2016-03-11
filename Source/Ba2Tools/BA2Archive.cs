@@ -43,6 +43,7 @@ namespace Ba2Tools
         /// </summary>
         protected List<string> _fileListCache = null;
 
+        #region Extract methods
         /// <summary>
         /// Extract all files from archive to specified directory.
         /// </summary>
@@ -79,22 +80,11 @@ namespace Ba2Tools
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <param name="progress">Progress reporter ranged from 0 to archive's total files count.</param>
         /// <param name="overwriteFiles">Overwrite files on disk with extracted ones?</param>
-        public virtual void ExtractAll(string destination, CancellationToken cancellationToken, IProgress<int> progress, bool overwriteFiles = false)
-        {
-            throw new NotSupportedException("Cannot extract any files because archive type is unknown.");
-        }
-
-        /// <summary>
-        /// Extract all files from archive to specified directory
-        /// with cancellation token and progress reporter.
-        /// </summary>
-        /// <seealso cref="BA2ExtractionException"/>
-        /// <param name="fileNames">Files to extract.</param>
-        /// <param name="destination">Absolute or relative directory path where extracted files will be placed.</param>
-        /// <param name="cancellationToken">Cancellation token.</param>
-        /// <param name="progress">Progress reporter ranged from 0 to archive total files count.</param>
-        /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
-        public virtual void ExtractFiles(IEnumerable<string> fileNames, string destination, CancellationToken cancellationToken, IProgress<int> progress, bool overwriteFiles = false)
+        public virtual void ExtractAll(
+            string destination,
+            CancellationToken cancellationToken,
+            IProgress<int> progress,
+            bool overwriteFiles = false)
         {
             throw new NotSupportedException("Cannot extract any files because archive type is unknown.");
         }
@@ -107,7 +97,7 @@ namespace Ba2Tools
         /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
         public virtual void ExtractFiles(IEnumerable<string> fileNames, string destination, bool overwriteFiles = false)
         {
-            ExtractFiles(fileNames, destination, CancellationToken.None, null, overwriteFiles);
+            this.ExtractFiles(fileNames, destination, CancellationToken.None, null, overwriteFiles);
         }
 
         /// <summary>
@@ -116,11 +106,34 @@ namespace Ba2Tools
         /// <seealso cref="BA2ExtractionException"/>
         /// <param name="destination">Directory where extracted files will be placed.</param>
         /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
-        public virtual void ExtractFiles(IEnumerable<string> fileNames, string destination, CancellationToken cancellationToken, bool overwriteFiles = false)
+        public virtual void ExtractFiles(
+            IEnumerable<string> fileNames,
+            string destination,
+            CancellationToken cancellationToken,
+            bool overwriteFiles = false)
         {
-            ExtractFiles(fileNames, destination, CancellationToken.None, null, overwriteFiles);
+            this.ExtractFiles(fileNames, destination, CancellationToken.None, null, overwriteFiles);
         }
 
+        /// <summary>
+        /// Extract all files from archive to specified directory
+        /// with cancellation token and progress reporter.
+        /// </summary>
+        /// <seealso cref="BA2ExtractionException"/>
+        /// <param name="fileNames">Files to extract.</param>
+        /// <param name="destination">Absolute or relative directory path where extracted files will be placed.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <param name="progress">Progress reporter ranged from 0 to <c>fileNames.Count()</c>.</param>
+        /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
+        public virtual void ExtractFiles(
+            IEnumerable<string> fileNames,
+            string destination,
+            CancellationToken cancellationToken,
+            IProgress<int> progress,
+            bool overwriteFiles = false)
+        {
+            throw new NotSupportedException("Cannot extract any files because archive type is unknown.");
+        }
 
         public virtual bool ExtractToStream(string fileName, Stream stream)
         {
@@ -137,6 +150,7 @@ namespace Ba2Tools
         {
             throw new NotSupportedException("Cannot extract any files because archive type is not known.");
         }
+        #endregion
 
         /// <summary>
         /// Lists all files in archive.

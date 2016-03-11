@@ -141,29 +141,6 @@ namespace Ba2Tools
                 }
             }
         }
-        #endregion
-
-        /// <summary>
-        /// Converts file name in archive to Ba2GeneralFileEntry.
-        /// </summary>
-        /// <param name="fileName">Filename in archive.</param>
-        /// <returns>Ba2GeneralFileEntry or null if not found.</returns>
-        private bool GetEntryFromName(string fileName, out BA2GeneralFileEntry entry)
-        {
-            if (_fileListCache == null)
-                ListFiles();
-
-            int index = _fileListCache.FindIndex(x => x.Equals(fileName, StringComparison.InvariantCultureIgnoreCase));
-            if (index == -1)
-            {
-                entry = null;
-                return false;
-            }
-            entry = fileEntries[index];
-            return true;
-        }
-
-        
 
         /// <summary>
         /// Extract single file from archive.
@@ -271,6 +248,27 @@ namespace Ba2Tools
                     extractedFileStream.Close();
                 }
             }
+        }
+        #endregion
+
+        /// <summary>
+        /// Converts file name in archive to Ba2GeneralFileEntry.
+        /// </summary>
+        /// <param name="fileName">Filename in archive.</param>
+        /// <returns>Ba2GeneralFileEntry or null if not found.</returns>
+        private bool GetEntryFromName(string fileName, out BA2GeneralFileEntry entry)
+        {
+            if (_fileListCache == null)
+                ListFiles();
+
+            int index = _fileListCache.FindIndex(x => x.Equals(fileName, StringComparison.InvariantCultureIgnoreCase));
+            if (index == -1)
+            {
+                entry = null;
+                return false;
+            }
+            entry = fileEntries[index];
+            return true;
         }
 
         /// <summary>

@@ -50,7 +50,7 @@ namespace Ba2Tools
         /// <param name="fileNames">Files to extract.</param>
         /// <param name="destination">Absolute or relative directory path where extracted files will be placed.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        /// <param name="progress">Progress reporter ranged from 0 to archive total files count.</param>
+        /// <param name="progress">Progress reporter ranged from 0 to <c>fileNames.Count()</c>.</param>
         /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
         void ExtractFiles(IEnumerable<string> fileNames, string destination, CancellationToken cancellationToken, IProgress<int> progress, bool overwriteFiles = false);
 

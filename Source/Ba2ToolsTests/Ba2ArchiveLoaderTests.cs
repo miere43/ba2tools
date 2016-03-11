@@ -9,7 +9,7 @@ using System.Threading;
 namespace Ba2ToolsTests
 {
     [TestClass()]
-    public class Ba2ArchiveLoader_Tests
+    public class BA2ArchiveLoaderTests
     {
         [TestCleanup]
         public void Cleanup()

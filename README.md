@@ -9,6 +9,7 @@ Current features:
 * Extract files from texture archives.
 * Supports extracting to Stream, not only in file system.
 * List files in archive
+* Support for extraction cancellation and progress reporting.
 
 Upcoming features:
 * Write BA2 archives
