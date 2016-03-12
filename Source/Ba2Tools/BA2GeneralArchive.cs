@@ -163,7 +163,7 @@ namespace Ba2Tools
             string finalDest = Path.GetDirectoryName(finalPath);
             Directory.CreateDirectory(finalDest);
 
-            if (File.Exists(finalPath) && overwriteFile == false)
+            if (overwriteFile == false && File.Exists(finalPath))
                 throw new BA2ExtractionException("Overwrite is not permitted.");
 
             using (var fileStream = File.Create(finalPath, 4096, FileOptions.SequentialScan))

@@ -64,5 +64,10 @@ namespace Ba2Tools.Internal
         /// Texture chunks in file.
         /// </summary>
         public TextureChunk[] Chunks;
+
+        /// <summary>
+        /// Index in archive.
+        /// </summary>
+        public int Index;
     }
 }

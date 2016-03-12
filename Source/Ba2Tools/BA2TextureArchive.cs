@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using Ba2Tools.Internal;
+using System.Threading.Tasks;
 
 namespace Ba2Tools
 {
@@ -28,7 +29,7 @@ namespace Ba2Tools
         /// <param name="overwriteFiles">Overwrite files on disk with extracted ones?</param>
         public override void ExtractAll(string destination, bool overwriteFiles = false)
         {
-            this.ExtractFiles(ListFiles(), destination, CancellationToken.None, null, overwriteFiles);
+            this.ExtractAll(destination, CancellationToken.None, null, overwriteFiles);
         }
 
         /// <summary>
@@ -40,7 +41,7 @@ namespace Ba2Tools
         /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
         public override void ExtractAll(string destination, CancellationToken cancellationToken, bool overwriteFiles = false)
         {
-            this.ExtractFiles(ListFiles(), destination, CancellationToken.None, null, overwriteFiles);
+            this.ExtractAll(destination, CancellationToken.None, null, overwriteFiles);
         }
 
         /// <summary>
@@ -53,7 +54,34 @@ namespace Ba2Tools
         /// <param name="overwriteFiles">Overwrite files on disk with extracted ones?</param>
         public override void ExtractAll(string destination, CancellationToken cancellationToken, IProgress<int> progress, bool overwriteFiles = false)
         {
-            this.ExtractFiles(ListFiles(), destination, cancellationToken, progress, overwriteFiles);
+            if (String.IsNullOrWhiteSpace(destination))
+                throw new ArgumentException(nameof(destination));
+
+            if (_fileListCache == null)
+                ListFiles(true);
+
+            int counter = 0;
+            int updateFrequency = Math.Max(1, (int)TotalFiles / 100);
+            int nextUpdate = updateFrequency;
+
+            if (cancellationToken == CancellationToken.None &&
+                progress == null)
+            {
+                nextUpdate = int.MaxValue;
+            }
+
+            for (int i = 0; i < TotalFiles; i++)
+            {
+                ExtractInternal(fileEntries[i], destination, overwriteFiles);
+
+                counter++;
+                if (counter >= nextUpdate)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    progress?.Report(counter);
+                    nextUpdate += updateFrequency;
+                }
+            }
         }
 
         /// <summary>
@@ -172,9 +200,6 @@ namespace Ba2Tools
             if (destination == null)
                 throw new ArgumentNullException(nameof(destination));
 
-            if (!Directory.Exists(destination))
-                Directory.CreateDirectory(destination);
-
             if (_fileListCache == null)
                 ListFiles(true);
 
@@ -182,25 +207,26 @@ namespace Ba2Tools
             if (!GetEntryFromName(fileName, out entry))
                 throw new BA2ExtractionException($"Cannot find file name \"{fileName}\" in archive");
 
+            ExtractInternal(entry, destination, overwriteFile);
+        }
+        #endregion
+
+        #region Private methods
+        private void ExtractInternal(BA2TextureFileEntry entry, string destinationFolder, bool overwriteFile = false)
+        {
+            string filePath = _fileListCache[entry.Index];
+
             string extension = new string(entry.Extension).Trim('\0');
-            string finalPath = Path.Combine(destination, fileName);
+            string finalPath = Path.Combine(destinationFolder, filePath);
 
             string finalDest = Path.GetDirectoryName(finalPath);
-            if (!Directory.Exists(finalDest))
-                Directory.CreateDirectory(finalDest);
+            Directory.CreateDirectory(finalDest);
 
-            if (File.Exists(finalPath) && overwriteFile == false)
-                throw new BA2ExtractionException("Overwrite is not permitted.");
-
-            using (var fileStream = File.OpenWrite(finalPath))
+            using (var fileStream = new FileStream(finalPath, overwriteFile ? FileMode.Create : FileMode.CreateNew, FileAccess.Write, FileShare.Read, 4096, FileOptions.None))
             {
                 ExtractToStream(entry, fileStream);
             }
         }
-        #endregion
-
-
-        #region Private methods
 
         /// <summary>
         /// Reads the chunks for entry.
@@ -409,7 +435,8 @@ namespace Ba2Tools
                     TextureWidth = reader.ReadUInt16(),
                     NumberOfMipmaps = reader.ReadByte(),
                     Format = reader.ReadByte(),
-                    Unknown3 = reader.ReadUInt16()
+                    Unknown3 = reader.ReadUInt16(),
+                    Index = i
                 };
 
                 ReadChunksForEntry(reader, entry);
