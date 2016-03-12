@@ -46,6 +46,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\Command.cs" />
+    <Compile Include="Commands\CommandType.cs" />
+    <Compile Include="Commands\ExtractAllCommand.cs" />
+    <Compile Include="Commands\ExtractCommand.cs" />
+    <Compile Include="Commands\FindCommand.cs" />
+    <Compile Include="Commands\ExtractMatchingCommand.cs" />
+    <Compile Include="ConsoleProgress.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
