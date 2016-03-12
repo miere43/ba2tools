@@ -17,11 +17,11 @@ Upcoming features:
 
 Sample:
 ```c#
-using (var archive = BA2Loader.Load("Fallout 4 - Interface.ba2"))
+using (var archive = BA2Loader.Load("Fallout4 - Interface.ba2"))
 {
 	IList<string> filesInArchive = archive.ListFiles();
 
-	if (filesInArchive.Count > 1)
+	if (filesInArchive.Count >= 1)
 	{
 		archive.Extract(filesInArchive.First(), "Modding/Interface/");
 	}
@@ -45,6 +45,7 @@ I want to mention that disk speed is huge bottleneck.
 ## Prerequisites
 
 * .NET Framework 4.5
+* C# 6.0
 
 ## Doxygen
 
