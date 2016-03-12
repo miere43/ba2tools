@@ -222,7 +222,10 @@ namespace Ba2Tools
             string finalDest = Path.GetDirectoryName(finalPath);
             Directory.CreateDirectory(finalDest);
 
-            using (var fileStream = new FileStream(finalPath, overwriteFile ? FileMode.Create : FileMode.CreateNew, FileAccess.Write, FileShare.Read, 4096, FileOptions.None))
+            if (overwriteFile == false && File.Exists(finalPath))
+                throw new BA2ExtractionException("Overwrite is not permitted.");
+
+            using (var fileStream = new FileStream(finalPath, FileMode.Create, FileAccess.Write, FileShare.Read, 4096, FileOptions.None))
             {
                 ExtractToStream(entry, fileStream);
             }
