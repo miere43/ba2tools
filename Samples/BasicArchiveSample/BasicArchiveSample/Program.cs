@@ -58,7 +58,7 @@ namespace BasicArchiveSample
             #endregion
 
             #region extractall
-            if (input.StartsWith("extractall"))
+            if (input.StartsWith("extractall") || input.StartsWith("exportall"))
             {
                 string[] args = GetArgs(input);
                 if (args.Length == 1)
@@ -74,7 +74,7 @@ namespace BasicArchiveSample
             #endregion
 
             #region extractmatching
-            if (input.StartsWith("extractmatching"))
+            if (input.StartsWith("extractmatching") || input.StartsWith("exportmatching"))
             {
                 string[] args = GetArgs(input);
                 if (args.Length == 1)
@@ -95,7 +95,7 @@ namespace BasicArchiveSample
             #endregion
 
             #region extract
-            if (input.StartsWith("extract"))
+            if (input.StartsWith("extract") || input.StartsWith("export"))
             {
                 string[] args = GetArgs(input);
                 if (args.Length == 1)
