@@ -53,7 +53,7 @@ namespace Ba2Tools
         /// <param name="overwriteFiles">Overwrite files on disk with extracted ones?</param>
         public virtual void ExtractAll(string destination, bool overwriteFiles = false)
         {
-            ExtractAll(destination, CancellationToken.None, null, overwriteFiles);
+            this.ExtractAll(destination, CancellationToken.None, null, overwriteFiles);
         }
 
         /// <summary>

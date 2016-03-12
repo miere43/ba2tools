@@ -57,6 +57,9 @@ namespace Ba2Tools
         /// <returns>BA2ArchiveBase instance.</returns>
         public static BA2Archive Load(string filePath, BA2LoaderFlags flags = BA2LoaderFlags.None)
         {
+            if (String.IsNullOrWhiteSpace(filePath))
+                throw new ArgumentException(nameof(filePath));
+
             try
             {
                 var stream = File.OpenRead(filePath);

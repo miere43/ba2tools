@@ -126,10 +126,9 @@ namespace Ba2Tools
                     throw new BA2ExtractionException("File \"" + name + "\" exists.");
 
                 string finalDestDir = Path.GetDirectoryName(finalFilename);
-                if (!Directory.Exists(finalDestDir))
-                    Directory.CreateDirectory(finalDestDir);
+                Directory.CreateDirectory(finalDestDir);
 
-                ExtractFileInternal(ref entry, ref finalFilename);
+                ExtractFileInternal(entry, ref finalFilename);
 
                 counter++;
                 if (counter >= nextUpdate)
@@ -151,19 +150,16 @@ namespace Ba2Tools
         /// <param name="overwriteFile">Overwrite existing file in extraction directory?</param>
         public override void Extract(string fileName, string destination, bool overwriteFile = false)
         {
+
             if (string.IsNullOrWhiteSpace(fileName))
                 throw new ArgumentException("fileName is invalid");
             if (string.IsNullOrWhiteSpace(destination))
                 throw new ArgumentException("destination is invalid");
 
-            if (!Directory.Exists(destination))
-                Directory.CreateDirectory(destination);
-
             if (_fileListCache == null)
-                ListFiles(true);
+                ListFiles();
 
             BA2GeneralFileEntry entry = null;
-
             if (!GetEntryFromName(fileName, out entry))
                 throw new BA2ExtractionException("Cannot find file name \"" + fileName + "\" in archive");
 
@@ -171,13 +167,15 @@ namespace Ba2Tools
             string finalPath = Path.Combine(destination, fileName);
 
             string finalDest = Path.GetDirectoryName(finalPath);
-            if (!Directory.Exists(finalDest))
-                Directory.CreateDirectory(finalDest);
+            Directory.CreateDirectory(finalDest);
 
             if (File.Exists(finalPath) && overwriteFile == false)
                 throw new BA2ExtractionException("Overwrite is not permitted.");
 
-            ExtractFileInternal(ref entry, ref finalPath);
+            using (var fileStream = File.Create(finalPath, 4096, FileOptions.SequentialScan))
+            {
+                ExtractToStream(entry, fileStream);
+            }
         }
 
         public override bool ExtractToStream(string fileName, Stream stream)
@@ -194,11 +192,11 @@ namespace Ba2Tools
             if (!GetEntryFromName(fileName, out entry))
                 return false;
 
-            ExtractFileInternal2(ref entry, stream);
+            ExtractToStream(entry, stream);
             return true;
         }
 
-        private void ExtractFileInternal2(ref BA2GeneralFileEntry entry, Stream destStream)
+        private void ExtractToStream(BA2GeneralFileEntry entry, Stream destStream)
         {
             // DeflateStream throws exception when
             // reads zlib compressed file header
@@ -218,7 +216,6 @@ namespace Ba2Tools
                 using (var uncompressStream = new DeflateStream(ArchiveStream, CompressionMode.Decompress, leaveOpen: true))
                 {
                     var bytesReaden = uncompressStream.Read(rawData, 0, (int)dataLength);
-                    Debug.Assert(bytesReaden == dataLength);
                 }
             }
             else
@@ -235,18 +232,12 @@ namespace Ba2Tools
         /// <summary>
         /// Base extraction function for all extraction methods.
         /// </summary>
-        private void ExtractFileInternal(ref BA2GeneralFileEntry fileEntry, ref string destFilename)
+        private void ExtractFileInternal(BA2GeneralFileEntry fileEntry, ref string destFilename)
         {
-            using (var stream = new MemoryStream())
+            using (var stream = File.Create(destFilename, 4096, FileOptions.SequentialScan))
             {
-                ExtractFileInternal2(ref fileEntry, stream);
-
-                using (var extractedFileStream = File.Create(destFilename, 4096, FileOptions.SequentialScan))
-                {
-                    extractedFileStream.Write(stream.GetBuffer(), 0, (int)stream.Length);
-                    extractedFileStream.Flush();
-                    extractedFileStream.Close();
-                }
+                ExtractToStream(fileEntry, stream);
+                stream.Flush();
             }
         }
         #endregion

@@ -107,15 +107,18 @@ namespace Ba2Tools
             bool overwriteFiles = false)
         {
             if (fileNames == null)
-                throw new ArgumentNullException("fileNames is null");
+                throw new ArgumentNullException(nameof(fileNames));
             if (string.IsNullOrWhiteSpace(destination))
-                throw new ArgumentException("destination is invalid");
+                throw new ArgumentException(nameof(destination));
             if (fileNames.Count() > TotalFiles)
-                throw new BA2ExtractionException("fileNames length is more than total files in archive");
+                throw new BA2ExtractionException(nameof(fileNames) + " length is more than total files in archive");
 
             int counter = 0;
             int updateFrequency = Math.Max(1, fileNames.Count() / 100);
             int nextUpdate = updateFrequency;
+
+            if (cancellationToken == CancellationToken.None && progress == null)
+                nextUpdate = int.MaxValue;
 
             foreach (var name in fileNames)
             {
@@ -334,11 +337,12 @@ namespace Ba2Tools
                     writer.Write((uint)0);
                 }
 
+                const long zlibHeaderSize = 2;
                 for (uint i = 0; i < entry.NumberOfChunks; i++)
                 {
                     var chunk = entry.Chunks[i];
 
-                    ArchiveStream.Seek((long)chunk.Offset + 2, SeekOrigin.Begin);
+                    ArchiveStream.Seek((long)chunk.Offset + zlibHeaderSize, SeekOrigin.Begin);
 
                     byte[] destBuffer = new byte[chunk.UnpackedLength];
                     using (var uncompressStream = new DeflateStream(ArchiveStream, CompressionMode.Decompress, leaveOpen: true))

@@ -17,13 +17,13 @@ Upcoming features:
 
 Sample:
 ```c#
-using (var archive = BA2Loader.Load("D:\\Games\\Steam\\steamapps\\Fallout 4\\Data\\Fallout 4 - Interface.ba2"))
+using (var archive = BA2Loader.Load("Fallout 4 - Interface.ba2"))
 {
-	string[] filesInArchive = archive.ListFiles();
+	IList<string> filesInArchive = archive.ListFiles();
 
-	if (filesInArchive.Length > 1)
+	if (filesInArchive.Count > 1)
 	{
-		archive.Extract(filesInArchive[0], "D:\\Modding\\Fallout 4 Data\\Interface");
+		archive.Extract(filesInArchive.First(), "Modding/Interface/");
 	}
 }
 ```
