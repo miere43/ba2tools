@@ -1,10 +1,10 @@
 ﻿using System;
 
-namespace Ba2Tools
+namespace Ba2Tools.Internal
 {
     /// <summary>
     /// Represents BA2TextureArchive file entry.
-    /// <seealso cref="BA2TextureArchive"/>
+    /// <seealso cref="BA2TextureArchive" />
     /// </summary>
     public class BA2TextureFileEntry
     {

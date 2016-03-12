@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using Ba2Tools.Internal;
-using Ba2Tools;
 using System.IO;
 using System.Text;
+using Ba2Tools.Internal;
 
 namespace Ba2Tools
 {
@@ -16,6 +14,9 @@ namespace Ba2Tools
         /// </summary>
         private static readonly Dictionary<byte[], BA2Type> ArchiveSignatures;
 
+        /// <summary>
+        /// Initializes the <see cref="BA2Loader"/> class.
+        /// </summary>
         static BA2Loader()
         {
             ArchiveSignatures =
@@ -32,8 +33,10 @@ namespace Ba2Tools
         /// Resolve archive type from header signature.
         /// </summary>
         /// <param name="signature">Archive signature.</param>
-        /// <returns>Archive type.</returns>
-        /// <see cref="BA2Type"/>
+        /// <returns>
+        /// Archive type.
+        /// </returns>
+        /// <see cref="BA2Type" />
         public static BA2Type GetArchiveType(byte[] signature)
         {
             if (ArchiveSignatures.ContainsKey(signature))
@@ -45,9 +48,11 @@ namespace Ba2Tools
         /// <summary>
         /// Resolve archive type from Ba2ArchiveBase derived class instance.
         /// </summary>
-        /// <param name="signature">Archive signature</param>
-        /// <returns>Archive type.</returns>
-        /// <see cref="BA2Type"/>
+        /// <param name="archive">The archive.</param>
+        /// <returns>
+        /// Archive type.
+        /// </returns>
+        /// <see cref="BA2Type" />
         public static BA2Type GetArchiveType(BA2Archive archive)
         {
             var archiveType = archive.GetType();
@@ -63,7 +68,9 @@ namespace Ba2Tools
         /// Resolve archive type from file.
         /// </summary>
         /// <param name="filePath">Path to the archive.</param>
-        /// <returns>Archive type.</returns>
+        /// <returns>
+        /// Archive type.
+        /// </returns>
         public static BA2Type GetArchiveType(string filePath)
         {
             BA2Header header;

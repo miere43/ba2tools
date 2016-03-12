@@ -1,11 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Ba2Tools
+namespace Ba2Tools.Internal
 {
     /// <summary>
     /// Represents file entry in general BA2 archive.

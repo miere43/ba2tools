@@ -8,9 +8,15 @@ using System.Threading;
 
 namespace Ba2ToolsTests
 {
+    /// <summary>
+    /// Tests for BA2Tools library.
+    /// </summary>
     [TestClass()]
     public class BA2ArchiveLoaderTests
     {
+        /// <summary>
+        /// Cleanups this instance.
+        /// </summary>
         [TestCleanup]
         public void Cleanup()
         {

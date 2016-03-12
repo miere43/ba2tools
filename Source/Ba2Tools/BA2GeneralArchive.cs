@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
+using Ba2Tools.Internal;
 
 namespace Ba2Tools
 {
@@ -18,12 +17,11 @@ namespace Ba2Tools
         private BA2GeneralFileEntry[] fileEntries = null;
 
         #region Extract methods
+
         /// <summary>
         /// Extract all files from archive to specified directory.
         /// </summary>
-        /// <seealso cref="ExtractFiles(IEnumerable{string}, string, bool)"/>
-        /// <seealso cref="Extract(string, string, bool)"/>
-        /// <param name="destination">Absolute or relative directory path directory where extracted files will be placed.</param>
+        /// <param name="destination">Destination directory where extracted files will be placed.</param>
         /// <param name="overwriteFiles">Overwrite files on disk with extracted ones?</param>
         public override void ExtractAll(string destination, bool overwriteFiles = false)
         {
@@ -34,8 +32,6 @@ namespace Ba2Tools
         /// Extract all files from archive to specified directory with
         /// cancellation token.
         /// </summary>
-        /// <seealso cref="BA2ExtractionException"/>
-        /// <param name="fileNames">Files to extract.</param>
         /// <param name="destination">Directory where extracted files will be placed.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
@@ -48,8 +44,6 @@ namespace Ba2Tools
         /// Extract all files from archive to specified directory with
         /// cancellation token and progress reporter.
         /// </summary>
-        /// <seealso cref="ExtractFiles(IEnumerable{string}, string, bool)"/>
-        /// <seealso cref="Extract(string, string, bool)"/>
         /// <param name="destination">Absolute or relative directory path directory where extracted files will be placed.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <param name="progress">Progress reporter ranged from 0 to archive's total files count.</param>
@@ -60,11 +54,10 @@ namespace Ba2Tools
         }
 
         /// <summary>
-        /// Extract all files from archive to specified directory.
+        /// Extract all files from archive.
         /// </summary>
-        /// <seealso cref="BA2ExtractionException"/>
         /// <param name="fileNames">Files to extract.</param>
-        /// <param name="destination">Absolute or relative directory path where extracted files will be placed.</param>
+        /// <param name="destination">Directory where extracted files will be placed.</param>
         /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
         public override void ExtractFiles(IEnumerable<string> fileNames, string destination, bool overwriteFiles = false)
         {
@@ -72,12 +65,10 @@ namespace Ba2Tools
         }
 
         /// <summary>
-        /// Extract all files from archive to destination directory
-        /// with cancellation token.
+        /// Extract all files from archive.
         /// </summary>
-        /// <seealso cref="BA2ExtractionException"/>
         /// <param name="fileNames">Files to extract.</param>
-        /// <param name="destination">Absolute or relative directory path where extracted files will be placed.</param>
+        /// <param name="destination">Directory where extracted files will be placed.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
         public override void ExtractFiles(IEnumerable<string> fileNames, string destination, CancellationToken cancellationToken, bool overwriteFiles = false)
@@ -89,25 +80,27 @@ namespace Ba2Tools
         /// Extract all files from archive to specified directory
         /// with cancellation token and progress reporter.
         /// </summary>
-        /// <seealso cref="BA2ExtractionException"/>
         /// <param name="fileNames">Files to extract.</param>
         /// <param name="destination">Absolute or relative directory path where extracted files will be placed.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        /// <param name="progress">Progress reporter ranged from 0 to archive total files count.</param>
+        /// <param name="progress">Progress reporter ranged from 0 to <c>fileNames.Count()</c>.</param>
         /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
+        /// <exception cref="System.ArgumentNullException"></exception>
+        /// <exception cref="System.ArgumentException"></exception>
+        /// <exception cref="BA2ExtractionException"></exception>
         public override void ExtractFiles(
-            IEnumerable<string> fileNames,
-            string destination,
-            CancellationToken cancellationToken,
-            IProgress<int> progress,
-            bool overwriteFiles = false)
+                            IEnumerable<string> fileNames,
+                            string destination,
+                            CancellationToken cancellationToken,
+                            IProgress<int> progress,
+                            bool overwriteFiles = false)
         {
             if (fileNames == null)
-                throw new ArgumentNullException("fileNames is null");
+                throw new ArgumentNullException(nameof(fileNames));
             if (string.IsNullOrWhiteSpace(destination))
-                throw new ArgumentException("destination is invalid");
+                throw new ArgumentException(nameof(destination));
             if (fileNames.Count() > TotalFiles)
-                throw new BA2ExtractionException("fileNames length is more than total files in archive");
+                throw new BA2ExtractionException($"{nameof(fileNames)} length is more than total files in archive");
 
             int counter = 0;
             int updateFrequency = Math.Max(1, fileNames.Count() / 100);
@@ -117,11 +110,11 @@ namespace Ba2Tools
             foreach (var name in fileNames)
             {
                 if (!GetEntryFromName(name, out entry))
-                    throw new BA2ExtractionException("File \"" + name + "\" is not found in archive");
+                    throw new BA2ExtractionException($"File \"{name}\" is not found in archive");
 
                 string finalFilename = Path.Combine(destination, name);
                 if (overwriteFiles == false && File.Exists(finalFilename))
-                    throw new BA2ExtractionException("File \"" + name + "\" exists.");
+                    throw new BA2ExtractionException($"File \"{name}\" exists.");
 
                 string finalDestDir = Path.GetDirectoryName(finalFilename);
                 Directory.CreateDirectory(finalDestDir);
@@ -141,24 +134,28 @@ namespace Ba2Tools
         /// <summary>
         /// Extract single file from archive.
         /// </summary>
-        /// <seealso cref="BA2ExtractionException"/>
-        /// <param name="fileName">File name in archive</param>
-        /// <param name="destination">Directory where files will be placed.</param>
-        /// <param name="overwriteFile">Overwrite existing file in extraction directory?</param>
+        /// <param name="fileName">File path, directories separated with backslash (\)</param>
+        /// <param name="destination">Destination directory where file will be extracted to.</param>
+        /// <param name="overwriteFile">Overwrite existing file with extracted one?</param>
+        /// <exception cref="System.ArgumentException">
+        /// </exception>
+        /// <exception cref="BA2ExtractionException">
+        /// Overwrite is not permitted.
+        /// </exception>
         public override void Extract(string fileName, string destination, bool overwriteFile = false)
         {
 
             if (string.IsNullOrWhiteSpace(fileName))
-                throw new ArgumentException("fileName is invalid");
+                throw new ArgumentException(nameof(fileName));
             if (string.IsNullOrWhiteSpace(destination))
-                throw new ArgumentException("destination is invalid");
+                throw new ArgumentException(nameof(destination));
 
             if (_fileListCache == null)
                 ListFiles();
 
             BA2GeneralFileEntry entry = null;
             if (!GetEntryFromName(fileName, out entry))
-                throw new BA2ExtractionException("Cannot find file name \"" + fileName + "\" in archive");
+                throw new BA2ExtractionException($"Cannot find file name \"{fileName}\" in archive");
 
             string extension = new string(entry.Extension).Trim('\0');
             string finalPath = Path.Combine(destination, fileName);
@@ -175,6 +172,16 @@ namespace Ba2Tools
             }
         }
 
+        /// <summary>
+        /// Extract file contents to stream.
+        /// </summary>
+        /// <param name="fileName">File name or file path from archive.</param>
+        /// <param name="stream">The stream.</param>
+        /// <returns>
+        /// Success is true, failure is false.
+        /// </returns>
+        /// <exception cref="System.ArgumentException"></exception>
+        /// <exception cref="System.ArgumentNullException"></exception>
         public override bool ExtractToStream(string fileName, Stream stream)
         {
             if (fileName == null)
@@ -193,6 +200,11 @@ namespace Ba2Tools
             return true;
         }
 
+        /// <summary>
+        /// Extracts to stream.
+        /// </summary>
+        /// <param name="entry">The entry.</param>
+        /// <param name="destStream">The destination stream.</param>
         private void ExtractToStream(BA2GeneralFileEntry entry, Stream destStream)
         {
             // DeflateStream throws exception when
@@ -229,6 +241,8 @@ namespace Ba2Tools
         /// <summary>
         /// Base extraction function for all extraction methods.
         /// </summary>
+        /// <param name="fileEntry">The file entry.</param>
+        /// <param name="destFilename">The destination filename.</param>
         private void ExtractFileInternal(BA2GeneralFileEntry fileEntry, ref string destFilename)
         {
             using (var stream = File.Create(destFilename, 4096, FileOptions.SequentialScan))
@@ -243,7 +257,10 @@ namespace Ba2Tools
         /// Converts file name in archive to Ba2GeneralFileEntry.
         /// </summary>
         /// <param name="fileName">Filename in archive.</param>
-        /// <returns>Ba2GeneralFileEntry or null if not found.</returns>
+        /// <param name="entry">The entry.</param>
+        /// <returns>
+        /// True if found entry and populated it or false otherwise.
+        /// </returns>
         private bool GetEntryFromName(string fileName, out BA2GeneralFileEntry entry)
         {
             if (_fileListCache == null)
@@ -260,9 +277,9 @@ namespace Ba2Tools
         }
 
         /// <summary>
-        /// Preload file entries. Should be called only once.
+        /// Preloads the data.
         /// </summary>
-        /// <param name="reader"></param>
+        /// <param name="reader">The reader.</param>
         internal override void PreloadData(BinaryReader reader)
         {
             reader.BaseStream.Seek(BA2Loader.HeaderSize, SeekOrigin.Begin);

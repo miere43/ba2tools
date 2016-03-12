@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ba2Tools
 {
@@ -17,11 +15,17 @@ namespace Ba2Tools
         /// <summary>
         /// Archive version defined in header.
         /// </summary>
+        /// <value>
+        /// The version.
+        /// </value>
         public UInt32 Version { get { return Header.Version; } }
 
         /// <summary>
         /// Number of files stored in archive.
         /// </summary>
+        /// <value>
+        /// The total files.
+        /// </value>
         public UInt32 TotalFiles { get { return Header.TotalFiles; } }
 
         /// <summary>
@@ -30,25 +34,31 @@ namespace Ba2Tools
         protected internal UInt64 NameTableOffset { get { return Header.NameTableOffset; } }
 
         /// <summary>
-        /// Path to file that was opened.
+        /// Gets the archive stream.
         /// </summary>
-        //public string FilePath { get; internal set; }
-
+        /// <value>
+        /// The archive stream.
+        /// </value>
         public Stream ArchiveStream { get; internal set; }
 
+        /// <summary>
+        /// Gets the archive header.
+        /// </summary>
+        /// <value>
+        /// The archive header.
+        /// </value>
         public BA2Header Header { get; internal set; }
 
         /// <summary>
         /// ListFiles() cache.
         /// </summary>
+        /// <seealso cref="ListFiles(bool)"/>
         protected List<string> _fileListCache = null;
 
         #region Extract methods
         /// <summary>
         /// Extract all files from archive to specified directory.
         /// </summary>
-        /// <seealso cref="ExtractFiles(IEnumerable{string}, string, bool)"/>
-        /// <seealso cref="Extract(string, string, bool)"/>
         /// <param name="destination">Destination directory where extracted files will be placed.</param>
         /// <param name="overwriteFiles">Overwrite files on disk with extracted ones?</param>
         public virtual void ExtractAll(string destination, bool overwriteFiles = false)
@@ -60,8 +70,6 @@ namespace Ba2Tools
         /// Extract all files from archive to specified directory with
         /// cancellation token.
         /// </summary>
-        /// <seealso cref="BA2ExtractionException"/>
-        /// <param name="fileNames">Files to extract.</param>
         /// <param name="destination">Directory where extracted files will be placed.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
@@ -74,8 +82,6 @@ namespace Ba2Tools
         /// Extract all files from archive to specified directory with
         /// cancellation token and progress reporter.
         /// </summary>
-        /// <seealso cref="ExtractFiles(IEnumerable{string}, string, bool)"/>
-        /// <seealso cref="Extract(string, string, bool)"/>
         /// <param name="destination">Absolute or relative directory path directory where extracted files will be placed.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <param name="progress">Progress reporter ranged from 0 to archive's total files count.</param>
@@ -92,7 +98,7 @@ namespace Ba2Tools
         /// <summary>
         /// Extract all files from archive.
         /// </summary>
-        /// <seealso cref="BA2ExtractionException"/>
+        /// <param name="fileNames">Files to extract.</param>
         /// <param name="destination">Directory where extracted files will be placed.</param>
         /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
         public virtual void ExtractFiles(IEnumerable<string> fileNames, string destination, bool overwriteFiles = false)
@@ -103,8 +109,9 @@ namespace Ba2Tools
         /// <summary>
         /// Extract all files from archive.
         /// </summary>
-        /// <seealso cref="BA2ExtractionException"/>
+        /// <param name="fileNames">Files to extract.</param>
         /// <param name="destination">Directory where extracted files will be placed.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
         public virtual void ExtractFiles(
             IEnumerable<string> fileNames,
@@ -119,7 +126,6 @@ namespace Ba2Tools
         /// Extract all files from archive to specified directory
         /// with cancellation token and progress reporter.
         /// </summary>
-        /// <seealso cref="BA2ExtractionException"/>
         /// <param name="fileNames">Files to extract.</param>
         /// <param name="destination">Absolute or relative directory path where extracted files will be placed.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
@@ -135,6 +141,14 @@ namespace Ba2Tools
             throw new NotSupportedException("Cannot extract any files because archive type is unknown.");
         }
 
+        /// <summary>
+        /// Extract file contents to stream.
+        /// </summary>
+        /// <param name="fileName">File name or file path from archive.</param>
+        /// <param name="stream">The stream.</param>
+        /// <returns>
+        /// Success is true, failure is false.
+        /// </returns>
         public virtual bool ExtractToStream(string fileName, Stream stream)
         {
             throw new NotSupportedException("Cannot extract any files because archive type is unknown.");
@@ -153,11 +167,12 @@ namespace Ba2Tools
         #endregion
 
         /// <summary>
-        /// Lists all files in archive.
+        /// Shows all file paths in archive.
         /// </summary>
-        /// <see cref="ExtractFile(string, string)"/>
-        /// <param name="forceListFiles">Force list of files in archive instead of returning cached copy.</param>
-        /// <returns>Array of file paths</returns>
+        /// <param name="forceListFiles">Force list files in archive instead of returning cached copy.</param>
+        /// <returns>
+        /// List of file paths in archive.
+        /// </returns>
         public virtual IList<string> ListFiles(bool forceListFiles = false)
         {
             if (_fileListCache != null && forceListFiles == false)
@@ -203,11 +218,23 @@ namespace Ba2Tools
             }
         }
 
+        /// <summary>
+        /// Preloads the data.
+        /// </summary>
+        /// <param name="reader">The reader.</param>
         internal virtual void PreloadData(BinaryReader reader)
         {
             // No data to preload.
         }
 
+        /// <summary>
+        /// Check file existance in archive.
+        /// </summary>
+        /// <param name="fileName">File to check in archive</param>
+        /// <returns></returns>
+        /// <remarks>
+        /// Case-insensitive.
+        /// </remarks>
         public virtual bool ContainsFile(string fileName)
         {
             if (_fileListCache == null)

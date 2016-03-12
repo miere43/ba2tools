@@ -1,17 +1,15 @@
-﻿using Ba2Tools;
-using Ba2Tools.Internal;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using Ba2Tools;
+using Ba2Tools.Internal;
 
 namespace Ba2Tools
 {
     /// <summary>
     /// Defines behaviour flags for BA2Loader methods.
-    /// <see cref="BA2Loader"/>
+    /// <see cref="BA2Loader" />
     /// </summary>
     [Flags]
     public enum BA2LoaderFlags
@@ -67,7 +65,7 @@ namespace Ba2Tools
             }
             catch (IOException e)
             {
-                throw new BA2LoadException("Cannot open file \"" + filePath + "\": " + e.Message, e);
+                throw new BA2LoadException($"Cannot open file \"{filePath}\": {e.Message}", e);
             }
         }
 
@@ -96,7 +94,7 @@ namespace Ba2Tools
                     throw new BA2LoadException("Archive has invalid signature");
 
                 if (header.Version != ArchiveVersion && !flags.HasFlag(BA2LoaderFlags.IgnoreVersion))
-                    throw new BA2LoadException("Version of archive is not valid (\"" + header.Version.ToString() + "\")");
+                    throw new BA2LoadException($"Version of archive is not valid (\"{header.Version.ToString()}\")");
 
                 // compare excepted signature and file signature
                 switch (GetArchiveType(header.ArchiveType))
@@ -114,7 +112,7 @@ namespace Ba2Tools
                         {
                             archive = new BA2Archive();
                         } else {
-                            throw new BA2LoadException("Archive of type \"" + Encoding.ASCII.GetString(header.ArchiveType) + "\" is not supported");
+                            throw new BA2LoadException($"Archive of type \"{Encoding.ASCII.GetString(header.ArchiveType)}\" is not supported");
                         }
                         break;
                 }

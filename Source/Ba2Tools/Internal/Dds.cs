@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Ba2Tools.Internal
 {
@@ -71,7 +68,7 @@ namespace Ba2Tools.Internal
         /// Magic for DDS files.
         /// Same as MakeFourCC('D', 'D', 'S', '\0');
         /// </summary>
-        public static readonly UInt32 DDS_MAGIC = 0x20534444; 
+        public static readonly UInt32 DDS_MAGIC = 0x20534444;
 
         public static readonly UInt32 DDS_RGB = 0x00000040;
 
