@@ -278,7 +278,8 @@ namespace BasicArchiveSample
             if (Console.ReadLine().Trim().ToLower() == "y")
             {
                 var cancel = new CancellationTokenSource();
-                var progress = new ConsoleProgress((int)files.Count(), (uint)archive.ArchiveStream.Length);
+                var progress = new ConsoleProgress((int)files.Count(),
+                    (uint)((archive.ArchiveStream.Length / archive.TotalFiles) * files.Count()));
                 ManualResetEvent ev = new ManualResetEvent(false);
                 bool cancelled = false;
 
