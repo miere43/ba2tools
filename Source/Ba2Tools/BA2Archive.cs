@@ -55,6 +55,11 @@ namespace Ba2Tools
         /// <seealso cref="ListFiles(bool)"/>
         protected List<string> _fileListCache = null;
 
+        ~BA2Archive()
+        {
+            Dispose(false);
+        }
+
         #region Extract methods
         /// <summary>
         /// Extract all files from archive to specified directory.
@@ -249,7 +254,20 @@ namespace Ba2Tools
         /// </summary>
         public void Dispose()
         {
-            ArchiveStream.Dispose();
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (ArchiveStream != null)
+                {
+                    ArchiveStream.Dispose();
+                    ArchiveStream = null;
+                }
+            }
         }
     }
 }

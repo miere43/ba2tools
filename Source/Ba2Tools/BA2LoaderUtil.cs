@@ -74,14 +74,22 @@ namespace Ba2Tools
         public static BA2Type GetArchiveType(string filePath)
         {
             BA2Header header;
+            FileStream stream = null;
 
-            using (var stream = File.OpenRead(filePath)) {
+            try {
+                stream = File.OpenRead(filePath);
                 if (stream.Length < BA2Loader.HeaderSize)
                     return BA2Type.Unknown;
 
-                using (var reader = new BinaryReader(stream, Encoding.ASCII, leaveOpen: true)) {
+                using (var reader = new BinaryReader(stream, Encoding.ASCII)) {
+                    stream = null;
                     header = LoadHeader(reader);
                 }
+            }
+            finally
+            {
+                if (stream != null)
+                    stream.Dispose();
             }
 
             return GetArchiveType(header.Signature);
