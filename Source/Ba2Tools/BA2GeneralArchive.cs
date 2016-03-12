@@ -110,9 +110,7 @@ namespace Ba2Tools
                 throw new BA2ExtractionException("fileNames length is more than total files in archive");
 
             int counter = 0;
-            // make ~100 updates.
             int updateFrequency = Math.Max(1, fileNames.Count() / 100);
-            Debug.WriteLine("Set update freq to {0} (count: {1})", updateFrequency, fileNames.Count());
             int nextUpdate = updateFrequency;
 
             BA2GeneralFileEntry entry = null;
@@ -133,7 +131,6 @@ namespace Ba2Tools
                 counter++;
                 if (counter >= nextUpdate)
                 {
-                    Debug.WriteLine("Update called, counter: {0}, upd: {1}", counter, nextUpdate);
                     cancellationToken.ThrowIfCancellationRequested();
                     progress?.Report(counter);
                     nextUpdate += updateFrequency;
