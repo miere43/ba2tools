@@ -9,6 +9,7 @@ Current features:
 * Extract files from texture archives.
 * Supports extracting to Stream, not only in file system.
 * List files in archive
+* Support for extraction cancellation and progress reporting.
 
 Upcoming features:
 * Write BA2 archives
@@ -16,13 +17,13 @@ Upcoming features:
 
 Sample:
 ```c#
-using (var archive = BA2Loader.Load("D:\\Games\\Steam\\steamapps\\Fallout 4\\Data\\Fallout 4 - Interface.ba2"))
+using (var archive = BA2Loader.Load("Fallout4 - Interface.ba2"))
 {
-	string[] filesInArchive = archive.ListFiles();
+	IList<string> filesInArchive = archive.ListFiles();
 
-	if (filesInArchive.Length > 1)
+	if (filesInArchive.Count >= 1)
 	{
-		archive.Extract(filesInArchive[0], "D:\\Modding\\Fallout 4 Data\\Interface");
+		archive.Extract(filesInArchive.First(), "Modding/Interface/");
 	}
 }
 ```
@@ -39,11 +40,10 @@ Extraction speed test on Fallout4 - Textures1.ba2 (extract all files task)
 | C++      | B.A.E. v0.0.4     | 1 min 9 secs    | rough GUI measurement
 | C#       | Ba2Tools v0.2.0   | 1 min 30 secs   |
 
-I want to mention that disk speed is huge bottleneck.
-
 ## Prerequisites
 
 * .NET Framework 4.5
+* C# 6.0
 
 ## Doxygen
 

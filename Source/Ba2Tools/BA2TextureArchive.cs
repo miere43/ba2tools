@@ -1,11 +1,11 @@
-﻿using Ba2Tools.Internal;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using Ba2Tools.Internal;
 using System.Threading.Tasks;
 
 namespace Ba2Tools
@@ -20,33 +20,150 @@ namespace Ba2Tools
         /// </summary>
         private BA2TextureFileEntry[] fileEntries = null;
 
+        #region Extract methods
+
         /// <summary>
-        /// Extracts all textures from archive to destination folder.
+        /// Extract all files from archive to specified directory.
         /// </summary>
-        /// <param name="destination">Folder where extracted files will be placed.</param>
-        /// <param name="overwriteFiles">Overwrite files with extracted in destination directory?</param>
+        /// <param name="destination">Destination directory where extracted files will be placed.</param>
+        /// <param name="overwriteFiles">Overwrite files on disk with extracted ones?</param>
         public override void ExtractAll(string destination, bool overwriteFiles = false)
         {
-            if (_fileListCache == null)
-                ListFiles();
+            this.ExtractAll(destination, CancellationToken.None, null, overwriteFiles);
+        }
 
-            foreach (var fileName in _fileListCache)
+        /// <summary>
+        /// Extract all files from archive to specified directory with
+        /// cancellation token.
+        /// </summary>
+        /// <param name="destination">Directory where extracted files will be placed.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
+        public override void ExtractAll(string destination, CancellationToken cancellationToken, bool overwriteFiles = false)
+        {
+            this.ExtractAll(destination, CancellationToken.None, null, overwriteFiles);
+        }
+
+        /// <summary>
+        /// Extract all files from archive to specified directory with
+        /// cancellation token and progress reporter.
+        /// </summary>
+        /// <param name="destination">Absolute or relative directory path directory where extracted files will be placed.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <param name="progress">Progress reporter ranged from 0 to archive's total files count.</param>
+        /// <param name="overwriteFiles">Overwrite files on disk with extracted ones?</param>
+        public override void ExtractAll(string destination, CancellationToken cancellationToken, IProgress<int> progress, bool overwriteFiles = false)
+        {
+            if (String.IsNullOrWhiteSpace(destination))
+                throw new ArgumentException(nameof(destination));
+
+            if (_fileListCache == null)
+                ListFiles(true);
+
+            int counter = 0;
+            int updateFrequency = Math.Max(1, (int)TotalFiles / 100);
+            int nextUpdate = updateFrequency;
+
+            if (cancellationToken == CancellationToken.None &&
+                progress == null)
             {
-                Extract(fileName, destination, overwriteFiles);
+                nextUpdate = int.MaxValue;
+            }
+
+            for (int i = 0; i < TotalFiles; i++)
+            {
+                ExtractInternal(fileEntries[i], destination, overwriteFiles);
+
+                counter++;
+                if (counter >= nextUpdate)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    progress?.Report(counter);
+                    nextUpdate += updateFrequency;
+                }
             }
         }
 
         /// <summary>
-        /// Tries to extract texture from archive to stream.
+        /// Extract all files from archive.
         /// </summary>
-        /// <param name="fileName"></param>
-        /// <param name="stream"></param>
+        /// <param name="fileNames">Files to extract.</param>
+        /// <param name="destination">Directory where extracted files will be placed.</param>
+        /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
+        public override void ExtractFiles(IEnumerable<string> fileNames, string destination, bool overwriteFiles = false)
+        {
+            this.ExtractFiles(fileNames, destination, CancellationToken.None, null, overwriteFiles);
+        }
+
+        /// <summary>
+        /// Extract all files from archive.
+        /// </summary>
+        /// <param name="fileNames">Files to extract.</param>
+        /// <param name="destination">Directory where extracted files will be placed.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
+        public override void ExtractFiles(IEnumerable<string> fileNames, string destination, CancellationToken cancellationToken, bool overwriteFiles = false)
+        {
+            this.ExtractFiles(fileNames, destination, cancellationToken, null, overwriteFiles);
+        }
+
+        /// <summary>
+        /// Extract all files from archive to specified directory
+        /// with cancellation token and progress reporter.
+        /// </summary>
+        /// <param name="fileNames">Files to extract.</param>
+        /// <param name="destination">Absolute or relative directory path where extracted files will be placed.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <param name="progress">Progress reporter ranged from 0 to <c>fileNames.Count()</c>.</param>
+        /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
+        /// <exception cref="System.ArgumentNullException"></exception>
+        /// <exception cref="System.ArgumentException"></exception>
+        /// <exception cref="BA2ExtractionException"></exception>
+        public override void ExtractFiles(
+            IEnumerable<string> fileNames,
+            string destination,
+            CancellationToken cancellationToken,
+            IProgress<int> progress,
+            bool overwriteFiles = false)
+        {
+            if (fileNames == null)
+                throw new ArgumentNullException(nameof(fileNames));
+            if (string.IsNullOrWhiteSpace(destination))
+                throw new ArgumentException(nameof(destination));
+            if (fileNames.Count() > TotalFiles)
+                throw new BA2ExtractionException($"{nameof(fileNames)} length is more than total files in archive");
+
+            int counter = 0;
+            int updateFrequency = Math.Max(1, fileNames.Count() / 100);
+            int nextUpdate = updateFrequency;
+
+            if (cancellationToken == CancellationToken.None && progress == null)
+                nextUpdate = int.MaxValue;
+
+            foreach (var name in fileNames)
+            {
+                Extract(name, destination, overwriteFiles);
+
+                counter++;
+                if (counter >= nextUpdate)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    progress?.Report(counter);
+                    nextUpdate += updateFrequency;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Extract file contents to stream.
+        /// </summary>
+        /// <param name="fileName">File name or file path from archive.</param>
+        /// <param name="stream">The stream.</param>
         /// <returns>
-        /// Returns true when extraction went successful, false when
-        /// <c>stream</c> doesn't support write or when cannot retrieve
-        /// BA2TextureFileEntry from <c>fileName</c>.
+        /// Success is true, failure is false.
         /// </returns>
-        /// <exception cref="ArgumentNullException">Thrown when <c>fileName</c> or <c>stream</c> is null.</exception>
+        /// <exception cref="System.ArgumentNullException">
+        /// </exception>
         public override bool ExtractToStream(string fileName, Stream stream)
         {
             if (fileName == null)
@@ -57,45 +174,24 @@ namespace Ba2Tools
             if (!stream.CanWrite)
                 return false;
 
-            var entry = GetEntryFromName(fileName);
-            if (!entry.HasValue)
+            BA2TextureFileEntry entry = null;
+            if (!GetEntryFromName(fileName, out entry))
                 return false;
 
-            var e = entry.Value;
-            ExtractToStream(ref e, stream);
+            ExtractToStream(entry, stream);
             return true;
         }
 
-        public override void ExtractFiles(string[] fileNames, string destination, bool overwriteFiles = false)
-        {
-            if (fileNames == null)
-                throw new ArgumentNullException("fileNames is null");
-            if (string.IsNullOrWhiteSpace(destination))
-                throw new ArgumentException("destination is invalid");
-            if (fileNames.Length > TotalFiles)
-                throw new BA2ExtractionException("fileNames length is more than total files in archive");
-
-            for (int i = 0; i < fileNames.Length; i++)
-            {
-                Extract(fileNames[i], destination, false);
-            }
-        }
-
         /// <summary>
-        /// Extracts texture from archive to destination path.
+        /// Extract single file from archive.
         /// </summary>
-        /// <param name="fileName">File name or file path in archive.</param>
-        /// <param name="destination"></param>
-        /// <param name="overwriteFile"></param>
-        /// <seealso cref="BA2Archive.ListFiles(bool)"/>
-        /// <exception cref="ArgumentException">
-        /// Thrown when fileName or destination is null.
+        /// <param name="fileName">File path, directories separated with backslash (\)</param>
+        /// <param name="destination">Destination directory where file will be extracted to.</param>
+        /// <param name="overwriteFile">Overwrite existing file with extracted one?</param>
+        /// <exception cref="System.ArgumentNullException">
         /// </exception>
         /// <exception cref="BA2ExtractionException">
-        /// Thrown when no matching file in archive was not found.
-        /// </exception>
-        /// <exception cref="IOException">
-        /// Thrown when some kind of error occur during archive loading or texture saving.
+        /// Overwrite is not permitted.
         /// </exception>
         public override void Extract(string fileName, string destination, bool overwriteFile = false)
         {
@@ -104,73 +200,43 @@ namespace Ba2Tools
             if (destination == null)
                 throw new ArgumentNullException(nameof(destination));
 
-            if (!Directory.Exists(destination))
-                Directory.CreateDirectory(destination);
-
             if (_fileListCache == null)
                 ListFiles(true);
 
-            BA2TextureFileEntry? fileEntryNullable = GetEntryFromName(ref fileName);
-            if (!fileEntryNullable.HasValue)
-                throw new BA2ExtractionException("Cannot find file name \"" + fileName + "\" in archive");
+            BA2TextureFileEntry entry = null;
+            if (!GetEntryFromName(fileName, out entry))
+                throw new BA2ExtractionException($"Cannot find file name \"{fileName}\" in archive");
 
-            var fileEntry = fileEntryNullable.Value;
-
-            string extension = new string(fileEntry.Extension).Trim('\0');
-            string finalPath = Path.Combine(destination, fileName);
-
-            string finalDest = Path.GetDirectoryName(finalPath);
-            if (!Directory.Exists(finalDest))
-                Directory.CreateDirectory(finalDest);
-
-            if (File.Exists(finalPath) && overwriteFile == false)
-                throw new BA2ExtractionException("Overwrite is not permitted.");
-
-            using (var fileStream = File.OpenWrite(finalPath))
-            {
-                ExtractToStream(ref fileEntry, fileStream);
-            }
+            ExtractInternal(entry, destination, overwriteFile);
         }
-
-        /// <summary>
-        /// Preload file entries. Should be called only once.
-        /// </summary>
-        /// <param name="reader">BinaryReader instance</param>
-        internal override void PreloadData(BinaryReader reader)
-        {
-            reader.BaseStream.Seek(BA2Loader.HeaderSize, SeekOrigin.Begin);
-            fileEntries = new BA2TextureFileEntry[TotalFiles];
-
-            for (int i = 0; i < TotalFiles; i++)
-            {
-                BA2TextureFileEntry entry = new BA2TextureFileEntry()
-                {
-                    Unknown0 = reader.ReadUInt32(),
-                    Extension = Encoding.ASCII.GetChars(reader.ReadBytes(4)),
-                    Unknown1 = reader.ReadUInt32(),
-                    Unknown2 = reader.ReadByte(),
-                    NumberOfChunks = reader.ReadByte(),
-                    ChunkHeaderSize = reader.ReadUInt16(),
-                    TextureHeight = reader.ReadUInt16(),
-                    TextureWidth = reader.ReadUInt16(),
-                    NumberOfMipmaps = reader.ReadByte(),
-                    Format = reader.ReadByte(),
-                    Unknown3 = reader.ReadUInt16()
-                };
-
-                ReadChunksForEntry(reader, ref entry);
-
-                fileEntries[i] = entry;
-            }
-        }
+        #endregion
 
         #region Private methods
+        private void ExtractInternal(BA2TextureFileEntry entry, string destinationFolder, bool overwriteFile = false)
+        {
+            string filePath = _fileListCache[entry.Index];
+
+            string extension = new string(entry.Extension).Trim('\0');
+            string finalPath = Path.Combine(destinationFolder, filePath);
+
+            string finalDest = Path.GetDirectoryName(finalPath);
+            Directory.CreateDirectory(finalDest);
+
+            if (overwriteFile == false && File.Exists(finalPath))
+                throw new BA2ExtractionException("Overwrite is not permitted.");
+
+            using (var fileStream = new FileStream(finalPath, FileMode.Create, FileAccess.Write, FileShare.Read, 4096, FileOptions.None))
+            {
+                ExtractToStream(entry, fileStream);
+            }
+        }
+
         /// <summary>
-        /// Reads all chunks for entry. Should be called after reading BA2TextureFileEntry from archive.
+        /// Reads the chunks for entry.
         /// </summary>
-        /// <param name="reader">BinaryReader instance.</param>
-        /// <param name="entry"></param>
-        private void ReadChunksForEntry(BinaryReader reader, ref BA2TextureFileEntry entry)
+        /// <param name="reader">The reader.</param>
+        /// <param name="entry">The entry.</param>
+        private void ReadChunksForEntry(BinaryReader reader, BA2TextureFileEntry entry)
         {
             var chunks = new TextureChunk[entry.NumberOfChunks];
 
@@ -196,54 +262,33 @@ namespace Ba2Tools
         /// Retrieves BA2TextureFileEntry from archive file name.
         /// </summary>
         /// <param name="fileName">File name in archive.</param>
-        /// <returns>
-        /// Nullable BA2TextureFileEntry. 
-        /// Contains null if matching entry for file name was not found.
-        /// </returns>
-        private BA2TextureFileEntry? GetEntryFromName(ref string fileName)
+        /// <param name="entry">The entry.</param>
+        /// <returns>True if entry is found and populated, false otherwise.</returns>
+        private bool GetEntryFromName(string fileName, out BA2TextureFileEntry entry)
         {
             if (_fileListCache == null)
                 ListFiles();
 
-            for (int i = 0; i < _fileListCache.Length; i++)
+            int index = _fileListCache.FindIndex(x => x.Equals(fileName, StringComparison.InvariantCultureIgnoreCase));
+            if (index == -1)
             {
-                string name = _fileListCache[i];
-
-                if (name.Equals(fileName, StringComparison.OrdinalIgnoreCase))
-                {
-                    return fileEntries[i];
-                }
+                entry = null;
+                return false;
             }
 
-            return null;
-        }
-
-        private BA2TextureFileEntry? GetEntryFromName(string fileName)
-        {
-            if (_fileListCache == null)
-                ListFiles();
-
-            for (int i = 0; i < _fileListCache.Length; i++)
-            {
-                string name = _fileListCache[i];
-
-                if (name.Equals(fileName, StringComparison.OrdinalIgnoreCase))
-                {
-                    return fileEntries[i];
-                }
-            }
-
-            return null;
+            entry = fileEntries[index];
+            return true;
         }
 
         /// <summary>
         /// Extracts and decompresses texture data, then combines it in valid DDS texture, then writes it to destination stream.
         /// </summary>
-        /// <param name="entry"></param>
-        /// <param name="archiveStream">Archive stream.</param>
+        /// <param name="entry">The entry.</param>
         /// <param name="destStream">Destination stream where ready texture will be placed.</param>
-        /// <remarks>No validation of arguments performed.</remarks>
-        private void ExtractToStream(ref BA2TextureFileEntry entry, Stream destStream)
+        /// <remarks>
+        /// No validation of arguments performed.
+        /// </remarks>
+        private void ExtractToStream(BA2TextureFileEntry entry, Stream destStream)
         {
             using (BinaryWriter writer = new BinaryWriter(destStream, Encoding.ASCII, leaveOpen: true))
             {
@@ -276,11 +321,12 @@ namespace Ba2Tools
                     writer.Write((uint)0);
                 }
 
+                const long zlibHeaderSize = 2;
                 for (uint i = 0; i < entry.NumberOfChunks; i++)
                 {
                     var chunk = entry.Chunks[i];
 
-                    ArchiveStream.Seek((long)chunk.Offset + 2, SeekOrigin.Begin);
+                    ArchiveStream.Seek((long)chunk.Offset + zlibHeaderSize, SeekOrigin.Begin);
 
                     byte[] destBuffer = new byte[chunk.UnpackedLength];
                     using (var uncompressStream = new DeflateStream(ArchiveStream, CompressionMode.Decompress, leaveOpen: true))
@@ -290,8 +336,8 @@ namespace Ba2Tools
                     }
 
                     writer.Write(destBuffer, 0, (int)chunk.UnpackedLength);
-                } 
-                
+                }
+
                 writer.Seek(0, SeekOrigin.Begin);
             }
         }
@@ -300,15 +346,17 @@ namespace Ba2Tools
         /// Creates valid DDS Header for entry's texture.
         /// </summary>
         /// <param name="entry">Valid BA2TextureFileEntry instance.</param>
-        /// <returns>Valid DDS Header.</returns>
-        /// <exception cref="NotSupportedException">DDS header for entries DDS format is not supported.</exception>
+        /// <returns>
+        /// Valid DDS Header.
+        /// </returns>
+        /// <exception cref="System.NotSupportedException">Entry DDS format is not supported.</exception>
         private DdsHeader CreateDdsHeaderForEntry(ref BA2TextureFileEntry entry)
         {
             var header = new DdsHeader();
             DxgiFormat format = (DxgiFormat)entry.Format;
 
             header.dwSize = 124; // sizeof(DDS_HEADER)
-            header.dwHeaderFlags = Dds.DDS_HEADER_FLAGS_TEXTURE | 
+            header.dwHeaderFlags = Dds.DDS_HEADER_FLAGS_TEXTURE |
                 Dds.DDS_HEADER_FLAGS_LINEARSIZE | Dds.DDS_HEADER_FLAGS_MIPMAP;
             header.dwHeight = (uint)entry.TextureHeight;
             header.dwWidth = (uint)entry.TextureWidth;
@@ -360,11 +408,44 @@ namespace Ba2Tools
                     header.dwPitchOrLinearSize = (uint)entry.TextureWidth * (uint)entry.TextureHeight;
                     break;
                 default:
-                    throw new NotSupportedException("DDS format " + format.ToString() + " is not supported.");
+                    throw new NotSupportedException($"DDS format \"{format.ToString()}\" is not supported.");
             }
 
             return header;
         }
         #endregion
+
+        /// <summary>
+        /// Preloads the data.
+        /// </summary>
+        /// <param name="reader">The reader.</param>
+        internal override void PreloadData(BinaryReader reader)
+        {
+            reader.BaseStream.Seek(BA2Loader.HeaderSize, SeekOrigin.Begin);
+            fileEntries = new BA2TextureFileEntry[TotalFiles];
+
+            for (int i = 0; i < TotalFiles; i++)
+            {
+                BA2TextureFileEntry entry = new BA2TextureFileEntry()
+                {
+                    Unknown0 = reader.ReadUInt32(),
+                    Extension = Encoding.ASCII.GetChars(reader.ReadBytes(4)),
+                    Unknown1 = reader.ReadUInt32(),
+                    Unknown2 = reader.ReadByte(),
+                    NumberOfChunks = reader.ReadByte(),
+                    ChunkHeaderSize = reader.ReadUInt16(),
+                    TextureHeight = reader.ReadUInt16(),
+                    TextureWidth = reader.ReadUInt16(),
+                    NumberOfMipmaps = reader.ReadByte(),
+                    Format = reader.ReadByte(),
+                    Unknown3 = reader.ReadUInt16(),
+                    Index = i
+                };
+
+                ReadChunksForEntry(reader, entry);
+
+                fileEntries[i] = entry;
+            }
+        }
     }
 }

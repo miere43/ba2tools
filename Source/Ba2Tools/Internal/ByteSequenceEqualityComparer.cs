@@ -4,7 +4,11 @@ using System.Linq;
 
 namespace Ba2Tools.Internal
 {
-    internal class ByteSequenceEqualityComparer : EqualityComparer<byte[]>
+    /// <summary>
+    /// Byte array equality comparer.
+    /// </summary>
+    /// <seealso cref="System.Collections.Generic.EqualityComparer{System.Byte[]}" />
+    class ByteSequenceEqualityComparer : EqualityComparer<byte[]>
     {
         public override bool Equals(byte[] x, byte[] y)
         {

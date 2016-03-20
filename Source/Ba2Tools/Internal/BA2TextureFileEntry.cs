@@ -1,12 +1,12 @@
 ﻿using System;
 
-namespace Ba2Tools
+namespace Ba2Tools.Internal
 {
     /// <summary>
     /// Represents BA2TextureArchive file entry.
-    /// <seealso cref="BA2TextureArchive"/>
+    /// <seealso cref="BA2TextureArchive" />
     /// </summary>
-    public struct BA2TextureFileEntry
+    public class BA2TextureFileEntry
     {
         /// <summary>
         /// Probably file hash.
@@ -64,5 +64,10 @@ namespace Ba2Tools
         /// Texture chunks in file.
         /// </summary>
         public TextureChunk[] Chunks;
+
+        /// <summary>
+        /// Index in archive.
+        /// </summary>
+        public int Index;
     }
 }

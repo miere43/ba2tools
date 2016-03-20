@@ -25,7 +25,9 @@ namespace Ba2ToolsTests
         /// <summary>
         /// Creates random temp folder in <c>TempFolder</c> and returns its path.
         /// </summary>
-        /// <returns>Path to temp folder.</returns>
+        /// <returns>
+        /// Path to temp folder.
+        /// </returns>
         public static string CreateTempDirectory()
         {
             string path = Path.Combine(TempFolder, Path.GetRandomFileName());
@@ -44,9 +46,14 @@ namespace Ba2ToolsTests
             }
         }
 
-        public static string GetDataPath(string item)
+        /// <summary>
+        /// Returns path to tests shared data files.
+        /// </summary>
+        /// <param name="file">File path.</param>
+        /// <returns>Path to file.</returns>
+        public static string GetDataPath(string file)
         {
-            return Path.Combine(DataFolder, item);
+            return Path.Combine(DataFolder, file);
         }
     }
 }
