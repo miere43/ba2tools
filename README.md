@@ -40,8 +40,6 @@ Extraction speed test on Fallout4 - Textures1.ba2 (extract all files task)
 | C++      | B.A.E. v0.0.4     | 1 min 9 secs    | rough GUI measurement
 | C#       | Ba2Tools v0.2.0   | 1 min 30 secs   |
 
-I want to mention that disk speed is huge bottleneck.
-
 ## Prerequisites
 
 * .NET Framework 4.5
