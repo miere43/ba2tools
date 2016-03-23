@@ -4,12 +4,19 @@ using System;
 using System.Linq;
 using System.Text;
 using System.IO;
+using System.Threading;
 
 namespace Ba2ToolsTests
 {
+    /// <summary>
+    /// Tests for BA2Tools library.
+    /// </summary>
     [TestClass()]
-    public class Ba2ArchiveLoader_Tests
+    public class BA2ArchiveLoaderTests
     {
+        /// <summary>
+        /// Cleanups this instance.
+        /// </summary>
         [TestCleanup]
         public void Cleanup()
         {
@@ -24,15 +31,15 @@ namespace Ba2ToolsTests
         {
             var archive = BA2Loader.Load(SharedData.GetDataPath("GeneralOneFile.ba2"));
             var header = archive.Header;
-            
+
             Assert.IsTrue(header.Signature.SequenceEqual(SharedData.ArchiveMagic));
             Assert.AreEqual(1U, header.Version);
             Assert.IsTrue(BA2Loader.GetArchiveType(header.ArchiveType) == BA2Type.General);
             Assert.AreEqual(1U, header.TotalFiles);
             Assert.AreEqual(69UL, header.NameTableOffset);
 
-            string[] files = archive.ListFiles();
-            Assert.AreEqual(1, files.Length);
+            var files = archive.ListFiles();
+            Assert.AreEqual(1, files.Count);
             Assert.AreEqual(true, archive.ContainsFile("test.txt"));
 
             var folder = SharedData.CreateTempDirectory();
@@ -57,7 +64,7 @@ namespace Ba2ToolsTests
             Assert.AreEqual(0U, header.TotalFiles);
 
             var files = archive.ListFiles();
-            Assert.AreEqual(0, files.Length);
+            Assert.AreEqual(0, files.Count);
             // Assert.AreEqual(69UL, header.NameTableOffset);
         }
 
@@ -141,6 +148,36 @@ namespace Ba2ToolsTests
         {
             var path = SharedData.GetDataPath("GeneralHeaderOnlyInvalidType.ba2");
             var archive = BA2Loader.Load(path, BA2LoaderFlags.LoadUnknownArchiveTypes);
+        }
+
+        /// <summary>
+        /// Test to ensure progress is being called properly.
+        /// </summary>
+        [TestMethod()]
+        public void TestGeneralArchiveExtractionWithProgress()
+        {
+            var path = SharedData.GetDataPath("GeneralOneFile.ba2");
+            var archive = BA2Loader.Load(path);
+            var temp = SharedData.CreateTempDirectory();
+            int progressValue = 0;
+            bool progressReceived = false;
+            var progressHandler = new Progress<int>(x =>
+            {
+                progressReceived = true;
+                progressValue = x;
+            });
+            archive.ExtractAll(temp, CancellationToken.None, progressHandler);
+
+            // workaround of dumb test execution
+            int waits = 0;
+            while (!progressReceived)
+            {
+                if (waits > 3)
+                    break;
+                Thread.Sleep(25);
+                waits++;
+            }
+            Assert.AreEqual(1, progressValue);
         }
     }
 }

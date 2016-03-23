@@ -1,15 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Ba2Tools
 {
     /// <summary>
     /// BA2 archive loader exception for errors during archive loading.
-    /// <see cref="BA2Loader"/>
+    /// <see cref="BA2Loader" />
     /// </summary>
+    /// <seealso cref="System.Exception" />
     [Serializable]
     public class BA2LoadException : Exception
     {

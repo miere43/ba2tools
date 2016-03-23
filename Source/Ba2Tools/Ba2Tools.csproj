@@ -40,21 +40,21 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BA2TextureFileEntry.cs" />
-    <Compile Include="Textures\TextureChunk.cs" />
+    <Compile Include="Internal\BA2TextureFileEntry.cs" />
+    <Compile Include="Internal\TextureChunk.cs" />
     <Compile Include="BA2ExtractionException.cs" />
     <Compile Include="BA2Header.cs" />
     <Compile Include="BA2Loader.cs" />
     <Compile Include="BA2Archive.cs" />
     <Compile Include="BA2LoadException.cs" />
     <Compile Include="BA2GeneralArchive.cs" />
-    <Compile Include="BA2GeneralFileEntry.cs" />
+    <Compile Include="Internal\BA2GeneralFileEntry.cs" />
     <Compile Include="BA2TextureArchive.cs" />
     <Compile Include="BA2LoaderUtil.cs" />
     <Compile Include="BA2Type.cs" />
     <Compile Include="IBA2Archive.cs" />
-    <Compile Include="Textures\ByteSequenceEqualityComparer.cs" />
-    <Compile Include="Textures\Dds.cs" />
+    <Compile Include="Internal\ByteSequenceEqualityComparer.cs" />
+    <Compile Include="Internal\Dds.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup />

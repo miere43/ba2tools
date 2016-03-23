@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
-namespace Ba2Tools
+namespace Ba2Tools.Internal
 {
     /// <summary>
     /// Represents DDS texture chunk.
@@ -25,8 +22,14 @@ namespace Ba2Tools
         /// </summary>
         public UInt32 UnpackedLength;
 
+        /// <summary>
+        /// Start mipmap of texture.
+        /// </summary>
         public UInt16 StartMipmap;
 
+        /// <summary>
+        /// End mipmap of texture.
+        /// </summary>
         public UInt16 EndMipmap;
 
         public UInt32 Unknown; // 0xBAADF00D
