@@ -16,7 +16,7 @@ namespace Ba2Tools
     {
         private BA2GeneralFileEntry[] fileEntries = null;
 
-        #region Extract methods
+        #region BA2Archive overrides
 
         /// <summary>
         /// Extract all files from archive to specified directory.
@@ -25,7 +25,7 @@ namespace Ba2Tools
         /// <param name="overwriteFiles">Overwrite files on disk with extracted ones?</param>
         public override void ExtractAll(string destination, bool overwriteFiles = false)
         {
-            this.ExtractFiles(ListFiles(), destination, CancellationToken.None, null, overwriteFiles);
+            this.ExtractFilesInternal(fileEntries, destination, CancellationToken.None, null, overwriteFiles);
         }
 
         /// <summary>
@@ -37,7 +37,7 @@ namespace Ba2Tools
         /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
         public override void ExtractAll(string destination, CancellationToken cancellationToken, bool overwriteFiles = false)
         {
-            this.ExtractFiles(ListFiles(), destination, cancellationToken, null, overwriteFiles);
+            this.ExtractFilesInternal(fileEntries, destination, cancellationToken, null, overwriteFiles);
         }
 
         /// <summary>
@@ -50,7 +50,7 @@ namespace Ba2Tools
         /// <param name="overwriteFiles">Overwrite files on disk with extracted ones?</param>
         public override void ExtractAll(string destination, CancellationToken cancellationToken, IProgress<int> progress, bool overwriteFiles = false)
         {
-            this.ExtractFiles(ListFiles(), destination, cancellationToken, progress, overwriteFiles);
+            this.ExtractFilesInternal(fileEntries, destination, cancellationToken, progress, overwriteFiles);
         }
 
         /// <summary>
@@ -61,7 +61,7 @@ namespace Ba2Tools
         /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
         public override void ExtractFiles(IEnumerable<string> fileNames, string destination, bool overwriteFiles = false)
         {
-            this.ExtractFiles(fileNames, destination, CancellationToken.None, null, overwriteFiles = false);
+            this.ExtractFilesInternal(GetFileEntries(fileNames), destination, CancellationToken.None, null, overwriteFiles = false);
         }
 
         /// <summary>
@@ -73,7 +73,7 @@ namespace Ba2Tools
         /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
         public override void ExtractFiles(IEnumerable<string> fileNames, string destination, CancellationToken cancellationToken, bool overwriteFiles = false)
         {
-            this.ExtractFiles(fileNames, destination, cancellationToken, null, overwriteFiles);
+            this.ExtractFilesInternal(GetFileEntries(fileNames), destination, cancellationToken, null, overwriteFiles);
         }
 
         /// <summary>
@@ -95,40 +95,7 @@ namespace Ba2Tools
                             IProgress<int> progress,
                             bool overwriteFiles = false)
         {
-            if (fileNames == null)
-                throw new ArgumentNullException(nameof(fileNames));
-            if (string.IsNullOrWhiteSpace(destination))
-                throw new ArgumentException(nameof(destination));
-            if (fileNames.Count() > TotalFiles)
-                throw new BA2ExtractionException($"{nameof(fileNames)} length is more than total files in archive");
-
-            int counter = 0;
-            int updateFrequency = Math.Max(1, fileNames.Count() / 100);
-            int nextUpdate = updateFrequency;
-
-            BA2GeneralFileEntry entry = null;
-            foreach (var name in fileNames)
-            {
-                if (!GetEntryFromName(name, out entry))
-                    throw new BA2ExtractionException($"File \"{name}\" is not found in archive");
-
-                string finalFilename = Path.Combine(destination, name);
-                if (overwriteFiles == false && File.Exists(finalFilename))
-                    throw new BA2ExtractionException($"File \"{name}\" exists.");
-
-                string finalDestDir = Path.GetDirectoryName(finalFilename);
-                Directory.CreateDirectory(finalDestDir);
-
-                ExtractFileInternal(entry, ref finalFilename);
-
-                counter++;
-                if (counter >= nextUpdate)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    progress?.Report(counter);
-                    nextUpdate += updateFrequency;
-                }
-            }
+            this.ExtractFilesInternal(GetFileEntries(fileNames), destination, cancellationToken, progress, overwriteFiles);
         }
 
         /// <summary>
@@ -200,6 +167,10 @@ namespace Ba2Tools
             return true;
         }
 
+        #endregion
+
+        #region Private methods
+
         /// <summary>
         /// Extracts to stream.
         /// </summary>
@@ -248,10 +219,69 @@ namespace Ba2Tools
             using (var stream = File.Create(destFilename, 4096, FileOptions.SequentialScan))
             {
                 ExtractToStream(fileEntry, stream);
-                stream.Flush();
             }
         }
-        #endregion
+
+        private BA2GeneralFileEntry[] GetFileEntries(IEnumerable<string> fileNames)
+        {
+            if (fileNames == null)
+                throw new ArgumentNullException(nameof(fileNames));
+
+            BA2GeneralFileEntry[] entries = new BA2GeneralFileEntry[fileNames.Count()];
+            BA2GeneralFileEntry entry;
+
+            int i = 0;
+            foreach (string name in fileNames)
+            {
+                if (!GetEntryFromName(name, out entry))
+                    throw new BA2ExtractionException($"File \"{name}\" is not found in archive");
+
+                entries[i] = entry;
+            }
+
+            return entries;
+        }
+
+        private void ExtractFilesInternal(
+            BA2GeneralFileEntry[] entries,
+            string destination,
+            CancellationToken cancellationToken,
+            IProgress<int> progress,
+            bool overwriteFiles = false)
+        {
+            int entriesLength = entries.Count();
+
+            bool outUpdate = cancellationToken != null || progress != null;
+
+            int counter = 0;
+            int updateFrequency = Math.Max(1, entriesLength / 100);
+            int nextUpdate = updateFrequency;
+
+            if (_fileListCache == null)
+                ListFiles();
+
+            for (int i = 0; i < entriesLength; i++)
+            {
+                BA2GeneralFileEntry entry = entries[i];
+
+                string finalFilename = Path.Combine(destination, _fileListCache[i]);
+                if (overwriteFiles == false && File.Exists(finalFilename))
+                    throw new BA2ExtractionException($"File \"{ _fileListCache[i] }\" exists.");
+
+                string finalDestDir = Path.GetDirectoryName(finalFilename);
+                Directory.CreateDirectory(finalDestDir);
+
+                ExtractFileInternal(entry, ref finalFilename);
+
+                counter++;
+                if (outUpdate && counter >= nextUpdate)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    progress?.Report(counter);
+                    nextUpdate += updateFrequency;
+                }
+            }
+        }
 
         /// <summary>
         /// Converts file name in archive to Ba2GeneralFileEntry.
@@ -275,6 +305,8 @@ namespace Ba2Tools
             entry = fileEntries[index];
             return true;
         }
+
+        #endregion
 
         /// <summary>
         /// Preloads the data.
