@@ -75,7 +75,7 @@ namespace Ba2Tools
         /// <param name="flags"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException">Thrown when <c>stream</c> is null.</exception>
-        private static BA2Archive Load(Stream stream, BA2LoaderFlags flags = BA2LoaderFlags.None)
+        public static BA2Archive Load(Stream stream, BA2LoaderFlags flags = BA2LoaderFlags.None)
         {
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
