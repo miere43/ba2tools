@@ -71,6 +71,7 @@
     <None Include="Data\GeneralHeaderOnlyInvalidType.ba2" />
     <None Include="Data\GeneralHeaderOnlyInvalidVersion.ba2" />
     <None Include="Data\GeneralOneFile.ba2" />
+    <None Include="Data\GeneralTwoFiles.ba2" />
     <None Include="Data\README.md" />
   </ItemGroup>
   <Choose>

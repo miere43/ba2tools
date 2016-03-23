@@ -49,6 +49,49 @@ namespace Ba2ToolsTests
             // Assert.IsTrue(File.ReadAllLines)
         }
 
+        [TestMethod()]
+        public void TestGeneralTwoFiles()
+        {
+            var archive = BA2Loader.Load(SharedData.GetDataPath("GeneralTwoFiles.ba2"));
+            var header = archive.Header;
+
+            Assert.IsTrue(header.Signature.SequenceEqual(SharedData.ArchiveMagic));
+            Assert.AreEqual(1U, header.Version);
+            Assert.IsTrue(BA2Loader.GetArchiveType(header.ArchiveType) == BA2Type.General);
+            Assert.AreEqual(2U, header.TotalFiles);
+            Assert.AreEqual(121UL, header.NameTableOffset);
+
+            var files = archive.ListFiles();
+            Assert.AreEqual(2, files.Count);
+            Assert.AreEqual("test.txt", files[0]);
+            Assert.AreEqual("wazzup.bin", files[1]);
+
+            var folder = SharedData.CreateTempDirectory();
+            archive.Extract("test.txt", folder);
+
+            var testPath = Path.Combine(folder, "test.txt");
+            Assert.IsTrue(File.Exists(testPath));
+
+            TestExtractedTestFile(archive, "test.txt", "test text");
+            TestExtractedTestFile(archive, "wazzup.bin", "wazzup dude bro?");
+
+            // Assert.IsTrue(File.ReadAllLines)
+        }
+
+        private void TestExtractedTestFile(BA2Archive archive, string fileName, string excepted)
+        {
+            using (var stream = new MemoryStream())
+            {
+                bool status = archive.ExtractToStream(fileName, stream);
+                Assert.IsTrue(status);
+
+                byte[] buffer = new byte[stream.Length];
+                Assert.AreEqual(stream.Length, stream.Read(buffer, 0, (int)stream.Length));
+
+                Assert.IsTrue(Encoding.ASCII.GetString(buffer).Equals(excepted, StringComparison.Ordinal));
+            }
+        }
+
         /// <summary>
         /// Test that header-only archives are valid.
         /// </summary>
