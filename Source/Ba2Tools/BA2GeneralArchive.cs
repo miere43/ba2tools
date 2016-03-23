@@ -264,9 +264,9 @@ namespace Ba2Tools
             {
                 BA2GeneralFileEntry entry = entries[i];
 
-                string finalFilename = Path.Combine(destination, _fileListCache[i]);
+                string finalFilename = Path.Combine(destination, _fileListCache[entry.Index]);
                 if (overwriteFiles == false && File.Exists(finalFilename))
-                    throw new BA2ExtractionException($"File \"{ _fileListCache[i] }\" exists.");
+                    throw new BA2ExtractionException($"File \"{ finalFilename }\" exists.");
 
                 string finalDestDir = Path.GetDirectoryName(finalFilename);
                 Directory.CreateDirectory(finalDestDir);
@@ -329,6 +329,7 @@ namespace Ba2Tools
                     PackedLength = reader.ReadUInt32(),
                     UnpackedLength = reader.ReadUInt32(),
                     Unknown3 = reader.ReadUInt32(),
+                    Index = i
                 };
 
                 // 3131961357 = 0xBAADF00D as uint little-endian (0x0DF0ADBA)

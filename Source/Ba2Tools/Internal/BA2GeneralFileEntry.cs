@@ -58,5 +58,10 @@ namespace Ba2Tools.Internal
         /// </summary>
         /// <returns>True if file is compressed, false otherwise.</returns>
         public bool IsCompressed() => (PackedLength != 0);
+
+        /// <summary>
+        /// Index in archive.
+        /// </summary>
+        public int Index;
     }
 }

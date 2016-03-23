@@ -29,7 +29,7 @@ namespace Ba2Tools
         /// <param name="overwriteFiles">Overwrite files on disk with extracted ones?</param>
         public override void ExtractAll(string destination, bool overwriteFiles = false)
         {
-            this.ExtractAll(destination, CancellationToken.None, null, overwriteFiles);
+            this.ExtractFilesInternal(fileEntries, destination, CancellationToken.None, null, overwriteFiles);
         }
 
         /// <summary>
@@ -41,7 +41,7 @@ namespace Ba2Tools
         /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
         public override void ExtractAll(string destination, CancellationToken cancellationToken, bool overwriteFiles = false)
         {
-            this.ExtractAll(destination, CancellationToken.None, null, overwriteFiles);
+            this.ExtractFilesInternal(fileEntries, destination, cancellationToken, null, overwriteFiles);
         }
 
         /// <summary>
@@ -54,34 +54,7 @@ namespace Ba2Tools
         /// <param name="overwriteFiles">Overwrite files on disk with extracted ones?</param>
         public override void ExtractAll(string destination, CancellationToken cancellationToken, IProgress<int> progress, bool overwriteFiles = false)
         {
-            if (String.IsNullOrWhiteSpace(destination))
-                throw new ArgumentException(nameof(destination));
-
-            if (_fileListCache == null)
-                ListFiles(true);
-
-            int counter = 0;
-            int updateFrequency = Math.Max(1, (int)TotalFiles / 100);
-            int nextUpdate = updateFrequency;
-
-            if (cancellationToken == CancellationToken.None &&
-                progress == null)
-            {
-                nextUpdate = int.MaxValue;
-            }
-
-            for (int i = 0; i < TotalFiles; i++)
-            {
-                ExtractInternal(fileEntries[i], destination, overwriteFiles);
-
-                counter++;
-                if (counter >= nextUpdate)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    progress?.Report(counter);
-                    nextUpdate += updateFrequency;
-                }
-            }
+            this.ExtractFilesInternal(fileEntries, destination, cancellationToken, progress, overwriteFiles);
         }
 
         /// <summary>
@@ -92,7 +65,7 @@ namespace Ba2Tools
         /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
         public override void ExtractFiles(IEnumerable<string> fileNames, string destination, bool overwriteFiles = false)
         {
-            this.ExtractFiles(fileNames, destination, CancellationToken.None, null, overwriteFiles);
+            this.ExtractFilesInternal(GetFileEntries(fileNames), destination, CancellationToken.None, null, overwriteFiles);
         }
 
         /// <summary>
@@ -104,7 +77,7 @@ namespace Ba2Tools
         /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
         public override void ExtractFiles(IEnumerable<string> fileNames, string destination, CancellationToken cancellationToken, bool overwriteFiles = false)
         {
-            this.ExtractFiles(fileNames, destination, cancellationToken, null, overwriteFiles);
+            this.ExtractFilesInternal(GetFileEntries(fileNames), destination, CancellationToken.None, null, overwriteFiles);
         }
 
         /// <summary>
@@ -126,32 +99,7 @@ namespace Ba2Tools
             IProgress<int> progress,
             bool overwriteFiles = false)
         {
-            if (fileNames == null)
-                throw new ArgumentNullException(nameof(fileNames));
-            if (string.IsNullOrWhiteSpace(destination))
-                throw new ArgumentException(nameof(destination));
-            if (fileNames.Count() > TotalFiles)
-                throw new BA2ExtractionException($"{nameof(fileNames)} length is more than total files in archive");
-
-            int counter = 0;
-            int updateFrequency = Math.Max(1, fileNames.Count() / 100);
-            int nextUpdate = updateFrequency;
-
-            if (cancellationToken == CancellationToken.None && progress == null)
-                nextUpdate = int.MaxValue;
-
-            foreach (var name in fileNames)
-            {
-                Extract(name, destination, overwriteFiles);
-
-                counter++;
-                if (counter >= nextUpdate)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    progress?.Report(counter);
-                    nextUpdate += updateFrequency;
-                }
-            }
+            this.ExtractFilesInternal(GetFileEntries(fileNames), destination, cancellationToken, progress, overwriteFiles);
         }
 
         /// <summary>
@@ -212,6 +160,44 @@ namespace Ba2Tools
         #endregion
 
         #region Private methods
+
+        private void ExtractFilesInternal(
+            BA2TextureFileEntry[] entries,
+            string destination,
+            CancellationToken cancellationToken,
+            IProgress<int> progress,
+            bool overwriteFiles)
+        {
+            if (string.IsNullOrWhiteSpace(destination))
+                throw new ArgumentException(nameof(destination));
+
+            int totalEntries = entries.Count();
+
+            bool shouldUpdate = cancellationToken != null || progress != null;
+            int counter = 0;
+            int updateFrequency = Math.Max(1, totalEntries / 100);
+            int nextUpdate = updateFrequency;
+
+            if (_fileListCache == null)
+                ListFiles();
+
+            for (int i = 0; i < totalEntries; i++)
+            {
+                BA2TextureFileEntry entry = entries[i];
+
+                ExtractInternal(entry, destination, overwriteFiles);
+                //Extract(name, destination, overwriteFiles);
+
+                counter++;
+                if (shouldUpdate && counter >= nextUpdate)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    progress?.Report(counter);
+                    nextUpdate += updateFrequency;
+                }
+            }
+        }
+
         private void ExtractInternal(BA2TextureFileEntry entry, string destinationFolder, bool overwriteFile = false)
         {
             string filePath = _fileListCache[entry.Index];
@@ -229,6 +215,26 @@ namespace Ba2Tools
             {
                 ExtractToStream(entry, fileStream);
             }
+        }
+
+        private BA2TextureFileEntry[] GetFileEntries(IEnumerable<string> fileNames)
+        {
+            if (fileNames == null)
+                throw new ArgumentNullException(nameof(fileNames));
+
+            BA2TextureFileEntry[] entries = new BA2TextureFileEntry[fileNames.Count()];
+            BA2TextureFileEntry entry;
+
+            int i = 0;
+            foreach (string name in fileNames)
+            {
+                if (!GetEntryFromName(name, out entry))
+                    throw new BA2ExtractionException($"File \"{name}\" is not found in archive");
+
+                entries[i] = entry;
+            }
+
+            return entries;
         }
 
         /// <summary>
