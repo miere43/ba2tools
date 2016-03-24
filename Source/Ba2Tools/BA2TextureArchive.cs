@@ -421,6 +421,17 @@ namespace Ba2Tools
         }
         #endregion
 
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                fileEntries = null;
+                _fileListCache = null;
+            }
+
+            base.Dispose(disposing);
+        }
+
         /// <summary>
         /// Preloads the data.
         /// </summary>
