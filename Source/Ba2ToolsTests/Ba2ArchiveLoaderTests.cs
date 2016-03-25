@@ -32,5 +32,15 @@ namespace Ba2ToolsTests
         {
             var archive = BA2Loader.Load(Path.Combine(SharedData.DataFolder, "InvalidArchive.txt"));
         }
+
+        /// <summary>
+        /// Test to ensure exception is thrown for generic methods.
+        /// </summary>
+        [TestMethod]
+        [ExpectedException(typeof(BA2LoadException))]
+        public void TestInvalidGenericArchiveLoad()
+        {
+            BA2TextureArchive archive = BA2Loader.Load<BA2TextureArchive>(SharedData.GetDataPath("GeneralOneFile.ba2"));
+        }
     }
 }

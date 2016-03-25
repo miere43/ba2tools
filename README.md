@@ -13,7 +13,6 @@ Current features:
 
 Upcoming features:
 * Write BA2 archives
-* Faster extraction speed
 
 Sample:
 ```c#

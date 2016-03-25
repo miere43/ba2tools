@@ -1,3 +1,9 @@
+## Version 0.4
+* Performance improvements for extracting files from archives.
+* Added generic variants of BA2Loader.Load(...) methods.
+* Changed BA2Loader.Load(Stream stream...) method access level to public.
+* Now BA2Loader.Load(...) disposes archive when any exception occurs.
+
 ## Version 0.3
 * More generic method declarations (string[] => IEnumerable<string>)
 * File entries are classes now instead of structs.
