@@ -6,7 +6,7 @@ namespace Ba2Tools.Internal
     /// Represents file entry in general BA2 archive.
     /// </summary>
     /// <seealso cref="BA2GeneralArchive"/>
-    public class BA2GeneralFileEntry
+    public class BA2GeneralFileEntry : IBA2FileEntry
     {
         /// <summary>
         /// Size of structure.
@@ -62,6 +62,6 @@ namespace Ba2Tools.Internal
         /// <summary>
         /// Index in archive.
         /// </summary>
-        public int Index;
+        public int Index { get; set; }
     }
 }
