@@ -94,6 +94,27 @@ namespace Ba2Tools
 
             return GetArchiveType(header.Signature);
         }
+
+        /// <summary>
+        /// Resolve archive type from generic type.
+        /// </summary>
+        /// <returns>
+        /// Archive type.
+        /// </returns>
+        public static BA2Type GetArchiveType<T>() where T : BA2Archive
+        {
+            var type = typeof(T);
+            if (typeof(BA2GeneralArchive) == type)
+            {
+                return BA2Type.General;
+            }
+            else if (typeof(BA2TextureArchive) == type)
+            {
+                return BA2Type.Texture;
+            }
+
+            return BA2Type.Unknown;
+        }
     }
 }
 

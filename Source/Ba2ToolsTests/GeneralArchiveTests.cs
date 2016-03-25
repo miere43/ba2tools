@@ -196,5 +196,11 @@ namespace Ba2ToolsTests
             }
             Assert.AreEqual(1, progressValue);
         }
+
+        [TestMethod]
+        public void TestGenericArchiveLoader()
+        {
+            BA2GeneralArchive archive = BA2Loader.Load<BA2GeneralArchive>(SharedData.GetDataPath("GeneralOneFile.ba2"));
+        }
     }
 }
