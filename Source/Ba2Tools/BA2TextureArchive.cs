@@ -231,6 +231,7 @@ namespace Ba2Tools
                     throw new BA2ExtractionException($"File \"{name}\" is not found in archive");
 
                 entries[i] = entry;
+                i++;
             }
 
             return entries;
