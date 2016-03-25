@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Ba2Tools.Internal;
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -49,16 +51,13 @@ namespace Ba2Tools
         /// </value>
         public BA2Header Header { get; internal set; }
 
+        public bool MultithreadedExtract { get; internal set; } = false;
+
         /// <summary>
         /// ListFiles() cache.
         /// </summary>
         /// <seealso cref="ListFiles(bool)"/>
         protected List<string> _fileListCache = null;
-
-        ~BA2Archive()
-        {
-            Dispose(false);
-        }
 
         #region Extract methods
         /// <summary>
@@ -248,6 +247,11 @@ namespace Ba2Tools
             return _fileListCache.Contains(fileName, StringComparer.OrdinalIgnoreCase);
         }
 
+        ~BA2Archive()
+        {
+            Dispose(false);
+        }
+
         /// <summary>
         /// Disposes BA2Archive instance and frees its resources.
         /// After this call BA2Archive is not usable anymore.
@@ -267,6 +271,32 @@ namespace Ba2Tools
                     ArchiveStream.Dispose();
                     ArchiveStream = null;
                 }
+            }
+        }
+
+        protected void CreateDirectoriesForFiles(
+            IBA2FileEntry[] entries,
+            BlockingCollection<string> coll,
+            CancellationToken cancel,
+            string destination,
+            bool overwriteFiles)
+        {
+            IBA2FileEntry entry;
+            int entriesLength = entries.Length;
+
+            if (_fileListCache == null)
+                ListFiles();
+
+            for (int i = 0; i < entriesLength; i++)
+            {
+                entry = entries[i];
+
+                string finalFilename = Path.Combine(destination, _fileListCache[entry.Index]);
+                if (overwriteFiles == false && File.Exists(finalFilename))
+                    throw new BA2ExtractionException($"File \"{ finalFilename }\" exists.");
+
+                Directory.CreateDirectory(Path.GetDirectoryName(finalFilename));
+                coll.Add(finalFilename, cancel);
             }
         }
     }

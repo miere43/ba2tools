@@ -155,6 +155,9 @@ namespace Ba2Tools
                             break;
                     }
 
+                    if (flags.HasFlag(BA2LoaderFlags.Multithreaded))
+                        archive.MultithreadedExtract = true;
+
                     archive.Header = header;
                     archive.ArchiveStream = stream;
 

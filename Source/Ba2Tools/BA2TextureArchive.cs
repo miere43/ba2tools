@@ -6,6 +6,8 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using Ba2Tools.Internal;
+using System.Threading.Tasks;
+using System.Collections.Concurrent;
 
 namespace Ba2Tools
 {
@@ -173,19 +175,28 @@ namespace Ba2Tools
             int totalEntries = entries.Count();
 
             bool shouldUpdate = cancellationToken != null || progress != null;
+
             int counter = 0;
             int updateFrequency = Math.Max(1, totalEntries / 100);
             int nextUpdate = updateFrequency;
 
-            if (_fileListCache == null)
-                ListFiles();
+            BlockingCollection<string> readyFilenames = new BlockingCollection<string>(totalEntries);
 
+            Action createDirs = () =>
+                CreateDirectoriesForFiles(entries, readyFilenames, cancellationToken, destination, overwriteFiles);
+
+            if (MultithreadedExtract)
+                Task.Run(createDirs, cancellationToken);
+            else
+                createDirs();
+            
             for (int i = 0; i < totalEntries; i++)
             {
                 BA2TextureFileEntry entry = entries[i];
-
-                ExtractInternal(entry, destination, overwriteFiles);
-                //Extract(name, destination, overwriteFiles);
+                using (var stream = File.Create(readyFilenames.Take(), 4096, FileOptions.SequentialScan))
+                {
+                    ExtractToStream(entry, stream);
+                }
 
                 counter++;
                 if (shouldUpdate && counter >= nextUpdate)
@@ -197,7 +208,7 @@ namespace Ba2Tools
             }
         }
 
-        private void ExtractInternal(BA2TextureFileEntry entry, string destinationFolder, bool overwriteFile = false)
+        private void ExtractInternal(BA2TextureFileEntry entry, string destinationFolder, bool overwriteFile)
         {
             string filePath = _fileListCache[entry.Index];
 
@@ -298,7 +309,7 @@ namespace Ba2Tools
         {
             using (BinaryWriter writer = new BinaryWriter(destStream, Encoding.ASCII, leaveOpen: true))
             {
-                DdsHeader header = CreateDdsHeaderForEntry(ref entry);
+                DdsHeader header = CreateDdsHeaderForEntry(entry);
 
                 writer.Write(Dds.DDS_MAGIC);
                 writer.Write(header.dwSize);
@@ -310,7 +321,7 @@ namespace Ba2Tools
                 writer.Write(header.dwMipMapCount);
                 for (int i = 0; i < 11; i++)
                 {
-                    writer.Write((uint)0);
+                    writer.Write(0U);
                 }
                 writer.Write(header.ddspf.dwSize);
                 writer.Write(header.ddspf.dwFlags);
@@ -324,7 +335,7 @@ namespace Ba2Tools
                 writer.Write(header.dwCubemapFlags);
                 for (int i = 0; i < 3; i++)
                 {
-                    writer.Write((uint)0);
+                    writer.Write(0U);
                 }
 
                 const long zlibHeaderSize = 2;
@@ -344,7 +355,7 @@ namespace Ba2Tools
                     writer.Write(destBuffer, 0, (int)chunk.UnpackedLength);
                 }
 
-                writer.Seek(0, SeekOrigin.Begin);
+                // writer.Seek(0, SeekOrigin.Begin);
             }
         }
 
@@ -356,7 +367,7 @@ namespace Ba2Tools
         /// Valid DDS Header.
         /// </returns>
         /// <exception cref="System.NotSupportedException">Entry DDS format is not supported.</exception>
-        private DdsHeader CreateDdsHeaderForEntry(ref BA2TextureFileEntry entry)
+        private DdsHeader CreateDdsHeaderForEntry(BA2TextureFileEntry entry)
         {
             var header = new DdsHeader();
             DxgiFormat format = (DxgiFormat)entry.Format;

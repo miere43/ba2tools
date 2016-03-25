@@ -42,6 +42,7 @@
   <ItemGroup>
     <Compile Include="BA2LoaderFlags.cs" />
     <Compile Include="Internal\BA2TextureFileEntry.cs" />
+    <Compile Include="Internal\IBA2FileEntry.cs" />
     <Compile Include="Internal\TextureChunk.cs" />
     <Compile Include="BA2ExtractionException.cs" />
     <Compile Include="BA2Header.cs" />

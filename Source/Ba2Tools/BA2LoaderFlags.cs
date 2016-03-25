@@ -15,9 +15,13 @@ namespace Ba2Tools
         /// </summary>
         IgnoreVersion = 1,
         /// <summary>
-        /// Load unknown archive types. Ba2ArchiveBase instance will be returned 
+        /// Load unknown archive types. BA2Archive instance will be returned 
         /// instead of throwing exception.
         /// </summary>
         LoadUnknownArchiveTypes = 2,
+        /// <summary>
+        /// Use multithreaded extraction for ExtractAll and ExtractFiles methods.
+        /// </summary>
+        Multithreaded = 4
     }
 }

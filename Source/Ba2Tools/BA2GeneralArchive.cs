@@ -6,6 +6,10 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using Ba2Tools.Internal;
+using System.Threading.Tasks;
+using System.Diagnostics;
+using System.Collections;
+using System.Collections.Concurrent;
 
 namespace Ba2Tools
 {
@@ -98,6 +102,8 @@ namespace Ba2Tools
             this.ExtractFilesInternal(GetFileEntries(fileNames), destination, cancellationToken, progress, overwriteFiles);
         }
 
+
+
         /// <summary>
         /// Extract single file from archive.
         /// </summary>
@@ -111,7 +117,6 @@ namespace Ba2Tools
         /// </exception>
         public override void Extract(string fileName, string destination, bool overwriteFile = false)
         {
-
             if (string.IsNullOrWhiteSpace(fileName))
                 throw new ArgumentException(nameof(fileName));
             if (string.IsNullOrWhiteSpace(destination))
@@ -209,19 +214,6 @@ namespace Ba2Tools
             destStream.Seek(0, SeekOrigin.Begin);
         }
 
-        /// <summary>
-        /// Base extraction function for all extraction methods.
-        /// </summary>
-        /// <param name="fileEntry">The file entry.</param>
-        /// <param name="destFilename">The destination filename.</param>
-        private void ExtractFileInternal(BA2GeneralFileEntry fileEntry, ref string destFilename)
-        {
-            using (var stream = File.Create(destFilename, 4096, FileOptions.SequentialScan))
-            {
-                ExtractToStream(fileEntry, stream);
-            }
-        }
-
         private BA2GeneralFileEntry[] GetFileEntries(IEnumerable<string> fileNames)
         {
             if (fileNames == null)
@@ -250,32 +242,34 @@ namespace Ba2Tools
             IProgress<int> progress,
             bool overwriteFiles = false)
         {
-            int entriesLength = entries.Count();
+            if (string.IsNullOrWhiteSpace(destination))
+                throw new ArgumentException(nameof(destination));
 
-            bool outUpdate = cancellationToken != null || progress != null;
+            int totalEntries = entries.Count();
+
+            bool shouldUpdate = cancellationToken != null || progress != null;
 
             int counter = 0;
-            int updateFrequency = Math.Max(1, entriesLength / 100);
+            int updateFrequency = Math.Max(1, totalEntries / 100);
             int nextUpdate = updateFrequency;
 
-            if (_fileListCache == null)
-                ListFiles();
+            BlockingCollection<string> readyFilenames = new BlockingCollection<string>(totalEntries);
 
-            for (int i = 0; i < entriesLength; i++)
+            var task = Task.Run(() =>
+            {
+                CreateDirectoriesForFiles(entries, readyFilenames, cancellationToken, destination, overwriteFiles);
+            }, cancellationToken);
+
+            for (int i = 0; i < totalEntries; i++)
             {
                 BA2GeneralFileEntry entry = entries[i];
-
-                string finalFilename = Path.Combine(destination, _fileListCache[entry.Index]);
-                if (overwriteFiles == false && File.Exists(finalFilename))
-                    throw new BA2ExtractionException($"File \"{ finalFilename }\" exists.");
-
-                string finalDestDir = Path.GetDirectoryName(finalFilename);
-                Directory.CreateDirectory(finalDestDir);
-
-                ExtractFileInternal(entry, ref finalFilename);
+                using (var stream = File.Create(readyFilenames.Take(), 4096, FileOptions.SequentialScan))
+                {
+                    ExtractToStream(entry, stream);
+                }
 
                 counter++;
-                if (outUpdate && counter >= nextUpdate)
+                if (shouldUpdate && counter >= nextUpdate)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
                     progress?.Report(counter);
@@ -345,7 +339,7 @@ namespace Ba2Tools
                 };
 
                 // 3131961357 = 0xBAADF00D as uint little-endian (0x0DF0ADBA)
-                System.Diagnostics.Debug.Assert(entry.Unknown3 == 3131961357);
+                // System.Diagnostics.Debug.Assert(entry.Unknown3 == 3131961357);
 
                 fileEntries[i] = entry;
             }
