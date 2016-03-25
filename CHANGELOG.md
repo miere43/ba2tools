@@ -1,3 +1,6 @@
+## Version 0.4.1
+* Fixed bug when using ExtractFiles(...) methods in general archive which was leading to null exceptions.
+
 ## Version 0.4
 * Performance improvements for extracting files from archives.
 * Added generic variants of BA2Loader.Load(...) methods.
