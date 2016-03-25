@@ -40,6 +40,7 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BA2LoaderFlags.cs" />
     <Compile Include="Internal\BA2TextureFileEntry.cs" />
     <Compile Include="Internal\TextureChunk.cs" />
     <Compile Include="BA2ExtractionException.cs" />

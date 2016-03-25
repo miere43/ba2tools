@@ -6,7 +6,6 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using Ba2Tools.Internal;
-using System.Threading.Tasks;
 
 namespace Ba2Tools
 {

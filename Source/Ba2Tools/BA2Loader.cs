@@ -2,30 +2,9 @@
 using System.IO;
 using System.Linq;
 using System.Text;
-using Ba2Tools;
-using Ba2Tools.Internal;
 
 namespace Ba2Tools
 {
-    /// <summary>
-    /// Defines behaviour flags for BA2Loader methods.
-    /// <see cref="BA2Loader" />
-    /// </summary>
-    [Flags]
-    public enum BA2LoaderFlags
-    {
-        None = 0,
-        /// <summary>
-        /// Ignore archive version 
-        /// </summary>
-        IgnoreVersion = 1,
-        /// <summary>
-        /// Load unknown archive types. Ba2ArchiveBase instance will be returned 
-        /// instead of throwing exception.
-        /// </summary>
-        LoadUnknownArchiveTypes = 2,
-    }
-
     /// <summary>
     /// Contains methods to load BA2 archives.
     /// </summary>
@@ -51,7 +30,7 @@ namespace Ba2Tools
         /// </summary>
         /// <param name="filePath">Path to archive.</param>
         /// <param name="flags">Flags for loader.</param>
-        /// <returns></returns>
+        /// <returns>BA2Archive instance.</returns>
         /// <exception cref="System.ArgumentException"></exception>
         /// <exception cref="BA2LoadException"></exception>
         public static BA2Archive Load(string filePath, BA2LoaderFlags flags = BA2LoaderFlags.None)
@@ -78,7 +57,6 @@ namespace Ba2Tools
         /// <param name="flags">Flags for loader.</param>
         /// <returns>BA2Archive instance.</returns>
         /// <exception cref="System.ArgumentException"></exception>
-        /// <exception cref="ArgumentNullException" />
         /// <exception cref="BA2LoadException" />
         public static T Load<T>(string filePath, BA2LoaderFlags flags = BA2LoaderFlags.None) where T : BA2Archive
         {
@@ -102,7 +80,7 @@ namespace Ba2Tools
         /// <param name="stream">Stream to read from.</param>
         /// <param name="flags">Flags for loader.</param>
         /// <returns>BA2Archive instance.</returns>
-        /// <exception cref="ArgumentNullException" />
+        /// <exception cref="ArgumentNullException">Thrown when <c>stream</c> is null.</exception>
         /// <exception cref="BA2LoadException" />
         public static T Load<T>(Stream stream, BA2LoaderFlags flags = BA2LoaderFlags.None) where T : BA2Archive
         {
@@ -130,7 +108,7 @@ namespace Ba2Tools
         /// </summary>
         /// <param name="stream">Stream to read from.</param>
         /// <param name="flags"></param>
-        /// <returns></returns>
+        /// <returns>BA2Archive instance.</returns>
         /// <exception cref="ArgumentNullException">Thrown when <c>stream</c> is null.</exception>
         /// <exception cref="BA2LoadException" />
         public static BA2Archive Load(Stream stream, BA2LoaderFlags flags = BA2LoaderFlags.None)
@@ -183,7 +161,7 @@ namespace Ba2Tools
                     archive.PreloadData(reader);
                 }
             }
-            catch (BA2LoadException)
+            catch (Exception)
             {
                 if (archive != null)
                     archive.Dispose();
