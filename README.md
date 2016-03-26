@@ -39,6 +39,14 @@ Extraction speed test on Fallout4 - Textures1.ba2 (extract all files task)
 | C++      | B.A.E. v0.0.4     | 1 min 9 secs    | rough GUI measurement
 | C#       | Ba2Tools v0.2.0   | 1 min 30 secs   |
 
+Extraction speed test on Fallout4 - Sounds.ba2 (extract all files task)
+
+| Language | Tool              | Extraction time | Notes
+| -------- | ----------------- | --------------- | -----
+| C++      | ba2extract v0003  | 0 min 20 secs   |
+| C++      | B.A.E. v0.0.4     | 1 min 35 secs   | rough GUI measurement
+| C#       | Ba2Tools v0.5.0   | 0 min 17 secs   | 
+
 ## Prerequisites
 
 * .NET Framework 4.5
