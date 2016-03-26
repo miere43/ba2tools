@@ -65,7 +65,12 @@ namespace Ba2Tools
         /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
         public override void ExtractFiles(IEnumerable<string> fileNames, string destination, bool overwriteFiles = false)
         {
-            this.ExtractFilesInternal(GetFileEntries(fileNames), destination, CancellationToken.None, null, overwriteFiles = false);
+            this.ExtractFilesInternal(
+                ConstructEntriesFromIndexes(GetIndexesFromFilenames(fileNames)),
+                destination,
+                CancellationToken.None,
+                null,
+                overwriteFiles = false);
         }
 
         /// <summary>
@@ -77,7 +82,59 @@ namespace Ba2Tools
         /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
         public override void ExtractFiles(IEnumerable<string> fileNames, string destination, CancellationToken cancellationToken, bool overwriteFiles = false)
         {
-            this.ExtractFilesInternal(GetFileEntries(fileNames), destination, cancellationToken, null, overwriteFiles);
+            this.ExtractFilesInternal(
+                ConstructEntriesFromIndexes(GetIndexesFromFilenames(fileNames)),
+                destination,
+                cancellationToken,
+                null,
+                overwriteFiles);
+        }
+
+        /// <summary>
+        /// Extract's specified files, accessed by index to the
+        /// specified directory.
+        /// </summary>
+        /// <param name="indexes">The indexes.</param>
+        /// <param name="destination">
+        /// Destination folder where extracted files will be placed.
+        /// </param>
+        /// <param name="overwriteFiles">Overwrite files in destination folder?</param>
+        public override void ExtractFiles(IEnumerable<int> indexes, string destination, bool overwriteFiles = false)
+        {
+            this.ExtractFilesInternal(
+                ConstructEntriesFromIndexes(indexes),
+                destination,
+                CancellationToken.None,
+                null,
+                overwriteFiles);
+        }
+
+        /// <summary>
+        /// Extracts specified files, accessed by index to the specified
+        /// directory with cancellation token and progress reporter.
+        /// </summary>
+        /// <param name="indexes">The indexes.</param>
+        /// <param name="destination">
+        /// Destination folder where extracted files will be placed.
+        /// </param>
+        /// <param name="cancellationToken">
+        /// The cancellation token. Set it to <c>CancellationToken.None</c>
+        /// if you don't wanna cancel operation.
+        /// </param>
+        /// <param name="progress">
+        /// Progress reporter ranged from 0 to <c>indexes.Count()</c>.
+        /// Set it to <c>null</c> if you don't want to handle progress
+        /// of operation.
+        /// </param>
+        /// <param name="overwriteFiles">Overwrite files in destination folder?</param>
+        public override void ExtractFiles(IEnumerable<int> indexes, string destination, CancellationToken cancellationToken, IProgress<int> progress, bool overwriteFiles = false)
+        {
+            this.ExtractFilesInternal(
+                ConstructEntriesFromIndexes(indexes),
+                destination,
+                cancellationToken,
+                progress,
+                overwriteFiles);
         }
 
         /// <summary>
@@ -99,10 +156,13 @@ namespace Ba2Tools
                             IProgress<int> progress,
                             bool overwriteFiles = false)
         {
-            this.ExtractFilesInternal(GetFileEntries(fileNames), destination, cancellationToken, progress, overwriteFiles);
+            this.ExtractFilesInternal(
+                ConstructEntriesFromIndexes(GetIndexesFromFilenames(fileNames)),
+                destination,
+                cancellationToken,
+                progress,
+                overwriteFiles);
         }
-
-
 
         /// <summary>
         /// Extract single file from archive.
@@ -111,6 +171,7 @@ namespace Ba2Tools
         /// <param name="destination">Destination directory where file will be extracted to.</param>
         /// <param name="overwriteFile">Overwrite existing file with extracted one?</param>
         /// <exception cref="System.ArgumentException">
+        /// <c>fileName</c> or <c>destination</c> is null or whitespace.
         /// </exception>
         /// <exception cref="BA2ExtractionException">
         /// Overwrite is not permitted.
@@ -122,26 +183,63 @@ namespace Ba2Tools
             if (string.IsNullOrWhiteSpace(destination))
                 throw new ArgumentException(nameof(destination));
 
-            if (_fileListCache == null)
-                ListFiles();
+            int index = GetIndexFromFilename(fileName);
+            if (index == -1)
+                throw new BA2ExtractionException($"Cannot find file name \"{ fileName }\" in archive");
 
-            BA2GeneralFileEntry entry = null;
-            if (!GetEntryFromName(fileName, out entry))
-                throw new BA2ExtractionException($"Cannot find file name \"{fileName}\" in archive");
+            this.Extract(index, destination, overwriteFile);
+        }
 
-            string extension = new string(entry.Extension).Trim('\0');
-            string finalPath = Path.Combine(destination, fileName);
+        /// <summary>
+        /// Extract single file to specified directory by index.
+        /// </summary>
+        /// <param name="index">The index.</param>
+        /// <param name="destination">Absolute or relative directory path where extracted file will be placed.</param>
+        /// <param name="overwriteFile">Overwrite existing file in directory with extracted one?</param>
+        /// <exception cref="IndexOutOfRangeException">
+        /// <c>index</c> is less than 0 or more than total files in archive.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <c>destination</c> is null or whitespace.
+        /// </exception>
+        /// <exception cref="BA2ExtractionException"></exception>
+        public override void Extract(int index, string destination, bool overwriteFile = false)
+        {
+            if (index < 0 || index > this.TotalFiles)
+                throw new IndexOutOfRangeException(nameof(index));
+            if (string.IsNullOrWhiteSpace(destination))
+                throw new ArgumentException(nameof(destination));
 
-            string finalDest = Path.GetDirectoryName(finalPath);
-            Directory.CreateDirectory(finalDest);
+            BA2GeneralFileEntry entry = fileEntries[index];
+            string extractPath = CreateDirectoryAndGetPath(entry, destination, overwriteFile);
 
-            if (overwriteFile == false && File.Exists(finalPath))
-                throw new BA2ExtractionException("Overwrite is not permitted.");
+            using (var stream = File.Create(extractPath, 4096, FileOptions.SequentialScan))
+                ExtractToStreamInternal(entry, stream);
+        }
 
-            using (var fileStream = File.Create(finalPath, 4096, FileOptions.SequentialScan))
-            {
-                ExtractToStream(entry, fileStream);
-            }
+        /// <summary>
+        /// Extract file, accessed by index, to the stream.
+        /// </summary>
+        /// <param name="index">The index.</param>
+        /// <param name="stream">The stream.</param>
+        /// <returns>
+        /// Success is true, failure is false.
+        /// </returns>
+        /// <exception cref="IndexOutOfRangeException">
+        /// <c>index</c> is less than 0 or more than total files in archive.
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// <c>stream</c> is null.
+        /// </exception>
+        public override bool ExtractToStream(int index, Stream stream)
+        {
+            if (index < 0 || index > this.TotalFiles)
+                throw new IndexOutOfRangeException(nameof(index));
+            if (stream == null)
+                throw new ArgumentNullException(nameof(stream));
+
+            ExtractToStreamInternal(fileEntries[index], stream);
+            return true;
         }
 
         /// <summary>
@@ -152,23 +250,21 @@ namespace Ba2Tools
         /// <returns>
         /// Success is true, failure is false.
         /// </returns>
-        /// <exception cref="System.ArgumentException"></exception>
-        /// <exception cref="System.ArgumentNullException"></exception>
+        /// <exception cref="System.ArgumentNullException">
+        /// <c>stream</c> or <c>fileName</c> is null.
+        /// </exception>
         public override bool ExtractToStream(string fileName, Stream stream)
         {
             if (fileName == null)
-                throw new ArgumentException(nameof(fileName));
+                throw new ArgumentNullException(nameof(fileName));
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
 
-            if (_fileListCache == null)
-                ListFiles();
-
-            BA2GeneralFileEntry entry = null;
-            if (!GetEntryFromName(fileName, out entry))
+            int index = GetIndexFromFilename(fileName);
+            if (index == -1)
                 return false;
 
-            ExtractToStream(entry, stream);
+            ExtractToStreamInternal(fileEntries[index], stream);
             return true;
         }
 
@@ -181,7 +277,7 @@ namespace Ba2Tools
         /// </summary>
         /// <param name="entry">The entry.</param>
         /// <param name="destStream">The destination stream.</param>
-        private void ExtractToStream(BA2GeneralFileEntry entry, Stream destStream)
+        private void ExtractToStreamInternal(BA2GeneralFileEntry entry, Stream destStream)
         {
             // DeflateStream throws exception when
             // reads zlib compressed file header
@@ -205,6 +301,8 @@ namespace Ba2Tools
             }
             else
             {
+                // TODO
+                // entry.UnpackedLength => dataLength;
                 ArchiveStream.Read(rawData, 0, (int)entry.UnpackedLength);
             }
 
@@ -212,26 +310,6 @@ namespace Ba2Tools
             destStream.Flush();
 
             destStream.Seek(0, SeekOrigin.Begin);
-        }
-
-        private BA2GeneralFileEntry[] GetFileEntries(IEnumerable<string> fileNames)
-        {
-            if (fileNames == null)
-                throw new ArgumentNullException(nameof(fileNames));
-
-            BA2GeneralFileEntry[] entries = new BA2GeneralFileEntry[fileNames.Count()];
-            BA2GeneralFileEntry entry;
-
-            int i = 0;
-            foreach (string name in fileNames)
-            {
-                if (!GetEntryFromName(name, out entry))
-                    throw new BA2ExtractionException($"File \"{name}\" is not found in archive");
-
-                entries[i] = entry;
-            }
-
-            return entries;
         }
 
         private void ExtractFilesInternal(
@@ -264,7 +342,7 @@ namespace Ba2Tools
                 BA2GeneralFileEntry entry = entries[i];
                 using (var stream = File.Create(readyFilenames.Take(), 4096, FileOptions.SequentialScan))
                 {
-                    ExtractToStream(entry, stream);
+                    ExtractToStreamInternal(entry, stream);
                 }
 
                 counter++;
@@ -275,29 +353,6 @@ namespace Ba2Tools
                     nextUpdate += updateFrequency;
                 }
             }
-        }
-
-        /// <summary>
-        /// Converts file name in archive to Ba2GeneralFileEntry.
-        /// </summary>
-        /// <param name="fileName">Filename in archive.</param>
-        /// <param name="entry">The entry.</param>
-        /// <returns>
-        /// True if found entry and populated it or false otherwise.
-        /// </returns>
-        private bool GetEntryFromName(string fileName, out BA2GeneralFileEntry entry)
-        {
-            if (_fileListCache == null)
-                ListFiles();
-
-            int index = _fileListCache.FindIndex(x => x.Equals(fileName, StringComparison.InvariantCultureIgnoreCase));
-            if (index == -1)
-            {
-                entry = null;
-                return false;
-            }
-            entry = fileEntries[index];
-            return true;
         }
 
         #endregion
@@ -342,6 +397,20 @@ namespace Ba2Tools
 
                 fileEntries[i] = entry;
             }
+        }
+
+        private BA2GeneralFileEntry[] ConstructEntriesFromIndexes(IEnumerable<int> indexes)
+        {
+            BA2GeneralFileEntry[] entries = new BA2GeneralFileEntry[indexes.Count()];
+            int i = 0;
+            foreach (int index in indexes)
+            {
+                // TODO throw new IndexOutOfRange
+                entries[i] = fileEntries[index];
+                i++;
+            }
+
+            return entries;
         }
     }
 }

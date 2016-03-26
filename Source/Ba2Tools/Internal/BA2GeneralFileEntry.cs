@@ -16,42 +16,42 @@ namespace Ba2Tools.Internal
         /// <summary>
         /// Probably file hash.
         /// </summary>
-        public UInt32 Unknown0;
+        public UInt32 Unknown0 { get; internal set; }
 
         /// <summary>
         /// File extension.
         /// </summary>
-        public char[] Extension;
+        public char[] Extension { get; set; }
 
         /// <summary>
         /// Probably directory hash.
         /// </summary>
-        public UInt32 Unknown1;
+        public UInt32 Unknown1 { get; internal set; }
 
         /// <summary>
         /// Probably file flags.
         /// </summary>
-        public UInt32 Unknown2;
+        public UInt32 Unknown2 { get; internal set; }
 
         /// <summary>
         /// Offset in archive where file data is laid.
         /// </summary>
-        public UInt64 Offset;
+        public UInt64 Offset { get; internal set; }
 
         /// <summary>
         /// ZLib packed length. Equals 0 if not compressed.
         /// </summary>
-        public UInt32 PackedLength;
+        public UInt32 PackedLength { get; internal set; }
 
         /// <summary>
         /// Real file size.
         /// </summary>
-        public UInt32 UnpackedLength;
+        public UInt32 UnpackedLength { get; internal set; }
 
         /// <summary>
         /// File entry ending, always 0xBAADF00D
         /// </summary>
-        public UInt32 Unknown3;
+        public UInt32 Unknown3 { get; internal set; }
 
         /// <summary>
         /// Checks file entry being compressed.

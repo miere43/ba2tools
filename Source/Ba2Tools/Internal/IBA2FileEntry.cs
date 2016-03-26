@@ -9,5 +9,7 @@ namespace Ba2Tools.Internal
     public interface IBA2FileEntry
     {
         int Index { get; set; }
+
+        char[] Extension { get; set; }
     }
 }
