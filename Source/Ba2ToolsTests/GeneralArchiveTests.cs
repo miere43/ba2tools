@@ -210,9 +210,45 @@ namespace Ba2ToolsTests
         }
 
         [TestMethod]
+        public void ExtractByIndexFromOneFileArchiveMultithreaded()
+        {
+            BA2GeneralArchive archive
+                = BA2Loader.Load<BA2GeneralArchive>(SharedData.GeneralOneFileArchive, BA2LoaderFlags.Multithreaded);
+
+            using (MemoryStream stream = new MemoryStream())
+            {
+                Assert.IsTrue(archive.ExtractToStream(0, stream));
+                TestUtils.AssertExtractedTextFile(stream, "test text");
+            }
+
+            archive.Dispose();
+        }
+
+        [TestMethod]
         public void ExtractByIndexFromTwoFileArchive()
         {
             BA2GeneralArchive archive = BA2Loader.Load<BA2GeneralArchive>(SharedData.GeneralTwoFilesArchive);
+
+            using (MemoryStream stream = new MemoryStream())
+            {
+                Assert.IsTrue(archive.ExtractToStream(0, stream));
+                TestUtils.AssertExtractedTextFile(stream, "test text");
+            }
+
+            using (MemoryStream stream = new MemoryStream())
+            {
+                Assert.IsTrue(archive.ExtractToStream(1, stream));
+                TestUtils.AssertExtractedTextFile(stream, "wazzup dude bro?");
+            }
+
+            archive.Dispose();
+        }
+
+        [TestMethod]
+        public void ExtractByIndexFromTwoFileArchiveMultithreaded()
+        {
+            BA2GeneralArchive archive =
+                BA2Loader.Load<BA2GeneralArchive>(SharedData.GeneralTwoFilesArchive, BA2LoaderFlags.Multithreaded);
 
             using (MemoryStream stream = new MemoryStream())
             {
@@ -243,12 +279,42 @@ namespace Ba2ToolsTests
         }
 
         [TestMethod]
+        public void ExtractFilesByIndexesFromTwoFileArchiveMultithreaded()
+        {
+            BA2GeneralArchive archive =
+                BA2Loader.Load<BA2GeneralArchive>(SharedData.GeneralTwoFilesArchive, BA2LoaderFlags.Multithreaded);
+
+            string temp = SharedData.CreateTempDirectory();
+            archive.ExtractFiles(new int[] { 0, 1 }, temp, false);
+            Assert.IsTrue(File.Exists(Path.Combine(temp, "test.txt")));
+            Assert.IsTrue(File.Exists(Path.Combine(temp, "wazzup.bin")));
+
+            archive.Dispose();
+        }
+
+        [TestMethod]
         public void ExtractAllFromTwoFileArchive()
         {
             BA2GeneralArchive archive = BA2Loader.Load<BA2GeneralArchive>(SharedData.GeneralTwoFilesArchive);
 
             string temp = SharedData.CreateTempDirectory();
             archive.ExtractAll(temp, false);
+            Assert.IsTrue(File.Exists(Path.Combine(temp, "test.txt")));
+            Assert.IsTrue(File.Exists(Path.Combine(temp, "wazzup.bin")));
+
+            archive.Dispose();
+        }
+
+
+
+        [TestMethod]
+        public void ExtractAllFromTwoFilesArchiveMultithreaded()
+        {
+            BA2GeneralArchive archive = 
+                BA2Loader.Load<BA2GeneralArchive>(SharedData.GeneralTwoFilesArchive, BA2LoaderFlags.Multithreaded);
+
+            string temp = SharedData.CreateTempDirectory();
+            archive.ExtractAll(temp);
             Assert.IsTrue(File.Exists(Path.Combine(temp, "test.txt")));
             Assert.IsTrue(File.Exists(Path.Combine(temp, "wazzup.bin")));
 
