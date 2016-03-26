@@ -22,6 +22,10 @@ namespace Ba2ToolsTests
         /// </summary>
         public static byte[] ArchiveMagic = new byte[] { 0x42, 0x54, 0x44, 0x58 };
 
+        public static string GeneralOneFileArchive => GetDataPath("GeneralOneFile.ba2");
+
+        public static string GeneralTwoFilesArchive => GetDataPath("GeneralTwoFiles.ba2");
+
         /// <summary>
         /// Creates random temp folder in <c>TempFolder</c> and returns its path.
         /// </summary>

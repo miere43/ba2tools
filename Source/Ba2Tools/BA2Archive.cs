@@ -127,7 +127,7 @@ namespace Ba2Tools
         }
 
         /// <summary>
-        /// Extract all files from archive to specified directory
+        /// Extract specified files from archive to specified directory
         /// with cancellation token and progress reporter.
         /// </summary>
         /// <param name="fileNames">Files to extract.</param>
@@ -146,6 +146,51 @@ namespace Ba2Tools
         }
 
         /// <summary>
+        /// Extract's specified files, accessed by index to the
+        /// specified directory.
+        /// </summary>
+        /// <param name="indexes">The indexes.</param>
+        /// <param name="destination">
+        /// Destination folder where extracted files will be placed.
+        /// </param>
+        /// <param name="overwriteFiles">Overwrite files in destination folder?</param>
+        public virtual void ExtractFiles(
+            IEnumerable<int> indexes,
+            string destination,
+            bool overwriteFiles = false)
+        {
+            this.ExtractFiles(indexes, destination, CancellationToken.None, null, overwriteFiles);
+        }
+
+        /// <summary>
+        /// Extracts specified files, accessed by index to the specified
+        /// directory with cancellation token and progress reporter.
+        /// </summary>
+        /// <param name="indexes">The indexes.</param>
+        /// <param name="destination">
+        /// Destination folder where extracted files will be placed.
+        /// </param>
+        /// <param name="cancellationToken">
+        /// The cancellation token. Set it to <c>CancellationToken.None</c>
+        /// if you don't wanna cancel operation.
+        /// </param>
+        /// <param name="progress">
+        /// Progress reporter ranged from 0 to <c>indexes.Count()</c>.
+        /// Set it to <c>null</c> if you don't want to handle progress
+        /// of operation.
+        /// </param>
+        /// <param name="overwriteFiles">Overwrite files in destination folder?</param>
+        public virtual void ExtractFiles(
+            IEnumerable<int> indexes,
+            string destination,
+            CancellationToken cancellationToken,
+            IProgress<int> progress,
+            bool overwriteFiles = false)
+        {
+            this.ExtractFiles((IEnumerable<string>)null, destination, cancellationToken, progress, overwriteFiles);
+        }
+
+        /// <summary>
         /// Extract file contents to stream.
         /// </summary>
         /// <param name="fileName">File name or file path from archive.</param>
@@ -154,6 +199,19 @@ namespace Ba2Tools
         /// Success is true, failure is false.
         /// </returns>
         public virtual bool ExtractToStream(string fileName, Stream stream)
+        {
+            throw new NotSupportedException("Cannot extract any files because archive type is unknown.");
+        }
+
+        /// <summary>
+        /// Extract file, accessed by index, to the stream.
+        /// </summary>
+        /// <param name="index">The index.</param>
+        /// <param name="stream">The stream.</param>
+        /// <returns>
+        /// Success is true, failure is false.
+        /// </returns>
+        public virtual bool ExtractToStream(int index, Stream stream)
         {
             throw new NotSupportedException("Cannot extract any files because archive type is unknown.");
         }
@@ -168,6 +226,12 @@ namespace Ba2Tools
         {
             throw new NotSupportedException("Cannot extract any files because archive type is not known.");
         }
+
+        public virtual void Extract(int index, string destination, bool overwriteFile = false)
+        {
+            this.Extract(null, destination, overwriteFile);
+        }
+
         #endregion
 
         /// <summary>
@@ -247,6 +311,104 @@ namespace Ba2Tools
             return _fileListCache.Contains(fileName, StringComparer.OrdinalIgnoreCase);
         }
 
+        /// <summary>
+        /// Gets the index from archive filename.
+        /// </summary>
+        /// <param name="fileName">Path to file in archive.</param>
+        /// <returns>Index or -1 if not found.</returns>
+        public virtual int GetIndexFromFilename(string fileName)
+        {
+            if (_fileListCache == null)
+                ListFiles();
+
+            return _fileListCache.FindIndex((name)
+                => name.Equals(fileName, StringComparison.OrdinalIgnoreCase));
+        }
+
+        #region Helper methods
+
+        /// <summary>
+        /// Creates the directories for files.
+        /// </summary>
+        /// <param name="entries">The entries.</param>
+        /// <param name="coll">The coll.</param>
+        /// <param name="cancel">The cancel.</param>
+        /// <param name="destination">The destination.</param>
+        /// <param name="overwriteFiles">if set to <c>true</c> [overwrite files].</param>
+        protected void CreateDirectoriesForFiles(
+            IBA2FileEntry[] entries,
+            BlockingCollection<string> coll,
+            CancellationToken cancel,
+            string destination,
+            bool overwriteFiles)
+        {
+            IBA2FileEntry entry;
+            int entriesLength = entries.Length;
+
+            if (_fileListCache == null)
+                ListFiles();
+
+            for (int i = 0; i < entriesLength; i++)
+            {
+                entry = entries[i];
+
+                string path = CreateDirectoryAndGetPath(entry, destination, overwriteFiles);
+                coll.Add(path, cancel);
+            }
+        }
+
+        /// <summary>
+        /// Creates the directory and get path.
+        /// </summary>
+        /// <param name="entry">The entry.</param>
+        /// <param name="destination">The destination.</param>
+        /// <param name="overwriteFile">if set to <c>true</c> [overwrite file].</param>
+        /// <returns></returns>
+        /// <exception cref="BA2ExtractionException"></exception>
+        protected string CreateDirectoryAndGetPath(IBA2FileEntry entry, string destination, bool overwriteFile)
+        {
+            string extension = new string(entry.Extension).Trim('\0');
+            string extractPath = Path.Combine(destination, _fileListCache[entry.Index]);
+
+            if (overwriteFile == false && File.Exists(extractPath))
+                throw new BA2ExtractionException($"File \"{ extractPath }\" already exists and overwrite is not permitted.");
+
+            string extractFolder = Path.GetDirectoryName(extractPath);
+            Directory.CreateDirectory(extractFolder);
+
+            return extractPath;
+        }
+
+        /// <summary>
+        /// Gets the indexes from filenames.
+        /// </summary>
+        /// <param name="fileNames">The file names.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentNullException"></exception>
+        /// <exception cref="BA2ExtractionException"></exception>
+        protected int[] GetIndexesFromFilenames(IEnumerable<string> fileNames)
+        {
+            if (fileNames == null)
+                throw new ArgumentNullException(nameof(fileNames));
+
+            int[] indexes = new int[fileNames.Count()];
+
+            int i = 0;
+            foreach (string name in fileNames)
+            {
+                int index = GetIndexFromFilename(name);
+                if (index == -1)
+                    throw new BA2ExtractionException($"File \"{name}\" is not found in archive");
+
+                indexes[i] = index;
+                i++;
+            }
+
+            return indexes;
+        }
+
+        #endregion
+
         ~BA2Archive()
         {
             Dispose(false);
@@ -271,32 +433,6 @@ namespace Ba2Tools
                     ArchiveStream.Dispose();
                     ArchiveStream = null;
                 }
-            }
-        }
-
-        protected void CreateDirectoriesForFiles(
-            IBA2FileEntry[] entries,
-            BlockingCollection<string> coll,
-            CancellationToken cancel,
-            string destination,
-            bool overwriteFiles)
-        {
-            IBA2FileEntry entry;
-            int entriesLength = entries.Length;
-
-            if (_fileListCache == null)
-                ListFiles();
-
-            for (int i = 0; i < entriesLength; i++)
-            {
-                entry = entries[i];
-
-                string finalFilename = Path.Combine(destination, _fileListCache[entry.Index]);
-                if (overwriteFiles == false && File.Exists(finalFilename))
-                    throw new BA2ExtractionException($"File \"{ finalFilename }\" exists.");
-
-                Directory.CreateDirectory(Path.GetDirectoryName(finalFilename));
-                coll.Add(finalFilename, cancel);
             }
         }
     }

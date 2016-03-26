@@ -15,14 +15,17 @@ namespace Ba2ToolsTests
         {
             using (var stream = new MemoryStream())
             {
-                bool status = archive.ExtractToStream(fileName, stream);
-                Assert.IsTrue(status);
-
-                byte[] buffer = new byte[stream.Length];
-                Assert.AreEqual(stream.Length, stream.Read(buffer, 0, (int)stream.Length));
-
-                Assert.IsTrue(Encoding.ASCII.GetString(buffer).Equals(excepted, StringComparison.Ordinal));
+                Assert.IsTrue(archive.ExtractToStream(fileName, stream));
+                AssertExtractedTextFile(stream, excepted);
             }
+        }
+
+        public static void AssertExtractedTextFile(Stream stream, string excepted)
+        {
+            byte[] buffer = new byte[stream.Length];
+            Assert.AreEqual(stream.Length, stream.Read(buffer, 0, (int)stream.Length));
+
+            Assert.IsTrue(Encoding.ASCII.GetString(buffer).Equals(excepted, StringComparison.Ordinal));
         }
     }
 }
