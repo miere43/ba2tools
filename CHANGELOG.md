@@ -1,3 +1,7 @@
+## Version 0.5
+* Added multi-threaded extraction. Use ```BA2Loader.Load(path, BA2LoaderFlags.Multithreaded)``` to enable multithreaded extraction for ```ExtractFiles``` and ```ExtractAll``` methods.
+* Added new overloads to ```ExtractToStream```, ```Extract```, ```ExtractFiles``` methods accepting as first parameter file index/file indexes in archive instead of filename/filenames in archive.
+
 ## Version 0.4.1
 * Fixed bug when using ExtractFiles(...) methods in general archive which was leading to null exceptions.
 
