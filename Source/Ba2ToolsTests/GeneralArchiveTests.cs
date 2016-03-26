@@ -120,6 +120,7 @@ namespace Ba2ToolsTests
         {
             var archive = BA2Loader.Load(SharedData.GetDataPath("GeneralOneFile.ba2"));
             Assert.IsInstanceOfType(archive, typeof(BA2GeneralArchive));
+            Assert.IsTrue(BA2Loader.GetArchiveType(archive) == BA2Type.General);
         }
 
         /// <summary>
@@ -171,9 +172,7 @@ namespace Ba2ToolsTests
         [TestMethod]
         public void TestGeneralArchiveExtractionWithProgress()
         {
-            var path = SharedData.GetDataPath("GeneralOneFile.ba2");
-
-            BA2Archive archive = BA2Loader.Load(path);
+            BA2Archive archive = BA2Loader.Load(SharedData.GeneralOneFileArchive);
             string temp = SharedData.CreateTempDirectory();
             int progressValue = 0;
             bool progressReceived = false;
@@ -188,7 +187,7 @@ namespace Ba2ToolsTests
             int waits = 0;
             while (!progressReceived)
             {
-                if (waits > 3)
+                if (waits > 10)
                     break;
                 Thread.Sleep(25);
                 waits++;
