@@ -70,7 +70,7 @@ namespace Ba2Tools
                 destination,
                 CancellationToken.None,
                 null,
-                overwriteFiles = false);
+                overwriteFiles);
         }
 
         /// <summary>
