@@ -56,12 +56,12 @@ namespace Ba2Tools
         /// <param name="filePath">Path to archive.</param>
         /// <param name="flags">Flags for loader.</param>
         /// <returns>BA2Archive instance.</returns>
-        /// <exception cref="System.ArgumentException"></exception>
+        /// <exception cref="System.ArgumentNullException"><c>filePath</c> is null.</exception>
         /// <exception cref="BA2LoadException" />
         public static T Load<T>(string filePath, BA2LoaderFlags flags = BA2LoaderFlags.None) where T : BA2Archive
         {
-            if (String.IsNullOrWhiteSpace(filePath))
-                throw new ArgumentException(nameof(filePath));
+            if (filePath == null)
+                throw new ArgumentNullException(nameof(filePath));
 
             try
             {
@@ -156,10 +156,10 @@ namespace Ba2Tools
                     }
 
                     if (flags.HasFlag(BA2LoaderFlags.Multithreaded))
-                        archive.MultithreadedExtract = true;
+                        archive.IsMultithreaded = true;
 
                     archive.Header = header;
-                    archive.ArchiveStream = stream;
+                    archive.m_archiveStream = stream;
 
                     archive.PreloadData(reader);
                 }

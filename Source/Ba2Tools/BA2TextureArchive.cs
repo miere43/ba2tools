@@ -21,7 +21,9 @@ namespace Ba2Tools
         /// </summary>
         private BA2TextureFileEntry[] fileEntries = null;
 
-        #region Extract methods
+        private SemaphoreSlim accessSemaphore;
+
+        #region BA2Archive Overrides
 
         /// <summary>
         /// Extract all files from archive to specified directory.
@@ -161,7 +163,15 @@ namespace Ba2Tools
             if (!TryGetEntryFromName(fileName, out entry))
                 return false;
 
-            ExtractToStreamInternal(entry, stream);
+            try
+            {
+                accessSemaphore.Wait();
+                ExtractToStreamInternal(entry, stream);
+            }
+            finally
+            {
+                accessSemaphore.Release();
+            }
             return true;
         }
 
@@ -187,7 +197,15 @@ namespace Ba2Tools
             if (stream == null)
                 throw new ArgumentException(nameof(stream));
 
-            ExtractToStreamInternal(fileEntries[index], stream);
+            try
+            {
+                accessSemaphore.Wait();
+                ExtractToStreamInternal(fileEntries[index], stream);
+            }
+            finally
+            {
+                accessSemaphore.Release();
+            }
             return true;
         }
 
@@ -242,55 +260,113 @@ namespace Ba2Tools
             if (!TryGetEntryFromName(fileName, out entry))
                 throw new BA2ExtractionException($"Cannot find file name \"{fileName}\" in archive");
 
-            ExtractInternal(entry, destination, overwriteFile);
+            ExtractFileInternal(entry, destination, overwriteFile);
         }
+
+        /// <summary>
+        /// Preloads the data.
+        /// </summary>
+        /// <remarks>
+        /// Do not call base.PreloadData().
+        /// </remarks>
+        /// <param name="reader">The reader.</param>
+        internal override void PreloadData(BinaryReader reader)
+        {
+            CheckDisposed();
+            try
+            {
+                accessSemaphore.Wait();
+
+                this.BuildFileList();
+
+                m_archiveStream.Seek(BA2Loader.HeaderSize, SeekOrigin.Begin);
+                fileEntries = new BA2TextureFileEntry[TotalFiles];
+
+                for (int i = 0; i < TotalFiles; i++)
+                {
+                    BA2TextureFileEntry entry = new BA2TextureFileEntry()
+                    {
+                        Unknown0 = reader.ReadUInt32(),
+                        Extension = Encoding.ASCII.GetChars(reader.ReadBytes(4)),
+                        Unknown1 = reader.ReadUInt32(),
+                        Unknown2 = reader.ReadByte(),
+                        NumberOfChunks = reader.ReadByte(),
+                        ChunkHeaderSize = reader.ReadUInt16(),
+                        TextureHeight = reader.ReadUInt16(),
+                        TextureWidth = reader.ReadUInt16(),
+                        NumberOfMipmaps = reader.ReadByte(),
+                        Format = reader.ReadByte(),
+                        Unknown3 = reader.ReadUInt16(),
+                        Index = i
+                    };
+
+                    ReadChunksForEntry(reader, entry);
+
+                    fileEntries[i] = entry;
+                }
+            }
+            finally
+            {
+                accessSemaphore.Release();
+            }
+        }
+
         #endregion
 
-        #region Private methods
+        #region Helper Methods
 
         private void ExtractFilesInternal(BA2TextureFileEntry[] entries, string destination, CancellationToken cancellationToken,
             IProgress<int> progress, bool overwriteFiles)
         {
-            if (string.IsNullOrWhiteSpace(destination))
-                throw new ArgumentException(nameof(destination));
-
-            int totalEntries = entries.Count();
-
-            bool shouldUpdate = cancellationToken != null || progress != null;
-
-            int counter = 0;
-            int updateFrequency = Math.Max(1, totalEntries / 100);
-            int nextUpdate = updateFrequency;
-
-            BlockingCollection<string> readyFilenames = new BlockingCollection<string>(totalEntries);
-
-            Action createDirs = () =>
-                CreateDirectoriesForFiles(entries, readyFilenames, cancellationToken, destination, overwriteFiles);
-
-            if (MultithreadedExtract)
-                Task.Run(createDirs, cancellationToken);
-            else
-                createDirs();
-            
-            for (int i = 0; i < totalEntries; i++)
+            try
             {
-                BA2TextureFileEntry entry = entries[i];
-                using (var stream = File.Create(readyFilenames.Take(), 4096, FileOptions.SequentialScan))
-                {
-                    ExtractToStreamInternal(entry, stream);
-                }
+                accessSemaphore.Wait(cancellationToken);
 
-                counter++;
-                if (shouldUpdate && counter >= nextUpdate)
+                if (string.IsNullOrWhiteSpace(destination))
+                    throw new ArgumentException(nameof(destination));
+
+                int totalEntries = entries.Count();
+
+                bool shouldUpdate = cancellationToken != null || progress != null;
+
+                int counter = 0;
+                int updateFrequency = Math.Max(1, totalEntries / 100);
+                int nextUpdate = updateFrequency;
+
+                BlockingCollection<string> readyFilenames = new BlockingCollection<string>(totalEntries);
+
+                Action createDirs = () =>
+                    CreateDirectoriesForFiles(entries, readyFilenames, cancellationToken, destination, overwriteFiles);
+
+                if (IsMultithreaded)
+                    Task.Run(createDirs, cancellationToken);
+                else
+                    createDirs();
+
+                for (int i = 0; i < totalEntries; i++)
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    progress?.Report(counter);
-                    nextUpdate += updateFrequency;
+                    BA2TextureFileEntry entry = entries[i];
+                    using (var stream = File.Create(readyFilenames.Take(), 4096, FileOptions.SequentialScan))
+                    {
+                        ExtractToStreamInternal(entry, stream);
+                    }
+
+                    counter++;
+                    if (shouldUpdate && counter >= nextUpdate)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        progress?.Report(counter);
+                        nextUpdate += updateFrequency;
+                    }
                 }
+            }
+            finally
+            {
+                accessSemaphore.Release();
             }
         }
 
-        private void ExtractInternal(BA2TextureFileEntry entry, string destinationFolder, bool overwriteFile)
+        private void ExtractFileInternal(BA2TextureFileEntry entry, string destinationFolder, bool overwriteFile)
         {
             string filePath = m_fileList[entry.Index];
 
@@ -422,10 +498,10 @@ namespace Ba2Tools
                 {
                     var chunk = entry.Chunks[i];
 
-                    ArchiveStream.Seek((long)chunk.Offset + zlibHeaderSize, SeekOrigin.Begin);
+                    m_archiveStream.Seek((long)chunk.Offset + zlibHeaderSize, SeekOrigin.Begin);
 
                     byte[] destBuffer = new byte[chunk.UnpackedLength];
-                    using (var uncompressStream = new DeflateStream(ArchiveStream, CompressionMode.Decompress, leaveOpen: true))
+                    using (var uncompressStream = new DeflateStream(m_archiveStream, CompressionMode.Decompress, leaveOpen: true))
                     {
                         var bytesReaden = uncompressStream.Read(destBuffer, 0, (int)chunk.UnpackedLength);
                         // Debug.Assert(bytesReaden == chunk.UnpackedLength);
@@ -433,8 +509,6 @@ namespace Ba2Tools
 
                     writer.Write(destBuffer, 0, (int)chunk.UnpackedLength);
                 }
-
-                // writer.Seek(0, SeekOrigin.Begin);
             }
         }
 
@@ -509,53 +583,6 @@ namespace Ba2Tools
 
             return header;
         }
-        #endregion
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                fileEntries = null;
-                m_fileList = null;
-            }
-
-            base.Dispose(disposing);
-        }
-
-        /// <summary>
-        /// Preloads the data.
-        /// </summary>
-        /// <param name="reader">The reader.</param>
-        internal override void PreloadData(BinaryReader reader)
-        {
-            reader.BaseStream.Seek(BA2Loader.HeaderSize, SeekOrigin.Begin);
-            fileEntries = new BA2TextureFileEntry[TotalFiles];
-
-            for (int i = 0; i < TotalFiles; i++)
-            {
-                BA2TextureFileEntry entry = new BA2TextureFileEntry()
-                {
-                    Unknown0 = reader.ReadUInt32(),
-                    Extension = Encoding.ASCII.GetChars(reader.ReadBytes(4)),
-                    Unknown1 = reader.ReadUInt32(),
-                    Unknown2 = reader.ReadByte(),
-                    NumberOfChunks = reader.ReadByte(),
-                    ChunkHeaderSize = reader.ReadUInt16(),
-                    TextureHeight = reader.ReadUInt16(),
-                    TextureWidth = reader.ReadUInt16(),
-                    NumberOfMipmaps = reader.ReadByte(),
-                    Format = reader.ReadByte(),
-                    Unknown3 = reader.ReadUInt16(),
-                    Index = i
-                };
-
-                ReadChunksForEntry(reader, entry);
-
-                fileEntries[i] = entry;
-            }
-
-            base.PreloadData(reader);
-        }
 
         private BA2TextureFileEntry[] ConstructEntriesFromIndexes(IEnumerable<int> indexes)
         {
@@ -569,5 +596,23 @@ namespace Ba2Tools
 
             return entries;
         }
+
+        #endregion
+
+        #region Disposal
+
+        protected override void Dispose(bool disposeManagedResources)
+        {
+            if (disposeManagedResources)
+            {
+                fileEntries = null;
+                if (accessSemaphore != null)
+                    accessSemaphore.Dispose();
+            }
+
+            base.Dispose(disposeManagedResources);
+        }
+
+        #endregion
     }
 }

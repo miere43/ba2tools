@@ -19,7 +19,20 @@ namespace Ba2Tools
 
         protected bool m_disposed;
 
-        #region Properties
+        /// <summary>
+        /// Offset to table where all filenames are listed.
+        /// </summary>
+        protected internal UInt64 m_nameTableOffset { get { return Header.NameTableOffset; } }
+
+        /// <summary>
+        /// Gets the archive stream.
+        /// </summary>
+        /// <value>
+        /// The archive stream.
+        /// </value>
+        internal Stream m_archiveStream;
+
+        #region Public Properties
 
         /// <summary>
         /// Archive version defined in header.
@@ -38,17 +51,9 @@ namespace Ba2Tools
         public UInt32 TotalFiles { get { return Header.TotalFiles; } }
 
         /// <summary>
-        /// Offset to table where all filenames are listed.
+        /// Get underlying archive stream length in bytes.
         /// </summary>
-        protected internal UInt64 NameTableOffset { get { return Header.NameTableOffset; } }
-
-        /// <summary>
-        /// Gets the archive stream.
-        /// </summary>
-        /// <value>
-        /// The archive stream.
-        /// </value>
-        internal Stream ArchiveStream { get; set; }
+        public Int64 Length { get { return m_archiveStream.Length; } }
 
         /// <summary>
         /// Gets the archive header.
@@ -61,7 +66,7 @@ namespace Ba2Tools
         /// <summary>
         /// Is multithreaded extraction enabled?
         /// </summary>
-        public bool MultithreadedExtract { get; internal set; } = false;
+        public bool IsMultithreaded { get; internal set; } = false;
 
         /// <summary>
         /// List of files stored in archive.
@@ -296,21 +301,21 @@ namespace Ba2Tools
                 return;
 
             // Not valid name table offset was given
-            if (NameTableOffset < (UInt64)BA2Loader.HeaderSize)
+            if (m_nameTableOffset < (UInt64)BA2Loader.HeaderSize)
                 throw new InvalidDataException("Invalid name table offset was providen.");
 
             List<string> fileList = new List<string>((int)TotalFiles);
 
-            ArchiveStream.Seek((long)NameTableOffset, SeekOrigin.Begin);
-            using (var reader = new BinaryReader(ArchiveStream, Encoding.ASCII, leaveOpen: true))
+            m_archiveStream.Seek((long)m_nameTableOffset, SeekOrigin.Begin);
+            using (var reader = new BinaryReader(m_archiveStream, Encoding.ASCII, leaveOpen: true))
             {
-                long nameTableLength = ArchiveStream.Length - (long)NameTableOffset;
+                long nameTableLength = m_archiveStream.Length - (long)m_nameTableOffset;
                 if (nameTableLength < 1)
                     throw new InvalidDataException("Invalid name table offset was providen.");
 
-                while (ArchiveStream.Length - ArchiveStream.Position >= 2)
+                while (m_archiveStream.Length - m_archiveStream.Position >= 2)
                 {
-                    int remainingBytes = (int)(ArchiveStream.Length - ArchiveStream.Position);
+                    int remainingBytes = (int)(m_archiveStream.Length - m_archiveStream.Position);
 
                     UInt16 stringLength = reader.ReadUInt16();
                     byte[] rawstring = reader.ReadBytes(stringLength > remainingBytes ? remainingBytes : stringLength);
@@ -415,8 +420,7 @@ namespace Ba2Tools
         }
 
         /// <summary>
-        /// Disposes BA2Archive instance and frees its resources.
-        /// After this call BA2Archive is not usable anymore.
+        /// Disposes BA2Archive instance and frees its resources. After this call extraction methods of BA2Archive are not usable anymore.
         /// </summary>
         public void Dispose()
         {
@@ -424,14 +428,17 @@ namespace Ba2Tools
             GC.SuppressFinalize(this);
         }
 
-        protected virtual void Dispose(bool disposing)
+        protected virtual void Dispose(bool disposeManagedResources)
         {
-            if (disposing)
+            if (m_disposed)
+                return;
+
+            if (disposeManagedResources)
             {
-                if (ArchiveStream != null)
+                if (m_archiveStream != null)
                 {
-                    ArchiveStream.Dispose();
-                    ArchiveStream = null;
+                    m_archiveStream.Dispose();
+                    m_archiveStream = null;
                 }
             }
 

@@ -8,22 +8,21 @@ Current features:
 * Extract files from general archives, including packed files.
 * Extract files from texture archives.
 * Supports extracting to Stream, not only in file system.
-* List files in archive
 * Support for extraction cancellation and progress reporting.
+* BA2Archive instances are thread-safe.
 
 Upcoming features:
 * Write BA2 archives
 
 Sample:
 ```c#
-using (var archive = BA2Loader.Load("Fallout4 - Interface.ba2"))
-{
-	IList<string> filesInArchive = archive.ListFiles();
-
-	if (filesInArchive.Count >= 1)
-	{
-		archive.Extract(filesInArchive.First(), "Modding/Interface/");
-	}
+using (BA2Archive archive = BA2Loader.Load("Fallout4 - Interface.ba2")) {
+    if (archive.TotalFiles >= 1) {
+        archive.Extract(
+                 fileName: archive.FileList[0],
+              destination: "Modding/Interface/",
+            overwriteFile: true);
+    }
 }
 ```
 

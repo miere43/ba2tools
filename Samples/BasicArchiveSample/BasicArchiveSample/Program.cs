@@ -123,7 +123,7 @@ namespace BasicArchiveSample
             string archivePath = null;
             BA2Archive archive = null;
 
-            Console.WriteLine("Path to archive: ");
+            Console.Write("Path to archive: ");
             while (true)
             {
                 archivePath = Console.ReadLine();
@@ -144,7 +144,7 @@ namespace BasicArchiveSample
                     break;
 
                 tryAgain:
-                    Console.WriteLine("Try again: ");
+                    Console.Write("Try again: ");
             }
 
             return archive;
@@ -155,7 +155,8 @@ namespace BasicArchiveSample
             BA2Archive archive = null;
             if (args.Length > 0)
             {
-                try {
+                try
+                {
                     archive = BA2Loader.Load(args[0]);
                 }
                 catch (Exception e)
@@ -258,7 +259,7 @@ namespace BasicArchiveSample
 
         private static void ExtractAll(BA2Archive archive, ExtractAllCommand cmd)
         {
-            ExtractFiles(archive, archive.ListFiles(), cmd.Destination);
+            ExtractFiles(archive, archive.FileList, cmd.Destination);
         }
 
         private static void ExtractSingle(BA2Archive archive, ExtractCommand cmd)
@@ -268,7 +269,7 @@ namespace BasicArchiveSample
 
         private static IEnumerable<string> FindMatchingFiles(BA2Archive archive, string match)
         {
-            return archive.ListFiles().Where((fileName)
+            return archive.FileList.Where((fileName)
                 => fileName.IndexOf(match, StringComparison.InvariantCultureIgnoreCase) != -1);
         } 
 
@@ -279,7 +280,7 @@ namespace BasicArchiveSample
             {
                 var cancel = new CancellationTokenSource();
                 var progress = new ConsoleProgress((int)files.Count(),
-                    (uint)((archive.ArchiveStream.Length / archive.TotalFiles) * files.Count()));
+                    (uint)((archive.Length / archive.TotalFiles) * files.Count()));
                 ManualResetEvent ev = new ManualResetEvent(false);
                 bool cancelled = false;
 
@@ -289,7 +290,7 @@ namespace BasicArchiveSample
                     {
                         progress.Start();
                         // extract
-                        archive.ExtractFiles(files, dest, cancel.Token, progress, true);
+                        archive.ExtractFiles(files, dest, true, cancel.Token, progress);
                         // manual exit from thread after extracting.
                         ev.Set();
                     }
@@ -354,7 +355,7 @@ namespace BasicArchiveSample
             Console.WriteLine("Type: " + BA2Loader.GetArchiveType(archive));
             Console.WriteLine("Signature: " + Encoding.ASCII.GetString(archive.Header.Signature));
             Console.WriteLine("Total files: " + archive.TotalFiles);
-            Console.WriteLine("Size: " + archive.ArchiveStream.Length / 1024 / 1024 + " MB");
+            Console.WriteLine("Size: " + archive.Length / 1024 / 1024 + " MB");
         }
 
         static void WriteError(string format, params object[] args)

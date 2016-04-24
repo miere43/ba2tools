@@ -20,6 +20,8 @@ namespace Ba2Tools
     {
         private BA2GeneralFileEntry[] fileEntries = null;
 
+        private SemaphoreSlim accessSemaphore = new SemaphoreSlim(1, 1);
+
         #region BA2Archive Overrides
 
         /// <summary>
@@ -137,7 +139,7 @@ namespace Ba2Tools
 
             int index = GetIndexFromFilename(fileName);
             if (index == -1)
-                throw new BA2ExtractionException($"Cannot find file name \"{ fileName }\" in archive");
+                throw new BA2ExtractionException($"Cannot find file \"{ fileName }\" in archive.");
 
             this.Extract(index, destination, overwriteFile);
         }
@@ -165,33 +167,17 @@ namespace Ba2Tools
             string extractPath = CreateDirectoryAndGetPath(entry, destination, overwriteFile);
 
             using (var stream = File.Create(extractPath, 4096, FileOptions.SequentialScan))
-                ExtractToStreamInternal(entry, stream);
-        }
-
-        /// <summary>
-        /// Extract file, accessed by index, to the stream.
-        /// </summary>
-        /// <param name="index">The index.</param>
-        /// <param name="stream">The stream.</param>
-        /// <returns>
-        /// Success is true, failure is false.
-        /// </returns>
-        /// <exception cref="IndexOutOfRangeException">
-        /// <c>index</c> is less than 0 or more than total files in archive.
-        /// </exception>
-        /// <exception cref="ArgumentNullException">
-        /// <c>stream</c> is null.
-        /// </exception>
-        public override bool ExtractToStream(int index, Stream stream)
-        {
-            CheckDisposed();
-            if (index < 0 || index > this.TotalFiles)
-                throw new IndexOutOfRangeException(nameof(index));
-            if (stream == null)
-                throw new ArgumentNullException(nameof(stream));
-
-            ExtractToStreamInternal(fileEntries[index], stream);
-            return true;
+            {
+                try
+                {
+                    accessSemaphore.Wait();
+                    ExtractToStreamInternal(entry, stream);
+                }
+                finally
+                {
+                    accessSemaphore.Release();
+                }
+            }
         }
 
         /// <summary>
@@ -217,47 +203,108 @@ namespace Ba2Tools
             if (index == -1)
                 return false;
 
-            ExtractToStreamInternal(fileEntries[index], stream);
+            try
+            {
+                accessSemaphore.Wait();
+                ExtractToStreamInternal(fileEntries[index], stream);
+            }
+            finally
+            {
+                accessSemaphore.Release();
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Extract file, accessed by index, to the stream.
+        /// </summary>
+        /// <param name="index">The index.</param>
+        /// <param name="stream">The stream.</param>
+        /// <returns>
+        /// Success is true, failure is false.
+        /// </returns>
+        /// <exception cref="IndexOutOfRangeException">
+        /// <c>index</c> is less than 0 or more than total files in archive.
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// <c>stream</c> is null.
+        /// </exception>
+        public override bool ExtractToStream(int index, Stream stream)
+        {
+            CheckDisposed();
+            if (index < 0 || index > this.TotalFiles)
+                throw new IndexOutOfRangeException(nameof(index));
+            if (stream == null)
+                throw new ArgumentNullException(nameof(stream));
+
+            try
+            {
+                accessSemaphore.Wait();
+                ExtractToStreamInternal(fileEntries[index], stream);
+            }
+            finally
+            {
+                accessSemaphore.Release();
+            }
             return true;
         }
 
         /// <summary>
         /// Preloads the data.
         /// </summary>
+        /// <remarks>
+        /// Do not call base.PreloadData().
+        /// </remarks>
         /// <param name="reader">The reader.</param>
         internal override void PreloadData(BinaryReader reader)
         {
-            reader.BaseStream.Seek(BA2Loader.HeaderSize, SeekOrigin.Begin);
-            fileEntries = new BA2GeneralFileEntry[TotalFiles];
+            CheckDisposed();
 
-            for (int i = 0; i < TotalFiles; i++)
+            try
             {
-                BA2GeneralFileEntry entry = new BA2GeneralFileEntry()
+                accessSemaphore.Wait();
+
+                this.BuildFileList();
+
+                m_archiveStream.Seek(BA2Loader.HeaderSize, SeekOrigin.Begin);
+                fileEntries = new BA2GeneralFileEntry[TotalFiles];
+
+                for (int i = 0; i < TotalFiles; i++)
                 {
-                    Unknown0 = reader.ReadUInt32(),
-                    Extension = Encoding.ASCII.GetChars(reader.ReadBytes(4)),
-                    Unknown1 = reader.ReadUInt32(),
-                    Unknown2 = reader.ReadUInt32(),
-                    Offset = reader.ReadUInt64(),
-                    PackedLength = reader.ReadUInt32(),
-                    UnpackedLength = reader.ReadUInt32(),
-                    Unknown3 = reader.ReadUInt32(),
-                    Index = i
-                };
+                    BA2GeneralFileEntry entry = new BA2GeneralFileEntry()
+                    {
+                        Unknown0 = reader.ReadUInt32(),
+                        Extension = Encoding.ASCII.GetChars(reader.ReadBytes(4)),
+                        Unknown1 = reader.ReadUInt32(),
+                        Unknown2 = reader.ReadUInt32(),
+                        Offset = reader.ReadUInt64(),
+                        PackedLength = reader.ReadUInt32(),
+                        UnpackedLength = reader.ReadUInt32(),
+                        Unknown3 = reader.ReadUInt32(),
+                        Index = i
+                    };
 
-                // 3131961357 = 0xBAADF00D as uint little-endian (0x0DF0ADBA)
-                // System.Diagnostics.Debug.Assert(entry.Unknown3 == 3131961357);
+                    // 3131961357 = 0xBAADF00D as uint little-endian (0x0DF0ADBA)
+                    // System.Diagnostics.Debug.Assert(entry.Unknown3 == 3131961357);
 
-                fileEntries[i] = entry;
+                    fileEntries[i] = entry;
+                }
             }
-
-            base.PreloadData(reader);
+            finally
+            {
+                accessSemaphore.Release();
+            }
         }
 
         #endregion
 
         #region Helper Methods
 
+        /// <summary>
+        /// Don't forget to wrap semaphore.
+        /// </summary>
+        /// <param name="entry"></param>
+        /// <param name="destStream"></param>
         private void ExtractToStreamInternal(BA2GeneralFileEntry entry, Stream destStream)
         {
             // DeflateStream throws exception when
@@ -268,14 +315,14 @@ namespace Ba2Tools
             UInt64 dataOffset = entry.IsCompressed() ? entry.Offset + zlibHeaderLength : entry.Offset;
             UInt32 dataLength = entry.IsCompressed() ? entry.PackedLength - zlibHeaderLength : entry.UnpackedLength;
 
-            ArchiveStream.Seek((long)dataOffset, SeekOrigin.Begin);
+            m_archiveStream.Seek((long)dataOffset, SeekOrigin.Begin);
 
             int bytesToRead = (int)dataLength;
             byte[] rawData = new byte[entry.UnpackedLength];
 
             if (entry.IsCompressed())
             {
-                using (var uncompressStream = new DeflateStream(ArchiveStream, CompressionMode.Decompress, leaveOpen: true))
+                using (var uncompressStream = new DeflateStream(m_archiveStream, CompressionMode.Decompress, leaveOpen: true))
                 {
                     var bytesReaden = uncompressStream.Read(rawData, 0, (int)dataLength);
                 }
@@ -284,7 +331,7 @@ namespace Ba2Tools
             {
                 // TODO
                 // entry.UnpackedLength => dataLength;
-                ArchiveStream.Read(rawData, 0, (int)entry.UnpackedLength);
+                m_archiveStream.Read(rawData, 0, (int)entry.UnpackedLength);
             }
 
             destStream.Write(rawData, 0, rawData.Length);
@@ -296,39 +343,48 @@ namespace Ba2Tools
         private void ExtractFilesInternal(BA2GeneralFileEntry[] entries, string destination, CancellationToken cancellationToken,
             IProgress<int> progress, bool overwriteFiles)
         {
-            if (string.IsNullOrWhiteSpace(destination))
-                throw new ArgumentException(nameof(destination));
-
-            int totalEntries = entries.Count();
-
-            bool shouldUpdate = cancellationToken != null || progress != null;
-
-            int counter = 0;
-            int updateFrequency = Math.Max(1, totalEntries / 100);
-            int nextUpdate = updateFrequency;
-
-            BlockingCollection<string> readyFilenames = new BlockingCollection<string>(totalEntries);
-
-            var task = Task.Run(() =>
+            try
             {
-                CreateDirectoriesForFiles(entries, readyFilenames, cancellationToken, destination, overwriteFiles);
-            }, cancellationToken);
+                accessSemaphore.Wait(cancellationToken);
 
-            for (int i = 0; i < totalEntries; i++)
+                if (string.IsNullOrWhiteSpace(destination))
+                    throw new ArgumentException(nameof(destination));
+
+                int totalEntries = entries.Count();
+
+                bool shouldUpdate = cancellationToken != null || progress != null;
+
+                int counter = 0;
+                int updateFrequency = Math.Max(1, totalEntries / 100);
+                int nextUpdate = updateFrequency;
+
+                BlockingCollection<string> readyFilenames = new BlockingCollection<string>(totalEntries);
+
+                var task = Task.Run(() =>
+                {
+                    CreateDirectoriesForFiles(entries, readyFilenames, cancellationToken, destination, overwriteFiles);
+                }, cancellationToken);
+
+                for (int i = 0; i < totalEntries; i++)
+                {
+                    BA2GeneralFileEntry entry = entries[i];
+                    using (var stream = File.Create(readyFilenames.Take(), 4096, FileOptions.SequentialScan))
+                    {
+                        ExtractToStreamInternal(entry, stream);
+                    }
+
+                    counter++;
+                    if (shouldUpdate && counter >= nextUpdate)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        progress?.Report(counter);
+                        nextUpdate += updateFrequency;
+                    }
+                }
+            }
+            finally
             {
-                BA2GeneralFileEntry entry = entries[i];
-                using (var stream = File.Create(readyFilenames.Take(), 4096, FileOptions.SequentialScan))
-                {
-                    ExtractToStreamInternal(entry, stream);
-                }
-
-                counter++;
-                if (shouldUpdate && counter >= nextUpdate)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    progress?.Report(counter);
-                    nextUpdate += updateFrequency;
-                }
+                accessSemaphore.Release();
             }
         }
 
@@ -350,14 +406,16 @@ namespace Ba2Tools
 
         #region Disposal
 
-        protected override void Dispose(bool disposing)
+        protected override void Dispose(bool disposeManagedResources)
         {
-            if (disposing)
+            if (disposeManagedResources)
             {
                 fileEntries = null;
+                if (accessSemaphore != null)
+                    accessSemaphore.Dispose();
             }
 
-            base.Dispose(disposing);
+            base.Dispose(disposeManagedResources);
         }
 
         #endregion

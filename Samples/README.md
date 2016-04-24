@@ -7,7 +7,7 @@ You can also refer to these small samples as well:
 ## Extract all files
 ```c#
 using (var archive = BA2Loader.Load("Fallout4 - Startup.ba2")) {
-	archive.ExtractAll("Extract/StartupArchive/");
+	archive.ExtractAll("Extract/StartupArchive/", overwriteFiles: true);
 }
 ```
 
@@ -23,12 +23,12 @@ using (var archive = BA2Loader.Load("Fallout4 - Startup.ba2")) {
 var archive = BA2Loader.Load("Fallout4 - Startup.ba2"));
 
 if (archive.GetType() == typeof(BA2GeneralArchive)) {
-	Console.WriteLine("This archive may contain any files.");
+	Console.WriteLine("This archive can contain any files.");
 } else if (archive as BA2TextureArchive != null) {
 	Console.WriteLine("This archive contains only textures.");
 } else {
 	var archiveType = BA2Loader.GetArchiveType(archive);
-	Console.WriteLine($"Cant say anything about {archiveType} archive type.");
+	Console.WriteLine($"Can't say anything about {archiveType} archive type.");
 }
 
 archive.Dispose();
@@ -38,7 +38,7 @@ archive.Dispose();
 ```c#
 using (var stream = new System.IO.MemoryStream()) {
 	using (var textureArchive = BA2Loader.Load("Fallout4 - Textures1.ba2")) {
-		string firstFilePath = textureArchive.ListFiles().First();
+		string firstFilePath = textureArchive.FileList[0];
 
 		textureArchive.ExtractToStream(firstFilePath, stream);
 	}
