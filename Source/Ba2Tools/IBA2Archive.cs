@@ -11,6 +11,9 @@ namespace Ba2Tools
     /// </summary>
     internal interface IBA2Archive
     {
+        /// <summary>
+        /// File paths in archive.
+        /// </summary>
         IReadOnlyList<string> FileList { get; }
 
         /// <summary>
@@ -24,10 +27,20 @@ namespace Ba2Tools
         /// <summary>
         /// Extract single file to specified directory by index.
         /// </summary>
-        /// <param name="index">The index.</param>
+        /// <param name="fileIndex">File index.</param>
         /// <param name="destination">Absolute or relative directory path where extracted file will be placed.</param>
         /// <param name="overwriteFile">Overwrite existing file in directory with extracted one?</param>
-        void Extract(int index, string destination, bool overwriteFile);
+        void Extract(int fileIndex, string destination, bool overwriteFile);
+
+        /// <summary>
+        /// Extract all files from archive to specified directory with
+        /// cancellation token and progress reporter.
+        /// </summary>
+        /// <param name="destination">Absolute or relative directory path directory where extracted files will be placed.</param>
+        /// <param name="overwriteFiles">Overwrite files on disk with extracted ones?</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <param name="progress">Progress reporter ranged from 0 to archive's total files count.</param>
+        void ExtractAll(string destination, bool overwriteFiles, CancellationToken cancellationToken, IProgress<int> progress);
 
         /// <summary>
         /// Extract all files from archive to specified directory
@@ -35,30 +48,21 @@ namespace Ba2Tools
         /// </summary>
         /// <param name="fileNames">Files to extract.</param>
         /// <param name="destination">Absolute or relative directory path where extracted files will be placed.</param>
+        /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <param name="progress">Progress reporter ranged from 0 to <c>fileNames.Count()</c>.</param>
-        /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
-        void ExtractFiles(IEnumerable<string> fileNames, string destination, CancellationToken cancellationToken, IProgress<int> progress,
-            bool overwriteFiles);
-
-        /// <summary>
-        /// Extract all files from archive to specified directory with
-        /// cancellation token and progress reporter.
-        /// </summary>
-        /// <param name="destination">Absolute or relative directory path directory where extracted files will be placed.</param>
-        /// <param name="cancellationToken">Cancellation token.</param>
-        /// <param name="progress">Progress reporter ranged from 0 to archive's total files count.</param>
-        /// <param name="overwriteFiles">Overwrite files on disk with extracted ones?</param>
-        void ExtractAll(string destination, CancellationToken cancellationToken, IProgress<int> progress, bool overwriteFiles);
+        void ExtractFiles(IEnumerable<string> fileNames, string destination, bool overwriteFiles, CancellationToken cancellationToken,
+            IProgress<int> progress);
 
         /// <summary>
         /// Extracts specified files, accessed by index to the specified
         /// directory with cancellation token and progress reporter.
         /// </summary>
-        /// <param name="indexes">The indexes.</param>
+        /// <param name="fileIndexes">File indexes.</param>
         /// <param name="destination">
         /// Destination folder where extracted files will be placed.
         /// </param>
+        /// <param name="overwriteFiles">Overwrite files in destination folder?</param>
         /// <param name="cancellationToken">
         /// The cancellation token. Set it to <c>CancellationToken.None</c>
         /// if you don't wanna cancel operation.
@@ -68,19 +72,8 @@ namespace Ba2Tools
         /// Set it to <c>null</c> if you don't want to handle progress
         /// of operation.
         /// </param>
-        /// <param name="overwriteFiles">Overwrite files in destination folder?</param>
-        void ExtractFiles(IEnumerable<int> indexes, string destination, CancellationToken cancellationToken, IProgress<int> progress,
-            bool overwriteFiles);
-
-        /// <summary>
-        /// Extract file, accessed by index, to the stream.
-        /// </summary>
-        /// <param name="index">The index.</param>
-        /// <param name="stream">The stream.</param>
-        /// <returns>
-        /// Success is true, failure is false.
-        /// </returns>
-        bool ExtractToStream(int index, Stream stream);
+        void ExtractFiles(IEnumerable<int> fileIndexes, string destination, bool overwriteFiles, CancellationToken cancellationToken,
+            IProgress<int> progress);
 
         /// <summary>
         /// Extract file contents to stream.
@@ -91,6 +84,16 @@ namespace Ba2Tools
         /// Success is true, failure is false.
         /// </returns>
         bool ExtractToStream(string fileName, Stream stream);
+
+        /// <summary>
+        /// Extract file, accessed by index, to the stream.
+        /// </summary>
+        /// <param name="index">The index.</param>
+        /// <param name="stream">The stream.</param>
+        /// <returns>
+        /// Success is true, failure is false.
+        /// </returns>
+        bool ExtractToStream(int index, Stream stream);
 
         /// <summary>
         /// Check file existance in archive.
@@ -108,14 +111,5 @@ namespace Ba2Tools
         /// <param name="fileName">Path to file in archive.</param>
         /// <returns>Index or -1 if not found.</returns>
         int GetIndexFromFilename(string fileName);
-
-        /// <summary>
-        /// Shows all file paths in archive.
-        /// </summary>
-        /// <param name="forceListFiles">Force list files in archive instead of returning cached copy.</param>
-        /// <returns>
-        /// List of file paths in archive.
-        /// </returns>
-        // IList<string> GetFileList(bool forceListFiles = false);
     }
 }

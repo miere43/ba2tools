@@ -34,26 +34,14 @@ namespace Ba2Tools
         }
 
         /// <summary>
-        /// Extract all files from archive to specified directory with cancellation token.
-        /// </summary>
-        /// <param name="destination">Directory where extracted files will be placed.</param>
-        /// <param name="cancellationToken">Cancellation token.</param>
-        /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
-        public override void ExtractAll(string destination, CancellationToken cancellationToken, bool overwriteFiles)
-        {
-            CheckDisposed();
-            this.ExtractFilesInternal(fileEntries, destination, cancellationToken, null, overwriteFiles);
-        }
-
-        /// <summary>
         /// Extract all files from archive to specified directory with cancellation token and progress reporter.
         /// </summary>
         /// <param name="destination">Absolute or relative directory path directory where extracted files will be placed.</param>
+        /// <param name="overwriteFiles">Overwrite files on disk with extracted ones?</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <param name="progress">Progress reporter ranged from 0 to archive's total files count.</param>
-        /// <param name="overwriteFiles">Overwrite files on disk with extracted ones?</param>
-        public override void ExtractAll(string destination, CancellationToken cancellationToken, IProgress<int> progress,
-            bool overwriteFiles)
+        public override void ExtractAll(string destination, bool overwriteFiles, CancellationToken cancellationToken,
+            IProgress<int> progress)
         {
             CheckDisposed();
             this.ExtractFilesInternal(fileEntries, destination, cancellationToken, progress, overwriteFiles);
@@ -70,25 +58,6 @@ namespace Ba2Tools
             CheckDisposed();
             this.ExtractFilesInternal(ConstructEntriesFromIndexes(GetIndexesFromFilenames(fileNames)), destination,
                 CancellationToken.None, null, overwriteFiles);
-        }
-
-        /// <summary>
-        /// Extract all files from archive.
-        /// </summary>
-        /// <param name="fileNames">Files to extract.</param>
-        /// <param name="destination">Directory where extracted files will be placed.</param>
-        /// <param name="cancellationToken">Cancellation token.</param>
-        /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
-        public override void ExtractFiles(IEnumerable<string> fileNames, string destination, CancellationToken cancellationToken,
-            bool overwriteFiles)
-        {
-            CheckDisposed();
-            this.ExtractFilesInternal(
-                ConstructEntriesFromIndexes(GetIndexesFromFilenames(fileNames)),
-                destination,
-                cancellationToken,
-                null,
-                overwriteFiles);
         }
 
         /// <summary>
@@ -113,6 +82,7 @@ namespace Ba2Tools
         /// <param name="destination">
         /// Destination folder where extracted files will be placed.
         /// </param>
+        /// <param name="overwriteFiles">Overwrite files in destination folder?</param>
         /// <param name="cancellationToken">
         /// The cancellation token. Set it to <c>CancellationToken.None</c> if you don't care.
         /// </param>
@@ -120,9 +90,8 @@ namespace Ba2Tools
         /// Progress reporter ranged from 0 to <c>indexes.Count()</c>. Set it to <c>null</c> if you don't want to handle progress
         /// of operation.
         /// </param>
-        /// <param name="overwriteFiles">Overwrite files in destination folder?</param>
-        public override void ExtractFiles(IEnumerable<int> indexes, string destination, CancellationToken cancellationToken,
-            IProgress<int> progress, bool overwriteFiles)
+        public override void ExtractFiles(IEnumerable<int> indexes, string destination, bool overwriteFiles,
+            CancellationToken cancellationToken, IProgress<int> progress)
         {
             CheckDisposed();
             this.ExtractFilesInternal(ConstructEntriesFromIndexes(indexes), destination, cancellationToken, progress, overwriteFiles);
@@ -134,14 +103,14 @@ namespace Ba2Tools
         /// </summary>
         /// <param name="fileNames">Files to extract.</param>
         /// <param name="destination">Absolute or relative directory path where extracted files will be placed.</param>
+        /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <param name="progress">Progress reporter ranged from 0 to <c>fileNames.Count()</c>.</param>
-        /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
         /// <exception cref="System.ArgumentNullException"></exception>
         /// <exception cref="System.ArgumentException"></exception>
         /// <exception cref="BA2ExtractionException"></exception>
-        public override void ExtractFiles(IEnumerable<string> fileNames, string destination, CancellationToken cancellationToken,
-            IProgress<int> progress, bool overwriteFiles)
+        public override void ExtractFiles(IEnumerable<string> fileNames, string destination, bool overwriteFiles,
+            CancellationToken cancellationToken, IProgress<int> progress)
         {
             CheckDisposed();
             this.ExtractFilesInternal(ConstructEntriesFromIndexes(GetIndexesFromFilenames(fileNames)), destination, cancellationToken,
@@ -160,6 +129,7 @@ namespace Ba2Tools
         /// </exception>
         public override void Extract(string fileName, string destination, bool overwriteFile)
         {
+            CheckDisposed();
             if (fileName == null)
                 throw new ArgumentNullException(nameof(fileName));
             if (destination == null)
@@ -185,6 +155,7 @@ namespace Ba2Tools
         /// <exception cref="BA2ExtractionException"></exception>
         public override void Extract(int index, string destination, bool overwriteFile)
         {
+            CheckDisposed();
             if (index < 0 || index > this.TotalFiles)
                 throw new IndexOutOfRangeException(nameof(index));
             if (destination == null)
@@ -213,6 +184,7 @@ namespace Ba2Tools
         /// </exception>
         public override bool ExtractToStream(int index, Stream stream)
         {
+            CheckDisposed();
             if (index < 0 || index > this.TotalFiles)
                 throw new IndexOutOfRangeException(nameof(index));
             if (stream == null)
@@ -235,6 +207,7 @@ namespace Ba2Tools
         /// </exception>
         public override bool ExtractToStream(string fileName, Stream stream)
         {
+            CheckDisposed();
             if (fileName == null)
                 throw new ArgumentNullException(nameof(fileName));
             if (stream == null)

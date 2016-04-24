@@ -145,7 +145,7 @@ namespace Ba2Tools
                             break;
                         case BA2Type.Unknown:
                         default:
-                            if (flags.HasFlag(BA2LoaderFlags.LoadUnknownArchiveTypes))
+                            if (flags.HasFlag(BA2LoaderFlags.IgnoreArchiveType))
                             {
                                 archive = new BA2Archive();
                             }

@@ -1,17 +1,24 @@
 ﻿using Ba2Tools;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using NUnit.Framework; 
 
 namespace Ba2ToolsTests
 {
-    [TestClass]
+    [TestFixture]
     public class GeneralArchiveTests
     {
-        [TestCleanup]
+        [OneTimeSetUp]
+        public void Setup()
+        {
+            TestContext.WriteLine(TestContext.CurrentContext.WorkDirectory);
+            TestContext.WriteLine(TestContext.CurrentContext.TestDirectory);
+        }
+
+        [OneTimeTearDown]
         public void Cleanup()
         {
             SharedData.CleanupTemp();
@@ -20,7 +27,7 @@ namespace Ba2ToolsTests
         /// <summary>
         /// Test name table, extraction methods.
         /// </summary>
-        [TestMethod]
+        [Test]
         public void TestGeneralOneFile()
         {
             var archive = BA2Loader.Load(SharedData.GetDataPath("GeneralOneFile.ba2"));
@@ -45,7 +52,7 @@ namespace Ba2ToolsTests
             Assert.AreEqual("test text", File.ReadAllText(path));
         }
 
-        [TestMethod]
+        [Test]
         public void TestGeneralTwoFiles()
         {
             var archive = BA2Loader.Load(SharedData.GetDataPath("GeneralTwoFiles.ba2"));
@@ -74,30 +81,16 @@ namespace Ba2ToolsTests
             // Assert.IsTrue(File.ReadAllLines)
         }
 
-        /// <summary>
-        /// Test that header-only archives are valid.
-        /// </summary>
-        [TestMethod]
-        [ExpectedException(typeof(InvalidDataException))]
-        public void TestGeneralHeaderOnly()
+        [Test]
+        public void InvalidDataExceptionThrownWhenInvalidNametableProviden()
         {
-            var archive = BA2Loader.Load(SharedData.GetDataPath("GeneralHeaderOnly.ba2"));
-            //var header = archive.Header;
-
-            //Assert.IsTrue(header.Signature.SequenceEqual(SharedData.ArchiveMagic));
-            //Assert.AreEqual(1U, header.Version);
-            //Assert.IsTrue(BA2Loader.GetArchiveType(header.ArchiveType) == BA2Type.General);
-            //Assert.AreEqual(0U, header.TotalFiles);
-
-            //var files = archive.FileList;
-            //Assert.AreEqual(0, files.Count);
-            // Assert.AreEqual(69UL, header.NameTableOffset);
+            Assert.Throws<InvalidDataException>(() => BA2Loader.Load(SharedData.GetDataPath("GeneralHeaderOnly.ba2")));
         }
 
         /// <summary>
         /// Test extraction to stream.
         /// </summary>
-        [TestMethod]
+        [Test]
         public void TestStreamExtraction()
         {
             var archive = BA2Loader.Load(SharedData.GetDataPath("GeneralOneFile.ba2"));
@@ -116,61 +109,59 @@ namespace Ba2ToolsTests
         /// <summary>
         /// Test to ensure general archive is threaten as general.
         /// </summary>
-        [TestMethod]
+        [Test]
         public void TestGeneralArchiveType()
         {
             var archive = BA2Loader.Load(SharedData.GetDataPath("GeneralOneFile.ba2"));
-            Assert.IsInstanceOfType(archive, typeof(BA2GeneralArchive));
+            Assert.IsInstanceOf<BA2GeneralArchive>(archive);
             Assert.IsTrue(BA2Loader.GetArchiveType(archive) == BA2Type.General);
         }
 
         /// <summary>
         /// Test to ensures exception being thrown for invalid versions.
         /// </summary>
-        [TestMethod]
-        [ExpectedException(typeof(BA2LoadException))]
-        public void TestInvalidVersion()
+        [Test]
+        public void LoadExceptionThrownWhenArchiveHasInvalidVersion()
         {
-            var archive = BA2Loader.Load(SharedData.GetDataPath("GeneralHeaderOnlyInvalidVersion.ba2"));
+            Assert.Throws<BA2LoadException>(() => BA2Loader.Load(SharedData.GetDataPath("GeneralHeaderOnlyInvalidVersion.ba2")));
         }
 
         /// <summary>
         /// Test to ensure no exception being thrown for invalid archive
-        /// type when <c>LoadUnknownArchiveTypes</c> is set.
+        /// type when <c>LoadUnknownArchiveTypes</c> is not set.
         /// </summary>
-        [TestMethod]
-        [ExpectedException(typeof(BA2LoadException))]
-        public void TestInvalidArchiveType()
+        [Test]
+        public void LoadExceptionThrownWhenArchiveHasInvalidType()
         {
-            var archive = BA2Loader.Load(SharedData.GetDataPath("GeneralHeaderOnlyInvalidType.ba2"));
+            Assert.Throws<BA2LoadException>(() => BA2Loader.Load(SharedData.GetDataPath("GeneralHeaderOnlyInvalidType.ba2")));
         }
 
         /// <summary>
         /// Test to ensure no exception being thrown for invalid versions
         /// when <c>IgnoreVersion</c> flag is set in loader.
         /// </summary>
-        [TestMethod]
+        [Test]
         public void TestKnownInvalidVersion()
         {
-            var path = SharedData.GetDataPath("GeneralOneFileInvalidVersion.ba2");
-            var archive = BA2Loader.Load(path, BA2LoaderFlags.IgnoreVersion);
+            Assert.DoesNotThrow(
+                () => BA2Loader.Load(SharedData.GetDataPath("GeneralOneFileInvalidVersion.ba2"), BA2LoaderFlags.IgnoreVersion));
         }
 
         /// <summary>
         /// Test to ensure no exception being thrown for invalid archive
         /// type when <c>LoadUnknownArchiveTypes</c> is set.
         /// </summary>
-        [TestMethod]
+        [Test]
         public void TestKnownInvalidArchiveType()
         {
-            var path = SharedData.GetDataPath("GeneralOneFileInvalidType.ba2");
-            var archive = BA2Loader.Load(path, BA2LoaderFlags.LoadUnknownArchiveTypes);
+            Assert.DoesNotThrow(
+                () => BA2Loader.Load(SharedData.GetDataPath("GeneralOneFileInvalidType.ba2"), BA2LoaderFlags.IgnoreArchiveType));
         }
 
         /// <summary>
         /// Test to ensure progress is being called properly.
         /// </summary>
-        [TestMethod]
+        [Test]
         public void TestGeneralArchiveExtractionWithProgress()
         {
             BA2Archive archive = BA2Loader.Load(SharedData.GeneralOneFileArchive);
@@ -182,7 +173,7 @@ namespace Ba2ToolsTests
                 progressReceived = true;
                 progressValue = x;
             });
-            archive.ExtractAll(temp, CancellationToken.None, progressHandler, false);
+            archive.ExtractAll(temp, false, CancellationToken.None, progressHandler);
 
             // workaround of dumb test execution
             int waits = 0;
@@ -196,7 +187,7 @@ namespace Ba2ToolsTests
             Assert.AreEqual(1, progressValue);
         }
 
-        [TestMethod]
+        [Test]
         public void ExtractByIndexFromOneFileArchive()
         {
             BA2GeneralArchive archive = BA2Loader.Load<BA2GeneralArchive>(SharedData.GeneralOneFileArchive);
@@ -210,7 +201,7 @@ namespace Ba2ToolsTests
             archive.Dispose();
         }
 
-        [TestMethod]
+        [Test]
         public void ExtractByIndexFromOneFileArchiveMultithreaded()
         {
             BA2GeneralArchive archive
@@ -225,7 +216,7 @@ namespace Ba2ToolsTests
             archive.Dispose();
         }
 
-        [TestMethod]
+        [Test]
         public void ExtractByIndexFromTwoFileArchive()
         {
             BA2GeneralArchive archive = BA2Loader.Load<BA2GeneralArchive>(SharedData.GeneralTwoFilesArchive);
@@ -236,7 +227,7 @@ namespace Ba2ToolsTests
             archive.Dispose();
         }
 
-        [TestMethod]
+        [Test]
         public void ExtractByIndexFromTwoFileArchiveMultithreaded()
         {
             BA2GeneralArchive archive = 
@@ -248,7 +239,7 @@ namespace Ba2ToolsTests
             archive.Dispose();
         }
 
-        [TestMethod]
+        [Test]
         public void ExtractFilesByIndexesFromTwoFileArchive()
         {
             BA2GeneralArchive archive = BA2Loader.Load<BA2GeneralArchive>(SharedData.GeneralTwoFilesArchive);
@@ -261,7 +252,7 @@ namespace Ba2ToolsTests
             archive.Dispose();
         }
 
-        [TestMethod]
+        [Test]
         public void ExtractFilesByIndexesFromTwoFileArchiveMultithreaded()
         {
             BA2GeneralArchive archive =
@@ -275,7 +266,7 @@ namespace Ba2ToolsTests
             archive.Dispose();
         }
 
-        [TestMethod]
+        [Test]
         public void ExtractAllFromTwoFileArchive()
         {
             BA2GeneralArchive archive = BA2Loader.Load<BA2GeneralArchive>(SharedData.GeneralTwoFilesArchive);
@@ -290,7 +281,7 @@ namespace Ba2ToolsTests
 
 
 
-        [TestMethod]
+        [Test]
         public void ExtractAllFromTwoFilesArchiveMultithreaded()
         {
             BA2GeneralArchive archive = 
@@ -304,20 +295,35 @@ namespace Ba2ToolsTests
             archive.Dispose();
         }
 
-        [TestMethod]
+        [Test]
         public void TestGenericArchiveLoader()
         {
             BA2GeneralArchive archive = BA2Loader.Load<BA2GeneralArchive>(SharedData.GeneralOneFileArchive);
             archive.Dispose();
         }
 
-        [TestMethod]
-        [ExpectedException(typeof(ObjectDisposedException))]
+        [Test(Description = "Ensure that disposed archives throws ObjectDisposedException when extraction methods are accessed.")]
         public void ExtractShouldThrowExceptionWhenDisposed()
         {
             BA2GeneralArchive archive = BA2Loader.Load<BA2GeneralArchive>(SharedData.GeneralOneFileArchive);
             archive.Dispose();
-            archive.ExtractToStream(0, null);
+
+            var dir = SharedData.CreateTempDirectory();
+
+            using (var stream = new MemoryStream())
+            {
+                Assert.Throws<ObjectDisposedException>(() => archive.Extract(0, dir, false));
+                Assert.Throws<ObjectDisposedException>(() => archive.Extract("test.txt", dir, false));
+                Assert.Throws<ObjectDisposedException>(() => archive.ExtractToStream(0, stream));
+                Assert.Throws<ObjectDisposedException>(() => archive.ExtractAll("", false));
+                Assert.Throws<ObjectDisposedException>(() => archive.ExtractAll("", false, CancellationToken.None, null));
+                Assert.Throws<ObjectDisposedException>(() => archive.ExtractFiles(new int[] { 0 }, dir, false));
+                Assert.Throws<ObjectDisposedException>(() => archive.ExtractFiles(new int[] { 0 }, dir, false,
+                    CancellationToken.None, null));
+                Assert.Throws<ObjectDisposedException>(() => archive.ExtractFiles(new string[] { "test.txt" }, dir, false));
+                Assert.Throws<ObjectDisposedException>(() => archive.ExtractFiles(new string[] { "test.txt" }, dir, false,
+                    CancellationToken.None, null));
+            }
         }
     }
 }

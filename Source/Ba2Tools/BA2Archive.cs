@@ -81,7 +81,7 @@ namespace Ba2Tools
         public virtual void ExtractAll(string destination, bool overwriteFiles)
         {
             CheckDisposed();
-            this.ExtractAll(destination, CancellationToken.None, null, overwriteFiles);
+            this.ExtractAll(destination, overwriteFiles, CancellationToken.None, null);
         }
 
         /// <summary>
@@ -95,7 +95,7 @@ namespace Ba2Tools
         public virtual void ExtractAll(string destination, CancellationToken cancellationToken, bool overwriteFiles)
         {
             CheckDisposed();
-            this.ExtractAll(destination, cancellationToken, null, overwriteFiles);
+            this.ExtractAll(destination, overwriteFiles, cancellationToken, null);
         }
 
         /// <summary>
@@ -103,15 +103,12 @@ namespace Ba2Tools
         /// cancellation token and progress reporter.
         /// </summary>
         /// <param name="destination">Absolute or relative directory path directory where extracted files will be placed.</param>
+        /// <param name="overwriteFiles">Overwrite files on disk with extracted ones?</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <param name="progress">Progress reporter ranged from 0 to archive's total files count.</param>
-        /// <param name="overwriteFiles">Overwrite files on disk with extracted ones?</param>
         /// <exception cref="System.ObjectDisposedException" />
-        public virtual void ExtractAll(
-            string destination,
-            CancellationToken cancellationToken,
-            IProgress<int> progress,
-            bool overwriteFiles)
+        public virtual void ExtractAll(string destination, bool overwriteFiles, CancellationToken cancellationToken,
+            IProgress<int> progress)
         {
             CheckDisposed();
             throw new NotSupportedException("Cannot extract any files because archive type is unknown.");
@@ -127,25 +124,7 @@ namespace Ba2Tools
         public virtual void ExtractFiles(IEnumerable<string> fileNames, string destination, bool overwriteFiles)
         {
             CheckDisposed();
-            this.ExtractFiles(fileNames, destination, CancellationToken.None, null, overwriteFiles);
-        }
-
-        /// <summary>
-        /// Extract all files from archive.
-        /// </summary>
-        /// <param name="fileNames">Files to extract.</param>
-        /// <param name="destination">Directory where extracted files will be placed.</param>
-        /// <param name="cancellationToken">Cancellation token.</param>
-        /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
-        /// <exception cref="System.ObjectDisposedException" />
-        public virtual void ExtractFiles(
-            IEnumerable<string> fileNames,
-            string destination,
-            CancellationToken cancellationToken,
-            bool overwriteFiles)
-        {
-            CheckDisposed();
-            this.ExtractFiles(fileNames, destination, CancellationToken.None, null, overwriteFiles);
+            this.ExtractFiles(fileNames, destination, overwriteFiles, CancellationToken.None, null);
         }
 
         /// <summary>
@@ -154,16 +133,12 @@ namespace Ba2Tools
         /// </summary>
         /// <param name="fileNames">Files to extract.</param>
         /// <param name="destination">Absolute or relative directory path where extracted files will be placed.</param>
+        /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <param name="progress">Progress reporter ranged from 0 to <c>fileNames.Count()</c>.</param>
-        /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
         /// <exception cref="System.ObjectDisposedException" />
-        public virtual void ExtractFiles(
-            IEnumerable<string> fileNames,
-            string destination,
-            CancellationToken cancellationToken,
-            IProgress<int> progress,
-            bool overwriteFiles)
+        public virtual void ExtractFiles(IEnumerable<string> fileNames, string destination, bool overwriteFiles,
+            CancellationToken cancellationToken, IProgress<int> progress)
         {
             CheckDisposed();
             throw new NotSupportedException("Cannot extract any files because archive type is unknown.");
@@ -179,13 +154,10 @@ namespace Ba2Tools
         /// </param>
         /// <param name="overwriteFiles">Overwrite files in destination folder?</param>
         /// <exception cref="System.ObjectDisposedException" />
-        public virtual void ExtractFiles(
-            IEnumerable<int> indexes,
-            string destination,
-            bool overwriteFiles)
+        public virtual void ExtractFiles(IEnumerable<int> indexes, string destination, bool overwriteFiles)
         {
             CheckDisposed();
-            this.ExtractFiles(indexes, destination, CancellationToken.None, null, overwriteFiles);
+            this.ExtractFiles(indexes, destination, overwriteFiles, CancellationToken.None, null);
         }
 
         /// <summary>
@@ -196,6 +168,7 @@ namespace Ba2Tools
         /// <param name="destination">
         /// Destination folder where extracted files will be placed.
         /// </param>
+        /// <param name="overwriteFiles">Overwrite files in destination folder?</param>
         /// <param name="cancellationToken">
         /// The cancellation token. Set it to <c>CancellationToken.None</c>
         /// if you don't wanna cancel operation.
@@ -205,17 +178,12 @@ namespace Ba2Tools
         /// Set it to <c>null</c> if you don't want to handle progress
         /// of operation.
         /// </param>
-        /// <param name="overwriteFiles">Overwrite files in destination folder?</param>
         /// <exception cref="System.ObjectDisposedException" />
-        public virtual void ExtractFiles(
-            IEnumerable<int> indexes,
-            string destination,
-            CancellationToken cancellationToken,
-            IProgress<int> progress,
-            bool overwriteFiles)
+        public virtual void ExtractFiles(IEnumerable<int> indexes, string destination, bool overwriteFiles,
+            CancellationToken cancellationToken, IProgress<int> progress)
         {
             CheckDisposed();
-            this.ExtractFiles((IEnumerable<string>)null, destination, cancellationToken, progress, overwriteFiles);
+            this.ExtractFiles((IEnumerable<string>)null, destination, overwriteFiles, cancellationToken, progress);
         }
 
         /// <summary>

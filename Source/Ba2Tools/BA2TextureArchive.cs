@@ -52,11 +52,11 @@ namespace Ba2Tools
         /// cancellation token and progress reporter.
         /// </summary>
         /// <param name="destination">Absolute or relative directory path directory where extracted files will be placed.</param>
+        /// <param name="overwriteFiles">Overwrite files on disk with extracted ones?</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <param name="progress">Progress reporter ranged from 0 to archive's total files count.</param>
-        /// <param name="overwriteFiles">Overwrite files on disk with extracted ones?</param>
-        public override void ExtractAll(string destination, CancellationToken cancellationToken, IProgress<int> progress,
-            bool overwriteFiles)
+        public override void ExtractAll(string destination, bool overwriteFiles, CancellationToken cancellationToken,
+            IProgress<int> progress)
         {
             CheckDisposed();
             this.ExtractFilesInternal(fileEntries, destination, cancellationToken, progress, overwriteFiles);
@@ -76,34 +76,19 @@ namespace Ba2Tools
         }
 
         /// <summary>
-        /// Extract all files from archive.
-        /// </summary>
-        /// <param name="fileNames">Files to extract.</param>
-        /// <param name="destination">Directory where extracted files will be placed.</param>
-        /// <param name="cancellationToken">Cancellation token.</param>
-        /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
-        public override void ExtractFiles(IEnumerable<string> fileNames, string destination, CancellationToken cancellationToken,
-            bool overwriteFiles)
-        {
-            CheckDisposed();
-            this.ExtractFilesInternal(ConstructEntriesFromIndexes(GetIndexesFromFilenames(fileNames)), destination,
-                CancellationToken.None, null, overwriteFiles);
-        }
-
-        /// <summary>
         /// Extract all files from archive to specified directory
         /// with cancellation token and progress reporter.
         /// </summary>
         /// <param name="fileNames">Files to extract.</param>
         /// <param name="destination">Absolute or relative directory path where extracted files will be placed.</param>
+        /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <param name="progress">Progress reporter ranged from 0 to <c>fileNames.Count()</c>.</param>
-        /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
         /// <exception cref="System.ArgumentNullException"></exception>
         /// <exception cref="System.ArgumentException"></exception>
         /// <exception cref="BA2ExtractionException"></exception>
-        public override void ExtractFiles(IEnumerable<string> fileNames, string destination, CancellationToken cancellationToken,
-            IProgress<int> progress, bool overwriteFiles)
+        public override void ExtractFiles(IEnumerable<string> fileNames, string destination, bool overwriteFiles,
+            CancellationToken cancellationToken, IProgress<int> progress)
         {
             CheckDisposed();
             this.ExtractFilesInternal(ConstructEntriesFromIndexes(GetIndexesFromFilenames(fileNames)), destination, cancellationToken,
@@ -133,6 +118,7 @@ namespace Ba2Tools
         /// <param name="destination">
         /// Destination folder where extracted files will be placed.
         /// </param>
+        /// <param name="overwriteFiles">Overwrite files in destination folder?</param>
         /// <param name="cancellationToken">
         /// The cancellation token. Set it to <c>CancellationToken.None</c>
         /// if you don't wanna cancel operation.
@@ -142,9 +128,8 @@ namespace Ba2Tools
         /// Set it to <c>null</c> if you don't want to handle progress
         /// of operation.
         /// </param>
-        /// <param name="overwriteFiles">Overwrite files in destination folder?</param>
-        public override void ExtractFiles(IEnumerable<int> indexes, string destination, CancellationToken cancellationToken,
-            IProgress<int> progress, bool overwriteFiles)
+        public override void ExtractFiles(IEnumerable<int> indexes, string destination, bool overwriteFiles,
+            CancellationToken cancellationToken, IProgress<int> progress)
         {
             CheckDisposed();
             this.ExtractFilesInternal(ConstructEntriesFromIndexes(indexes), destination, cancellationToken, progress, overwriteFiles);

@@ -1,21 +1,23 @@
 ﻿using System.IO;
+using NUnit.Framework;
 
 namespace Ba2ToolsTests
 {
     /// <summary>
     /// Data shared between tests.
     /// </summary>
+    [TestFixture]
     public static class SharedData
     {
         /// <summary>
         /// Folder with test data.
         /// </summary>
-        public static string DataFolder = "../../Data/";
+        public static string DataFolder = @"..\..\Data\";
 
         /// <summary>
         /// Folder to store temp data.
         /// </summary>
-        public static string TempFolder = "../../Temp/";
+        public static string TempFolder = @"..\..\Temp\";
 
         /// <summary>
         /// BA2 archive magic.
@@ -57,7 +59,7 @@ namespace Ba2ToolsTests
         /// <returns>Path to file.</returns>
         public static string GetDataPath(string file)
         {
-            return Path.Combine(DataFolder, file);
+            return Path.Combine(TestContext.CurrentContext.WorkDirectory, DataFolder, file);
         }
     }
 }
