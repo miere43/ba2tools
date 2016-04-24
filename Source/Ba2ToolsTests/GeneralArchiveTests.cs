@@ -38,7 +38,7 @@ namespace Ba2ToolsTests
 
             var folder = SharedData.CreateTempDirectory();
 
-            archive.Extract("test.txt", folder);
+            archive.Extract("test.txt", folder, false);
             string path = Path.Combine(folder, "test.txt");
 
             Assert.IsTrue(File.Exists(path));
@@ -63,7 +63,7 @@ namespace Ba2ToolsTests
             Assert.AreEqual("wazzup.bin", files[1]);
 
             var folder = SharedData.CreateTempDirectory();
-            archive.Extract("test.txt", folder);
+            archive.Extract("test.txt", folder, false);
 
             var testPath = Path.Combine(folder, "test.txt");
             Assert.IsTrue(File.Exists(testPath));
@@ -182,7 +182,7 @@ namespace Ba2ToolsTests
                 progressReceived = true;
                 progressValue = x;
             });
-            archive.ExtractAll(temp, CancellationToken.None, progressHandler);
+            archive.ExtractAll(temp, CancellationToken.None, progressHandler, false);
 
             // workaround of dumb test execution
             int waits = 0;
@@ -297,7 +297,7 @@ namespace Ba2ToolsTests
                 BA2Loader.Load<BA2GeneralArchive>(SharedData.GeneralTwoFilesArchive, BA2LoaderFlags.Multithreaded);
 
             string temp = SharedData.CreateTempDirectory();
-            archive.ExtractAll(temp);
+            archive.ExtractAll(temp, false);
             Assert.IsTrue(File.Exists(Path.Combine(temp, "test.txt")));
             Assert.IsTrue(File.Exists(Path.Combine(temp, "wazzup.bin")));
 
@@ -307,8 +307,17 @@ namespace Ba2ToolsTests
         [TestMethod]
         public void TestGenericArchiveLoader()
         {
-            BA2GeneralArchive archive = BA2Loader.Load<BA2GeneralArchive>(SharedData.GetDataPath("GeneralOneFile.ba2"));
+            BA2GeneralArchive archive = BA2Loader.Load<BA2GeneralArchive>(SharedData.GeneralOneFileArchive);
             archive.Dispose();
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ObjectDisposedException))]
+        public void ExtractShouldThrowExceptionWhenDisposed()
+        {
+            BA2GeneralArchive archive = BA2Loader.Load<BA2GeneralArchive>(SharedData.GeneralOneFileArchive);
+            archive.Dispose();
+            archive.ExtractToStream(0, null);
         }
     }
 }

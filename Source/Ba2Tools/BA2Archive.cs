@@ -15,6 +15,12 @@ namespace Ba2Tools
     /// </summary>
     public class BA2Archive : IBA2Archive, IDisposable
     {
+        protected List<string> m_fileList = null;
+
+        protected bool m_disposed;
+
+        #region Properties
+
         /// <summary>
         /// Archive version defined in header.
         /// </summary>
@@ -42,7 +48,7 @@ namespace Ba2Tools
         /// <value>
         /// The archive stream.
         /// </value>
-        public Stream ArchiveStream { get; internal set; }
+        internal Stream ArchiveStream { get; set; }
 
         /// <summary>
         /// Gets the archive header.
@@ -52,19 +58,29 @@ namespace Ba2Tools
         /// </value>
         public BA2Header Header { get; internal set; }
 
+        /// <summary>
+        /// Is multithreaded extraction enabled?
+        /// </summary>
         public bool MultithreadedExtract { get; internal set; } = false;
 
-        protected List<string> m_fileList = null;
+        /// <summary>
+        /// List of files stored in archive.
+        /// </summary>
+        /// <seealso cref="GetIndexFromFilename(string)"/>
         public IReadOnlyList<string> FileList { get { return m_fileList; } }
 
-        #region Extract methods
+        #endregion
+
+        #region IBA2Archive Implementation
         /// <summary>
         /// Extract all files from archive to specified directory.
         /// </summary>
         /// <param name="destination">Destination directory where extracted files will be placed.</param>
         /// <param name="overwriteFiles">Overwrite files on disk with extracted ones?</param>
-        public virtual void ExtractAll(string destination, bool overwriteFiles = false)
+        /// <exception cref="System.ObjectDisposedException" />
+        public virtual void ExtractAll(string destination, bool overwriteFiles)
         {
+            CheckDisposed();
             this.ExtractAll(destination, CancellationToken.None, null, overwriteFiles);
         }
 
@@ -75,8 +91,10 @@ namespace Ba2Tools
         /// <param name="destination">Directory where extracted files will be placed.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
-        public virtual void ExtractAll(string destination, CancellationToken cancellationToken, bool overwriteFiles = false)
+        /// <exception cref="System.ObjectDisposedException" />
+        public virtual void ExtractAll(string destination, CancellationToken cancellationToken, bool overwriteFiles)
         {
+            CheckDisposed();
             this.ExtractAll(destination, cancellationToken, null, overwriteFiles);
         }
 
@@ -88,12 +106,14 @@ namespace Ba2Tools
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <param name="progress">Progress reporter ranged from 0 to archive's total files count.</param>
         /// <param name="overwriteFiles">Overwrite files on disk with extracted ones?</param>
+        /// <exception cref="System.ObjectDisposedException" />
         public virtual void ExtractAll(
             string destination,
             CancellationToken cancellationToken,
             IProgress<int> progress,
-            bool overwriteFiles = false)
+            bool overwriteFiles)
         {
+            CheckDisposed();
             throw new NotSupportedException("Cannot extract any files because archive type is unknown.");
         }
 
@@ -103,8 +123,10 @@ namespace Ba2Tools
         /// <param name="fileNames">Files to extract.</param>
         /// <param name="destination">Directory where extracted files will be placed.</param>
         /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
-        public virtual void ExtractFiles(IEnumerable<string> fileNames, string destination, bool overwriteFiles = false)
+        /// <exception cref="System.ObjectDisposedException" />
+        public virtual void ExtractFiles(IEnumerable<string> fileNames, string destination, bool overwriteFiles)
         {
+            CheckDisposed();
             this.ExtractFiles(fileNames, destination, CancellationToken.None, null, overwriteFiles);
         }
 
@@ -115,12 +137,14 @@ namespace Ba2Tools
         /// <param name="destination">Directory where extracted files will be placed.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
+        /// <exception cref="System.ObjectDisposedException" />
         public virtual void ExtractFiles(
             IEnumerable<string> fileNames,
             string destination,
             CancellationToken cancellationToken,
-            bool overwriteFiles = false)
+            bool overwriteFiles)
         {
+            CheckDisposed();
             this.ExtractFiles(fileNames, destination, CancellationToken.None, null, overwriteFiles);
         }
 
@@ -133,13 +157,15 @@ namespace Ba2Tools
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <param name="progress">Progress reporter ranged from 0 to <c>fileNames.Count()</c>.</param>
         /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
+        /// <exception cref="System.ObjectDisposedException" />
         public virtual void ExtractFiles(
             IEnumerable<string> fileNames,
             string destination,
             CancellationToken cancellationToken,
             IProgress<int> progress,
-            bool overwriteFiles = false)
+            bool overwriteFiles)
         {
+            CheckDisposed();
             throw new NotSupportedException("Cannot extract any files because archive type is unknown.");
         }
 
@@ -152,11 +178,13 @@ namespace Ba2Tools
         /// Destination folder where extracted files will be placed.
         /// </param>
         /// <param name="overwriteFiles">Overwrite files in destination folder?</param>
+        /// <exception cref="System.ObjectDisposedException" />
         public virtual void ExtractFiles(
             IEnumerable<int> indexes,
             string destination,
-            bool overwriteFiles = false)
+            bool overwriteFiles)
         {
+            CheckDisposed();
             this.ExtractFiles(indexes, destination, CancellationToken.None, null, overwriteFiles);
         }
 
@@ -178,13 +206,15 @@ namespace Ba2Tools
         /// of operation.
         /// </param>
         /// <param name="overwriteFiles">Overwrite files in destination folder?</param>
+        /// <exception cref="System.ObjectDisposedException" />
         public virtual void ExtractFiles(
             IEnumerable<int> indexes,
             string destination,
             CancellationToken cancellationToken,
             IProgress<int> progress,
-            bool overwriteFiles = false)
+            bool overwriteFiles)
         {
+            CheckDisposed();
             this.ExtractFiles((IEnumerable<string>)null, destination, cancellationToken, progress, overwriteFiles);
         }
 
@@ -196,8 +226,10 @@ namespace Ba2Tools
         /// <returns>
         /// Success is true, failure is false.
         /// </returns>
+        /// <exception cref="System.ObjectDisposedException" />
         public virtual bool ExtractToStream(string fileName, Stream stream)
         {
+            CheckDisposed();
             throw new NotSupportedException("Cannot extract any files because archive type is unknown.");
         }
 
@@ -209,8 +241,10 @@ namespace Ba2Tools
         /// <returns>
         /// Success is true, failure is false.
         /// </returns>
+        /// <exception cref="System.ObjectDisposedException" />
         public virtual bool ExtractToStream(int index, Stream stream)
         {
+            CheckDisposed();
             throw new NotSupportedException("Cannot extract any files because archive type is unknown.");
         }
 
@@ -218,19 +252,70 @@ namespace Ba2Tools
         /// Extract single file from archive.
         /// </summary>
         /// <param name="fileName">File path, directories separated with backslash (\)</param>
-        /// <param name="destination">Destination directory where file will be extracted to.</param>
+        /// <param name="destination">Destination directory where file will be extracted.</param>
         /// <param name="overwriteFile">Overwrite existing file with extracted one?</param>
-        public virtual void Extract(string fileName, string destination, bool overwriteFile = false)
+        /// <exception cref="System.ObjectDisposedException" />
+        public virtual void Extract(string fileName, string destination, bool overwriteFile)
         {
+            CheckDisposed();
             throw new NotSupportedException("Cannot extract any files because archive type is not known.");
         }
 
-        public virtual void Extract(int index, string destination, bool overwriteFile = false)
+        /// <summary>
+        /// Extracts file from archive, accessed by index.
+        /// </summary>
+        /// <param name="fileIndex">File index. See <c>GetIndexFromFilename()</c>.</param>
+        /// <param name="destination">Destination directory where file will be extracted.</param>
+        /// <param name="overwriteFile">Overwrite existing file with extracted one?</param>
+        /// <exception cref="System.ObjectDisposedException" />
+        public virtual void Extract(int fileIndex, string destination, bool overwriteFile)
         {
+            CheckDisposed();
             this.Extract(null, destination, overwriteFile);
         }
 
+        /// <summary>
+        /// Check file existance in archive.
+        /// </summary>
+        /// <param name="fileName">File to check in archive</param>
+        /// <returns></returns>
+        /// <remarks>
+        /// Case-insensitive.
+        /// </remarks>
+        public virtual bool ContainsFile(string fileName)
+        {
+            return m_fileList.Contains(fileName, StringComparer.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Preloads the data.
+        /// </summary>
+        /// <param name="reader">The reader.</param>
+        internal virtual void PreloadData(BinaryReader reader)
+        {
+            CheckDisposed();
+            BuildFileList();
+        }
+
         #endregion
+
+        #region Helper methods
+
+        /// <summary>
+        /// Gets the index from archive filename.
+        /// </summary>
+        /// <param name="fileName">Path to file in archive.</param>
+        /// <returns>Index or -1 if not found.</returns>
+        public virtual int GetIndexFromFilename(string fileName)
+        {
+            int length = m_fileList.Count;
+            for (int i = 0; i < length; i++)
+            {
+                if (m_fileList[i].Equals(fileName, StringComparison.OrdinalIgnoreCase))
+                    return i;
+            }
+            return -1;
+        }
 
         /// <summary>
         /// Builds file list. NameTableOffset property must be set to valid value before calling this method. This method accesses
@@ -271,49 +356,6 @@ namespace Ba2Tools
 
             this.m_fileList = fileList;
         }
-
-        /// <summary>
-        /// Preloads the data.
-        /// </summary>
-        /// <param name="reader">The reader.</param>
-        internal virtual void PreloadData(BinaryReader reader)
-        {
-            BuildFileList();
-        }
-
-        /// <summary>
-        /// Check file existance in archive.
-        /// </summary>
-        /// <param name="fileName">File to check in archive</param>
-        /// <returns></returns>
-        /// <remarks>
-        /// Case-insensitive.
-        /// </remarks>
-        public virtual bool ContainsFile(string fileName)
-        {
-            if (m_fileList == null)
-                BuildFileList();
-
-            return m_fileList.Contains(fileName, StringComparer.OrdinalIgnoreCase);
-        }
-
-        /// <summary>
-        /// Gets the index from archive filename.
-        /// </summary>
-        /// <param name="fileName">Path to file in archive.</param>
-        /// <returns>Index or -1 if not found.</returns>
-        public virtual int GetIndexFromFilename(string fileName)
-        {
-            int length = m_fileList.Count;
-            for (int i = 0; i < length; i++)
-            {
-                if (m_fileList[i].Equals(fileName, StringComparison.OrdinalIgnoreCase))
-                    return i;
-            }
-            return -1;
-        }
-
-        #region Helper methods
 
         /// <summary>
         /// Creates the directories for files.
@@ -397,6 +439,8 @@ namespace Ba2Tools
 
         #endregion
 
+        #region Disposal
+
         ~BA2Archive()
         {
             Dispose(false);
@@ -422,6 +466,16 @@ namespace Ba2Tools
                     ArchiveStream = null;
                 }
             }
+
+            m_disposed = true;
         }
+
+        protected void CheckDisposed()
+        {
+            if (m_disposed)
+                throw new ObjectDisposedException(nameof(Stream));
+        }
+
+        #endregion
     }
 }

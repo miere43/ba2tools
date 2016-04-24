@@ -19,10 +19,7 @@ namespace Ba2Tools
         /// <param name="fileName">File name or file path from archive.</param>
         /// <param name="destination">Absolute or relative directory path where extracted file will be placed.</param>
         /// <param name="overwriteFile">Overwrite existing file in directory with extracted one?</param>
-        void Extract(
-            string fileName,
-            string destination,
-            bool overwriteFile = false);
+        void Extract(string fileName, string destination, bool overwriteFile);
 
         /// <summary>
         /// Extract single file to specified directory by index.
@@ -30,10 +27,7 @@ namespace Ba2Tools
         /// <param name="index">The index.</param>
         /// <param name="destination">Absolute or relative directory path where extracted file will be placed.</param>
         /// <param name="overwriteFile">Overwrite existing file in directory with extracted one?</param>
-        void Extract(
-            int index,
-            string destination,
-            bool overwriteFile = false);
+        void Extract(int index, string destination, bool overwriteFile);
 
         /// <summary>
         /// Extract all files from archive to specified directory
@@ -44,12 +38,8 @@ namespace Ba2Tools
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <param name="progress">Progress reporter ranged from 0 to <c>fileNames.Count()</c>.</param>
         /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
-        void ExtractFiles(
-            IEnumerable<string> fileNames,
-            string destination,
-            CancellationToken cancellationToken,
-            IProgress<int> progress,
-            bool overwriteFiles = false);
+        void ExtractFiles(IEnumerable<string> fileNames, string destination, CancellationToken cancellationToken, IProgress<int> progress,
+            bool overwriteFiles);
 
         /// <summary>
         /// Extract all files from archive to specified directory with
@@ -59,11 +49,7 @@ namespace Ba2Tools
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <param name="progress">Progress reporter ranged from 0 to archive's total files count.</param>
         /// <param name="overwriteFiles">Overwrite files on disk with extracted ones?</param>
-        void ExtractAll(
-            string destination,
-            CancellationToken cancellationToken,
-            IProgress<int> progress,
-            bool overwriteFiles = false);
+        void ExtractAll(string destination, CancellationToken cancellationToken, IProgress<int> progress, bool overwriteFiles);
 
         /// <summary>
         /// Extracts specified files, accessed by index to the specified
@@ -83,12 +69,8 @@ namespace Ba2Tools
         /// of operation.
         /// </param>
         /// <param name="overwriteFiles">Overwrite files in destination folder?</param>
-        void ExtractFiles(
-            IEnumerable<int> indexes,
-            string destination,
-            CancellationToken cancellationToken,
-            IProgress<int> progress,
-            bool overwriteFiles = false);
+        void ExtractFiles(IEnumerable<int> indexes, string destination, CancellationToken cancellationToken, IProgress<int> progress,
+            bool overwriteFiles);
 
         /// <summary>
         /// Extract file, accessed by index, to the stream.
