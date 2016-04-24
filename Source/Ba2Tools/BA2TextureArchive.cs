@@ -269,9 +269,6 @@ namespace Ba2Tools
             if (destination == null)
                 throw new ArgumentNullException(nameof(destination));
 
-            if (_fileListCache == null)
-                ListFiles(true);
-
             BA2TextureFileEntry entry = null;
             if (!TryGetEntryFromName(fileName, out entry))
                 throw new BA2ExtractionException($"Cannot find file name \"{fileName}\" in archive");
@@ -330,7 +327,7 @@ namespace Ba2Tools
 
         private void ExtractInternal(BA2TextureFileEntry entry, string destinationFolder, bool overwriteFile)
         {
-            string filePath = _fileListCache[entry.Index];
+            string filePath = m_fileList[entry.Index];
 
             string extension = new string(entry.Extension).Trim('\0');
             string finalPath = Path.Combine(destinationFolder, filePath);
@@ -403,10 +400,7 @@ namespace Ba2Tools
         /// <returns>True if entry is found and populated, false otherwise.</returns>
         private bool TryGetEntryFromName(string fileName, out BA2TextureFileEntry entry)
         {
-            if (_fileListCache == null)
-                ListFiles();
-
-            int index = _fileListCache.FindIndex(x => x.Equals(fileName, StringComparison.InvariantCultureIgnoreCase));
+            int index = GetIndexFromFilename(fileName);
             if (index == -1)
             {
                 entry = null;
@@ -557,7 +551,7 @@ namespace Ba2Tools
             if (disposing)
             {
                 fileEntries = null;
-                _fileListCache = null;
+                m_fileList = null;
             }
 
             base.Dispose(disposing);
@@ -594,6 +588,8 @@ namespace Ba2Tools
 
                 fileEntries[i] = entry;
             }
+
+            base.PreloadData(reader);
         }
 
         private BA2TextureFileEntry[] ConstructEntriesFromIndexes(IEnumerable<int> indexes)

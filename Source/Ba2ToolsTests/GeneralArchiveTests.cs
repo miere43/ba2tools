@@ -32,7 +32,7 @@ namespace Ba2ToolsTests
             Assert.AreEqual(1U, header.TotalFiles);
             Assert.AreEqual(69UL, header.NameTableOffset);
 
-            var files = archive.ListFiles();
+            var files = archive.FileList;
             Assert.AreEqual(1, files.Count);
             Assert.AreEqual(true, archive.ContainsFile("test.txt"));
 
@@ -57,7 +57,7 @@ namespace Ba2ToolsTests
             Assert.AreEqual(2U, header.TotalFiles);
             Assert.AreEqual(121UL, header.NameTableOffset);
 
-            var files = archive.ListFiles();
+            var files = archive.FileList;
             Assert.AreEqual(2, files.Count);
             Assert.AreEqual("test.txt", files[0]);
             Assert.AreEqual("wazzup.bin", files[1]);
@@ -68,8 +68,8 @@ namespace Ba2ToolsTests
             var testPath = Path.Combine(folder, "test.txt");
             Assert.IsTrue(File.Exists(testPath));
 
-            TestUtils.AssertExtractedTextFile(archive, "test.txt", "test text");
-            TestUtils.AssertExtractedTextFile(archive, "wazzup.bin", "wazzup dude bro?");
+            TestUtils.AssertExtractedTextFile(archive, archive.GetIndexFromFilename("test.txt"), "test text");
+            TestUtils.AssertExtractedTextFile(archive, archive.GetIndexFromFilename("wazzup.bin"), "wazzup dude bro?");
 
             // Assert.IsTrue(File.ReadAllLines)
         }
@@ -78,18 +78,19 @@ namespace Ba2ToolsTests
         /// Test that header-only archives are valid.
         /// </summary>
         [TestMethod]
+        [ExpectedException(typeof(InvalidDataException))]
         public void TestGeneralHeaderOnly()
         {
             var archive = BA2Loader.Load(SharedData.GetDataPath("GeneralHeaderOnly.ba2"));
-            var header = archive.Header;
+            //var header = archive.Header;
 
-            Assert.IsTrue(header.Signature.SequenceEqual(SharedData.ArchiveMagic));
-            Assert.AreEqual(1U, header.Version);
-            Assert.IsTrue(BA2Loader.GetArchiveType(header.ArchiveType) == BA2Type.General);
-            Assert.AreEqual(0U, header.TotalFiles);
+            //Assert.IsTrue(header.Signature.SequenceEqual(SharedData.ArchiveMagic));
+            //Assert.AreEqual(1U, header.Version);
+            //Assert.IsTrue(BA2Loader.GetArchiveType(header.ArchiveType) == BA2Type.General);
+            //Assert.AreEqual(0U, header.TotalFiles);
 
-            var files = archive.ListFiles();
-            Assert.AreEqual(0, files.Count);
+            //var files = archive.FileList;
+            //Assert.AreEqual(0, files.Count);
             // Assert.AreEqual(69UL, header.NameTableOffset);
         }
 
@@ -151,7 +152,7 @@ namespace Ba2ToolsTests
         [TestMethod]
         public void TestKnownInvalidVersion()
         {
-            var path = SharedData.GetDataPath("GeneralHeaderOnlyInvalidVersion.ba2");
+            var path = SharedData.GetDataPath("GeneralOneFileInvalidVersion.ba2");
             var archive = BA2Loader.Load(path, BA2LoaderFlags.IgnoreVersion);
         }
 
@@ -162,7 +163,7 @@ namespace Ba2ToolsTests
         [TestMethod]
         public void TestKnownInvalidArchiveType()
         {
-            var path = SharedData.GetDataPath("GeneralHeaderOnlyInvalidType.ba2");
+            var path = SharedData.GetDataPath("GeneralOneFileInvalidType.ba2");
             var archive = BA2Loader.Load(path, BA2LoaderFlags.LoadUnknownArchiveTypes);
         }
 
@@ -229,17 +230,8 @@ namespace Ba2ToolsTests
         {
             BA2GeneralArchive archive = BA2Loader.Load<BA2GeneralArchive>(SharedData.GeneralTwoFilesArchive);
 
-            using (MemoryStream stream = new MemoryStream())
-            {
-                Assert.IsTrue(archive.ExtractToStream(0, stream));
-                TestUtils.AssertExtractedTextFile(stream, "test text");
-            }
-
-            using (MemoryStream stream = new MemoryStream())
-            {
-                Assert.IsTrue(archive.ExtractToStream(1, stream));
-                TestUtils.AssertExtractedTextFile(stream, "wazzup dude bro?");
-            }
+            TestUtils.AssertExtractedTextFile(archive, 0, "test text");
+            TestUtils.AssertExtractedTextFile(archive, 1, "wazzup dude bro?");
 
             archive.Dispose();
         }
@@ -247,20 +239,11 @@ namespace Ba2ToolsTests
         [TestMethod]
         public void ExtractByIndexFromTwoFileArchiveMultithreaded()
         {
-            BA2GeneralArchive archive =
+            BA2GeneralArchive archive = 
                 BA2Loader.Load<BA2GeneralArchive>(SharedData.GeneralTwoFilesArchive, BA2LoaderFlags.Multithreaded);
 
-            using (MemoryStream stream = new MemoryStream())
-            {
-                Assert.IsTrue(archive.ExtractToStream(0, stream));
-                TestUtils.AssertExtractedTextFile(stream, "test text");
-            }
-
-            using (MemoryStream stream = new MemoryStream())
-            {
-                Assert.IsTrue(archive.ExtractToStream(1, stream));
-                TestUtils.AssertExtractedTextFile(stream, "wazzup dude bro?");
-            }
+            TestUtils.AssertExtractedTextFile(archive, 0, "test text");
+            TestUtils.AssertExtractedTextFile(archive, 1, "wazzup dude bro?");
 
             archive.Dispose();
         }

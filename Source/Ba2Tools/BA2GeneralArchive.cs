@@ -362,7 +362,7 @@ namespace Ba2Tools
             if (disposing)
             {
                 fileEntries = null;
-                _fileListCache = null;
+                m_fileList = null;
             }
 
             base.Dispose(disposing);
@@ -397,6 +397,8 @@ namespace Ba2Tools
 
                 fileEntries[i] = entry;
             }
+
+            base.PreloadData(reader);
         }
 
         private BA2GeneralFileEntry[] ConstructEntriesFromIndexes(IEnumerable<int> indexes)

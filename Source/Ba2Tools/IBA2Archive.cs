@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Threading;
 
@@ -8,8 +9,10 @@ namespace Ba2Tools
     /// <summary>
     /// Defines basic methods for all BA2 archives.
     /// </summary>
-    public interface IBA2Archive
+    internal interface IBA2Archive
     {
+        IReadOnlyList<string> FileList { get; }
+
         /// <summary>
         /// Extract single file to specified directory.
         /// </summary>
@@ -131,6 +134,6 @@ namespace Ba2Tools
         /// <returns>
         /// List of file paths in archive.
         /// </returns>
-        IList<string> ListFiles(bool forceListFiles = false);
+        // IList<string> GetFileList(bool forceListFiles = false);
     }
 }

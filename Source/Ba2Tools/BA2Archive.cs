@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Collections.ObjectModel;
 
 namespace Ba2Tools
 {
@@ -53,11 +54,8 @@ namespace Ba2Tools
 
         public bool MultithreadedExtract { get; internal set; } = false;
 
-        /// <summary>
-        /// ListFiles() cache.
-        /// </summary>
-        /// <seealso cref="ListFiles(bool)"/>
-        protected List<string> _fileListCache = null;
+        protected List<string> m_fileList = null;
+        public IReadOnlyList<string> FileList { get { return m_fileList; } }
 
         #region Extract methods
         /// <summary>
@@ -235,31 +233,27 @@ namespace Ba2Tools
         #endregion
 
         /// <summary>
-        /// Shows all file paths in archive.
+        /// Builds file list. NameTableOffset property must be set to valid value before calling this method. This method accesses
+        /// archive stream and doesn't seek back to position before method call.
         /// </summary>
-        /// <param name="forceListFiles">Force list files in archive instead of returning cached copy.</param>
-        /// <returns>
-        /// List of file paths in archive.
-        /// </returns>
-        public virtual IList<string> ListFiles(bool forceListFiles = false)
+        /// <exception cref="System.IO.InvalidDataException" />
+        protected virtual void BuildFileList()
         {
-            if (_fileListCache != null && forceListFiles == false)
-                return _fileListCache;
+            if (this.m_fileList != null)
+                return;
 
             // Not valid name table offset was given
             if (NameTableOffset < (UInt64)BA2Loader.HeaderSize)
-            {
-                goto invalidNameTableProviden;
-            }
+                throw new InvalidDataException("Invalid name table offset was providen.");
 
-            List<string> strings = new List<string>(Math.Min(10000, (int)TotalFiles));
+            List<string> fileList = new List<string>((int)TotalFiles);
 
             ArchiveStream.Seek((long)NameTableOffset, SeekOrigin.Begin);
             using (var reader = new BinaryReader(ArchiveStream, Encoding.ASCII, leaveOpen: true))
             {
                 long nameTableLength = ArchiveStream.Length - (long)NameTableOffset;
-                if (nameTableLength < 0)
-                    goto invalidNameTableProviden;
+                if (nameTableLength < 1)
+                    throw new InvalidDataException("Invalid name table offset was providen.");
 
                 while (ArchiveStream.Length - ArchiveStream.Position >= 2)
                 {
@@ -268,22 +262,14 @@ namespace Ba2Tools
                     UInt16 stringLength = reader.ReadUInt16();
                     byte[] rawstring = reader.ReadBytes(stringLength > remainingBytes ? remainingBytes : stringLength);
 
-                    strings.Add(Encoding.ASCII.GetString(rawstring));
+                    fileList.Add(Encoding.ASCII.GetString(rawstring));
                 }
             }
 
-            // Is all files in archive were listed? (excepted "FileCount" files)
-            System.Diagnostics.Debug.Assert(TotalFiles == strings.Count);
+            if (TotalFiles != fileList.Count)
+                throw new InvalidDataException($"File list is not valid: excepted { TotalFiles } entries, but got { fileList.Count }");
 
-            _fileListCache = strings;
-            return _fileListCache;
-
-        /// goto case when invalid name table offset was providen
-        invalidNameTableProviden:
-            {
-                _fileListCache = new List<string>(0);
-                return _fileListCache;
-            }
+            this.m_fileList = fileList;
         }
 
         /// <summary>
@@ -292,7 +278,7 @@ namespace Ba2Tools
         /// <param name="reader">The reader.</param>
         internal virtual void PreloadData(BinaryReader reader)
         {
-            // No data to preload.
+            BuildFileList();
         }
 
         /// <summary>
@@ -305,10 +291,10 @@ namespace Ba2Tools
         /// </remarks>
         public virtual bool ContainsFile(string fileName)
         {
-            if (_fileListCache == null)
-                ListFiles();
+            if (m_fileList == null)
+                BuildFileList();
 
-            return _fileListCache.Contains(fileName, StringComparer.OrdinalIgnoreCase);
+            return m_fileList.Contains(fileName, StringComparer.OrdinalIgnoreCase);
         }
 
         /// <summary>
@@ -318,11 +304,13 @@ namespace Ba2Tools
         /// <returns>Index or -1 if not found.</returns>
         public virtual int GetIndexFromFilename(string fileName)
         {
-            if (_fileListCache == null)
-                ListFiles();
-
-            return _fileListCache.FindIndex((name)
-                => name.Equals(fileName, StringComparison.OrdinalIgnoreCase));
+            int length = m_fileList.Count;
+            for (int i = 0; i < length; i++)
+            {
+                if (m_fileList[i].Equals(fileName, StringComparison.OrdinalIgnoreCase))
+                    return i;
+            }
+            return -1;
         }
 
         #region Helper methods
@@ -345,8 +333,8 @@ namespace Ba2Tools
             IBA2FileEntry entry;
             int entriesLength = entries.Length;
 
-            if (_fileListCache == null)
-                ListFiles();
+            if (m_fileList == null)
+                BuildFileList();
 
             for (int i = 0; i < entriesLength; i++)
             {
@@ -368,7 +356,7 @@ namespace Ba2Tools
         protected string CreateDirectoryAndGetPath(IBA2FileEntry entry, string destination, bool overwriteFile)
         {
             string extension = new string(entry.Extension).Trim('\0');
-            string extractPath = Path.Combine(destination, _fileListCache[entry.Index]);
+            string extractPath = Path.Combine(destination, m_fileList[entry.Index]);
 
             if (overwriteFile == false && File.Exists(extractPath))
                 throw new BA2ExtractionException($"File \"{ extractPath }\" already exists and overwrite is not permitted.");
