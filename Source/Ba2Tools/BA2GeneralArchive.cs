@@ -313,18 +313,16 @@ namespace Ba2Tools
 
             // offset to file data
             UInt64 dataOffset = entry.IsCompressed() ? entry.Offset + zlibHeaderLength : entry.Offset;
-            UInt32 dataLength = entry.IsCompressed() ? entry.PackedLength - zlibHeaderLength : entry.UnpackedLength;
 
             m_archiveStream.Seek((long)dataOffset, SeekOrigin.Begin);
 
-            int bytesToRead = (int)dataLength;
             byte[] rawData = new byte[entry.UnpackedLength];
 
             if (entry.IsCompressed())
             {
                 using (var uncompressStream = new DeflateStream(m_archiveStream, CompressionMode.Decompress, leaveOpen: true))
                 {
-                    var bytesReaden = uncompressStream.Read(rawData, 0, (int)dataLength);
+                    var bytesReaden = uncompressStream.Read(rawData, 0, (int)entry.UnpackedLength);
                 }
             }
             else
@@ -360,10 +358,13 @@ namespace Ba2Tools
 
                 BlockingCollection<string> readyFilenames = new BlockingCollection<string>(totalEntries);
 
-                var task = Task.Run(() =>
-                {
+                Action createDirs = () =>
                     CreateDirectoriesForFiles(entries, readyFilenames, cancellationToken, destination, overwriteFiles);
-                }, cancellationToken);
+
+                if (IsMultithreaded)
+                    Task.Run(createDirs, cancellationToken);
+                else
+                    createDirs();
 
                 for (int i = 0; i < totalEntries; i++)
                 {
