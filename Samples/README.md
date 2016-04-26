@@ -40,7 +40,7 @@ using (var stream = new System.IO.MemoryStream()) {
 	using (var textureArchive = BA2Loader.Load("Fallout4 - Textures1.ba2")) {
 		string firstFilePath = textureArchive.FileList[0];
 
-		textureArchive.ExtractToStream(firstFilePath, stream);
+		textureArchive.ExtractToStream(firstFilePath, stream, true);
 	}
 
 	// ensure proper position.
@@ -49,4 +49,12 @@ using (var stream = new System.IO.MemoryStream()) {
 	// perform some actions on texture.
 	// ...
 }	
+```
+
+## Async example
+```
+public Task ExtractAllAsync(BA2Archive archive)
+{
+    return Task.Run(() => archive.ExtractAll("D:/stuff", true));
+}
 ```

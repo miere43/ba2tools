@@ -49,7 +49,8 @@ Extraction speed test on Fallout4 - Sounds.ba2 (extract all files task)
 ## Prerequisites
 
 * .NET Framework 4.5
-* C# 6.0
+* Visual Studio 2015
+* C# 6.0 compiler
 
 ## Doxygen
 

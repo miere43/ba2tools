@@ -279,8 +279,6 @@ namespace Ba2ToolsTests
             archive.Dispose();
         }
 
-
-
         [Test]
         public void ExtractAllFromTwoFilesArchiveMultithreaded()
         {
@@ -323,6 +321,15 @@ namespace Ba2ToolsTests
                 Assert.Throws<ObjectDisposedException>(() => archive.ExtractFiles(new string[] { "test.txt" }, dir, false));
                 Assert.Throws<ObjectDisposedException>(() => archive.ExtractFiles(new string[] { "test.txt" }, dir, false,
                     CancellationToken.None, null));
+
+                // These methods should not throw ObjectDisposedException
+                Assert.DoesNotThrow(() => {
+                    var files = archive.FileList;
+                    archive.GetIndexFromFilename("test.txt");
+                    archive.GetIndexFromFilename("ajkkfajsdlkfjlkasdf");
+                    var total = archive.TotalFiles;
+                    var header = archive.Header;
+                });
             }
         }
     }

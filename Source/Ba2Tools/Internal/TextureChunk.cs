@@ -5,7 +5,7 @@ namespace Ba2Tools.Internal
     /// <summary>
     /// Represents DDS texture chunk.
     /// </summary>
-    public struct TextureChunk
+    internal struct TextureChunk
     {
         /// <summary>
         /// Offset to chunk data from beginning of the archive.

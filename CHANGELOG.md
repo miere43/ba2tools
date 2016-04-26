@@ -1,9 +1,14 @@
+## Version 0.6
+* BA2Archive instances are thread-safe now.
+* Changed signature of some of extraction methods, replaced ```BA2Archive.ListFiles() -> IList<string>``` methods to ```BA2Archive.FileList -> IReadOnlyList<string>``` property.
+* BA2Archive now throws ObjectDisposedException when archive is disposed and extraction method of that archive was used.
+
 ## Version 0.5
 * Added multi-threaded extraction. Use ```BA2Loader.Load(path, BA2LoaderFlags.Multithreaded)``` to enable multithreaded extraction for ```ExtractFiles``` and ```ExtractAll``` methods.
 * Added new overloads to ```ExtractToStream```, ```Extract```, ```ExtractFiles``` methods accepting as first parameter file index/file indexes in archive instead of filename/filenames in archive.
 
 ## Version 0.4.1
-* Fixed bug when using ExtractFiles(...) methods in general archive which was leading to null exceptions.
+* Fixed bug when using ExtractFiles(...) methods in general archive that was leading to null exceptions.
 
 ## Version 0.4
 * Performance improvements for extracting files from archives.

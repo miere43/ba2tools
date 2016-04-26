@@ -6,7 +6,7 @@ namespace Ba2Tools.Internal
     /// Represents BA2TextureArchive file entry.
     /// <seealso cref="BA2TextureArchive" />
     /// </summary>
-    public class BA2TextureFileEntry : IBA2FileEntry
+    internal class BA2TextureFileEntry : IBA2FileEntry
     {
         /// <summary>
         /// Probably file hash.

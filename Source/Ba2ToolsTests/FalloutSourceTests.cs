@@ -1,0 +1,128 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Ba2Tools;
+using Microsoft.Win32;
+using NUnit.Framework;
+
+namespace Ba2ToolsTests
+{
+    [TestFixture(Description = "Fallout 4 .ba2 archives required to run these tests.")]
+    [Explicit]
+    [Category("Fallout4SourceTests")]
+    [Category("LongTests")]
+    public class FalloutSourceTests
+    {
+        private static string installPath = "";
+
+        /// <summary>
+        /// Rethieves Fallout 4 installation path from registry.
+        /// </summary>
+        /// <returns>Fallout 4 installation path or null if not found.</returns>
+        public static bool DiscoverFallout4InstallPath()
+        {
+            lock (installPath)
+            {
+                if (installPath != "")
+                    return true;
+
+                RegistryKey fonode;
+                if (Environment.Is64BitOperatingSystem)
+                    fonode = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\bethesda softworks\Fallout4", false);
+                else
+                    fonode = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\bethesda softworks\Fallout4", false);
+
+                if (fonode == null) return false;
+
+                object installedPath = fonode.GetValue("Installed Path");
+                installPath = installedPath as string;
+                if (!installPath.EndsWith("\\"))
+                    installPath = installPath + '\\';
+                return true;
+            }
+        }
+
+        private static string GetArchivePath(string path)
+        {
+            if (installPath == "") return "";
+            return Path.Combine(installPath, @"Data\", path);
+        }
+
+        [OneTimeSetUp]
+        public void CanRunTests()
+        {
+            if (!DiscoverFallout4InstallPath())
+                Assert.Ignore("Fallout 4 install path was not found. Skipping Fallout4Source tests.");
+        }
+
+        [Test, TestCaseSource(nameof(archives))]
+        [Parallelizable(ParallelScope.Children)]
+        public void FalloutArchivesHeaderTest(string archiveName, byte[] signature, uint version, byte[] type, uint totalFiles, ulong nameTableOffset)
+        {
+            var archivePath = GetArchivePath(archiveName);
+            if (!File.Exists(archivePath))
+                Assert.Ignore("Archive {0} was not found. Skipping test.", archivePath);
+
+            using (var archive = BA2Loader.Load(archivePath, BA2LoaderFlags.None))
+            {
+                Assert.AreEqual(archive.Header.Signature, signature, "Signatures don't match.");
+                Assert.AreEqual(archive.Header.Version, version, "Versions don't match.");
+                Assert.AreEqual(archive.Header.ArchiveType, type, "Types don't match.");
+                Assert.AreEqual(archive.Header.TotalFiles, totalFiles, "Total files don't match.");
+                Assert.AreEqual(archive.Header.NameTableOffset, nameTableOffset, "Table offset don't match.");
+            }
+        }
+
+        [Test, TestCaseSource(nameof(archives))]
+        [Parallelizable(ParallelScope.Children)]
+        public void FalloutArchivesExtractTest(string archiveName, byte[] signature, uint version, byte[] type, uint totalFiles, ulong nameTableOffset)
+        {
+            var archivePath = GetArchivePath(archiveName);
+            if (!File.Exists(archivePath))
+                Assert.Ignore("Archive {0} was not found. Skipping test.", archivePath);
+
+            using (var archive = BA2Loader.Load(archivePath, BA2LoaderFlags.None))
+            {
+                using (var memory = new MemoryStream())
+                {
+                    Assert.IsTrue(archive.ExtractToStream(0, memory));
+                }
+            }
+        }
+
+        #region Archive Info
+
+            // Auto-generated Tuesday, 26 April 2016 (UTC)
+            // filePath, signature, version, type, totalFiles, nameTableOffset
+        private static object[] archives = {
+            new object[] { "DLCRobot - Main.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 6050U, 362911874UL },
+            new object[] { "DLCRobot - Textures.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 68, 88, 49, 48 }, 353U, 218548977UL },
+            new object[] { "DLCRobot - Voices_en.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 6112U, 122546078UL },
+            new object[] { "Fallout4 - Animations.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 29415U, 364671383UL },
+            new object[] { "Fallout4 - Interface.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 438U, 22813756UL },
+            new object[] { "Fallout4 - Materials.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 6887U, 1436230UL },
+            new object[] { "Fallout4 - Meshes.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 42322U, 1481362830UL },
+            new object[] { "Fallout4 - MeshesExtra.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 125837U, 1372108897UL },
+            new object[] { "Fallout4 - Misc.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 7867U, 11455074UL },
+            new object[] { "Fallout4 - Nvflex.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 32U, 6383680UL },
+            new object[] { "Fallout4 - Shaders.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 1U, 12239948UL },
+            new object[] { "Fallout4 - Sounds.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 8872U, 1579167914UL },
+            new object[] { "Fallout4 - Startup.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 51U, 19468216UL },
+            new object[] { "Fallout4 - Textures1.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 68, 88, 49, 48 }, 3539U, 2703418692UL },
+            new object[] { "Fallout4 - Textures2.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 68, 88, 49, 48 }, 3539U, 2410440805UL },
+            new object[] { "Fallout4 - Textures3.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 68, 88, 49, 48 }, 3539U, 2100879994UL },
+            new object[] { "Fallout4 - Textures4.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 68, 88, 49, 48 }, 3539U, 1999775741UL },
+            new object[] { "Fallout4 - Textures5.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 68, 88, 49, 48 }, 3539U, 1963549908UL },
+            new object[] { "Fallout4 - Textures6.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 68, 88, 49, 48 }, 3539U, 1382669557UL },
+            new object[] { "Fallout4 - Textures7.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 68, 88, 49, 48 }, 3539U, 545751391UL },
+            new object[] { "Fallout4 - Textures8.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 68, 88, 49, 48 }, 3539U, 601929031UL },
+            new object[] { "Fallout4 - Textures9.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 68, 88, 49, 48 }, 3530U, 864276682UL },
+            new object[] { "Fallout4 - Voices.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 116101U, 2599842887UL }
+        };
+
+        #endregion
+    }
+}

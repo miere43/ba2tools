@@ -21,7 +21,7 @@ namespace Ba2Tools
         /// </summary>
         private BA2TextureFileEntry[] fileEntries = null;
 
-        private SemaphoreSlim accessSemaphore;
+        private SemaphoreSlim accessSemaphore = new SemaphoreSlim(1, 1);
 
         #region BA2Archive Overrides
 

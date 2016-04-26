@@ -118,6 +118,11 @@ namespace BasicArchiveSample
             return Command.Invalid;
         }
 
+        public Task ExtractAllAsync(BA2Archive archive)
+        {
+            return Task.Run(() => archive.ExtractAll("D:/stuff", true));
+        }
+
         static BA2Archive RequestArchive()
         {
             string archivePath = null;

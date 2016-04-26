@@ -8,7 +8,7 @@ namespace Ba2Tools.Internal
     /// <remarks>
     /// https://msdn.microsoft.com/ru-ru/library/windows/desktop/bb943984(v=vs.85).aspx
     /// </remarks>
-    public struct DdsPixelFormat
+    internal struct DdsPixelFormat
     {
         public UInt32 dwSize;
         public UInt32 dwFlags;
@@ -26,7 +26,7 @@ namespace Ba2Tools.Internal
     /// <remarks>
     /// https://msdn.microsoft.com/en-us/library/windows/desktop/bb173059(v=vs.85).aspx
     /// </remarks>
-    public enum DxgiFormat : int
+    internal enum DxgiFormat : int
     {
         R8_UNORM = 61,
         BC1_UNORM = 71,
@@ -43,7 +43,7 @@ namespace Ba2Tools.Internal
     /// <remarks>
     /// https://msdn.microsoft.com/ru-ru/library/windows/desktop/bb943982(v=vs.85).aspx
     /// </remarks>
-    public struct DdsHeader
+    internal struct DdsHeader
     {
         public UInt32 dwSize;
         public UInt32 dwHeaderFlags;
@@ -62,7 +62,7 @@ namespace Ba2Tools.Internal
     /// <summary>
     /// Collecion of methods and constants for DDS texture format.
     /// </summary>
-    public static class Dds
+    internal static class Dds
     {
         /// <summary>
         /// Magic for DDS files.

@@ -8,7 +8,7 @@ namespace Ba2Tools.Internal
     /// Byte array equality comparer.
     /// </summary>
     /// <seealso cref="System.Collections.Generic.EqualityComparer{System.Byte[]}" />
-    class ByteSequenceEqualityComparer : EqualityComparer<byte[]>
+    internal class ByteSequenceEqualityComparer : EqualityComparer<byte[]>
     {
         public override bool Equals(byte[] x, byte[] y)
         {
