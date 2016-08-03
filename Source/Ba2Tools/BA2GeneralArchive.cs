@@ -302,8 +302,9 @@ namespace Ba2Tools
         /// <summary>
         /// Returns size of file at specified file index. Returns 0 if fileIndex is out of bounds.
         /// </summary>
-        public UInt32 GetSizeOfFile(int fileIndex)
+        public override UInt32 GetFileSize(int fileIndex)
         {
+            CheckDisposed();
             if (fileIndex < 0 || fileIndex >= fileEntries.Length)
                 return 0;
             return fileEntries[fileIndex].UnpackedLength;

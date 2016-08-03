@@ -105,6 +105,33 @@ namespace Ba2ToolsTests
             });
         }
 
+        private void GetFileSizeTest(int fileIndex, BA2Archive a)
+        {
+            var exceptedLen = a.GetFileSize(fileIndex);
+            var actualLen = 0u;
+            using (var stream = new MemoryStream())
+            {
+                a.ExtractToStream(fileIndex, stream);
+                actualLen = (uint)stream.Length;
+
+                Assert.AreEqual(exceptedLen, actualLen);
+            }
+        }
+
+        [Test]
+        public void GeneralArchiveGetFileSizeTest()
+        {
+            var a = BA2Loader.Load<BA2GeneralArchive>(GetArchivePath("Fallout4 - Sounds.ba2"));
+            GetFileSizeTest(0, a);
+        }
+
+        [Test]
+        public void TextureArchiveGetFileSizeTest()
+        {
+            var a = BA2Loader.Load<BA2TextureArchive>(GetArchivePath("Fallout4 - Textures1.ba2"));
+            GetFileSizeTest(0, a);
+        }
+
         #region Archive Info
 
         // Auto-generated Wednesday, 03 August 2016 (UTC)

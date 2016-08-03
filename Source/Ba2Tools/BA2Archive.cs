@@ -165,7 +165,7 @@ namespace Ba2Tools
         /// <param name="overwriteFiles">Overwrite files in destination folder?</param>
         /// <param name="cancellationToken">
         /// The cancellation token. Set it to <c>CancellationToken.None</c>
-        /// if you don't wanna cancel operation.
+        /// if you don't want to cancel operation.
         /// </param>
         /// <param name="progress">
         /// Progress reporter ranged from 0 to <c>indexes.Count()</c>.
@@ -220,7 +220,7 @@ namespace Ba2Tools
         public virtual void Extract(string fileName, string destination, bool overwriteFile)
         {
             CheckDisposed();
-            throw new NotSupportedException("Cannot extract any files because archive type is not known.");
+            throw new NotSupportedException("Cannot extract any files because archive type is unknown.");
         }
 
         /// <summary>
@@ -262,6 +262,12 @@ namespace Ba2Tools
         #endregion
 
         #region Helper methods
+
+        public virtual UInt32 GetFileSize(int fileIndex)
+        {
+            CheckDisposed();
+            throw new NotSupportedException("Cannot get file size because archive type is unknown.");
+        }
 
         /// <summary>
         /// Gets the index from archive filename.

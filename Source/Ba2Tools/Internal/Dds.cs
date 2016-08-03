@@ -68,23 +68,25 @@ namespace Ba2Tools.Internal
         /// Magic for DDS files.
         /// Same as MakeFourCC('D', 'D', 'S', '\0');
         /// </summary>
-        public static readonly UInt32 DDS_MAGIC = 0x20534444;
+        public const UInt32 DDS_MAGIC = 0x20534444;
 
-        public static readonly UInt32 DDS_RGB = 0x00000040;
+        public const UInt32 DDS_RGB = 0x00000040;
 
-        public static readonly UInt32 DDS_RGBA = 0x00000041;
+        public const UInt32 DDS_RGBA = 0x00000041;
 
-        public static readonly UInt32 DDS_FOURCC = 0x00000004;
+        public const UInt32 DDS_FOURCC = 0x00000004;
 
-        public static readonly UInt32 DDS_HEADER_FLAGS_TEXTURE = 0x00001007;
+        public const UInt32 DDS_HEADER_FLAGS_TEXTURE = 0x00001007;
 
-        public static readonly UInt32 DDS_HEADER_FLAGS_LINEARSIZE = 0x00080000;
+        public const UInt32 DDS_HEADER_FLAGS_LINEARSIZE = 0x00080000;
 
-        public static readonly UInt32 DDS_HEADER_FLAGS_MIPMAP = 0x00020000;
+        public const UInt32 DDS_HEADER_FLAGS_MIPMAP = 0x00020000;
 
-        public static readonly UInt32 DDS_SURFACE_FLAGS_TEXTURE = 0x00001000;
+        public const UInt32 DDS_SURFACE_FLAGS_TEXTURE = 0x00001000;
 
-        public static readonly UInt32 DDS_SURFACE_FLAGS_MIPMAP = 0x00400008;
+        public const UInt32 DDS_SURFACE_FLAGS_MIPMAP = 0x00400008;
+
+        public const UInt32 DDS_HEADER_SIZE = 124;
 
         /// <summary>
         /// Creates FourCC code for DDS header.

@@ -323,6 +323,23 @@ namespace Ba2Tools
 
         #region Helper Methods
 
+        /// <summary>
+        /// Returns size of file at specified file index. Returns 0 if fileIndex is out of bounds.
+        /// </summary>
+        public override UInt32 GetFileSize(int fileIndex)
+        {
+            CheckDisposed();
+            if (fileIndex < 0 || fileIndex >= fileEntries.Length)
+                return 0;
+            var entry = fileEntries[fileIndex];
+            UInt32 result = Dds.DDS_HEADER_SIZE + 4;
+            foreach (var chunk in entry.Chunks)
+            {
+                result += chunk.UnpackedLength;
+            }
+            return result;
+        }
+
         private void ExtractFilesInternal(BA2TextureFileEntry[] entries, string destination, CancellationToken cancellationToken,
             IProgress<int> progress, bool overwriteFiles)
         {
@@ -524,7 +541,7 @@ namespace Ba2Tools
             var header = new DdsHeader();
             DxgiFormat format = (DxgiFormat)entry.Format;
 
-            header.dwSize = 124; // sizeof(DDS_HEADER)
+            header.dwSize = Dds.DDS_HEADER_SIZE;
             header.dwHeaderFlags = Dds.DDS_HEADER_FLAGS_TEXTURE |
                 Dds.DDS_HEADER_FLAGS_LINEARSIZE | Dds.DDS_HEADER_FLAGS_MIPMAP;
             header.dwHeight = (uint)entry.TextureHeight;

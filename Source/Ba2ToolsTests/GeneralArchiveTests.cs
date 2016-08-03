@@ -14,8 +14,8 @@ namespace Ba2ToolsTests
         [OneTimeSetUp]
         public void Setup()
         {
-            TestContext.WriteLine(TestContext.CurrentContext.WorkDirectory);
-            TestContext.WriteLine(TestContext.CurrentContext.TestDirectory);
+            //TestContext.WriteLine(TestContext.CurrentContext.WorkDirectory);
+            //TestContext.WriteLine(TestContext.CurrentContext.TestDirectory);
         }
 
         [OneTimeTearDown]
@@ -321,6 +321,7 @@ namespace Ba2ToolsTests
                 Assert.Throws<ObjectDisposedException>(() => archive.ExtractFiles(new string[] { "test.txt" }, dir, false));
                 Assert.Throws<ObjectDisposedException>(() => archive.ExtractFiles(new string[] { "test.txt" }, dir, false,
                     CancellationToken.None, null));
+                Assert.Throws<ObjectDisposedException>(() => archive.GetFileSize(0));
 
                 // These methods should not throw ObjectDisposedException
                 Assert.DoesNotThrow(() => {
