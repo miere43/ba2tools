@@ -333,6 +333,8 @@ namespace Ba2Tools
         {
             IBA2FileEntry entry;
             int entriesLength = entries.Length;
+            int checkEach = entriesLength / 5;
+            int check = checkEach;
 
             if (m_fileNames == null)
                 BuildFileList();
@@ -343,6 +345,12 @@ namespace Ba2Tools
 
                 string path = CreateDirectoryAndGetPath(entry, destination, overwriteFiles);
                 coll.Add(path, cancel);
+
+                if (i == check)
+                {
+                    cancel.ThrowIfCancellationRequested();
+                    check += checkEach;
+                }
             }
         }
 
@@ -402,33 +410,24 @@ namespace Ba2Tools
 
         ~BA2Archive()
         {
-            Dispose(false);
+            Dispose();
         }
 
         /// <summary>
         /// Disposes BA2Archive instance and frees its resources. After this call extraction methods of BA2Archive are not usable anymore.
         /// </summary>
-        public void Dispose()
+        public virtual void Dispose()
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
+            if (m_disposed) return;
 
-        protected virtual void Dispose(bool disposeManagedResources)
-        {
-            if (m_disposed)
-                return;
-
-            if (disposeManagedResources)
+            if (m_archiveStream != null)
             {
-                if (m_archiveStream != null)
-                {
-                    m_archiveStream.Dispose();
-                    m_archiveStream = null;
-                }
+                m_archiveStream.Dispose();
+                m_archiveStream = null;
             }
 
             m_disposed = true;
+            GC.SuppressFinalize(this);
         }
 
         protected void CheckDisposed()

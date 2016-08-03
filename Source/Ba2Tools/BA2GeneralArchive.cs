@@ -20,7 +20,7 @@ namespace Ba2Tools
     {
         private BA2GeneralFileEntry[] fileEntries = null;
 
-        private SemaphoreSlim accessSemaphore = new SemaphoreSlim(1, 1);
+        private object m_lock = new object();
 
         #region BA2Archive Overrides
 
@@ -31,8 +31,11 @@ namespace Ba2Tools
         /// <param name="overwriteFiles">Overwrite files on disk with extracted ones?</param>
         public override void ExtractAll(string destination, bool overwriteFiles)
         {
-            CheckDisposed();
-            this.ExtractFilesInternal(fileEntries, destination, CancellationToken.None, null, overwriteFiles);
+            lock (m_lock)
+            {
+                CheckDisposed();
+                ExtractFilesInternal(fileEntries, destination, CancellationToken.None, null, overwriteFiles);
+            }
         }
 
         /// <summary>
@@ -45,8 +48,11 @@ namespace Ba2Tools
         public override void ExtractAll(string destination, bool overwriteFiles, CancellationToken cancellationToken,
             IProgress<int> progress)
         {
-            CheckDisposed();
-            this.ExtractFilesInternal(fileEntries, destination, cancellationToken, progress, overwriteFiles);
+            lock (m_lock)
+            {
+                CheckDisposed();
+                ExtractFilesInternal(fileEntries, destination, cancellationToken, progress, overwriteFiles);
+            }
         }
 
         /// <summary>
@@ -57,9 +63,12 @@ namespace Ba2Tools
         /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
         public override void ExtractFiles(IEnumerable<string> fileNames, string destination, bool overwriteFiles)
         {
-            CheckDisposed();
-            this.ExtractFilesInternal(ConstructEntriesFromIndexes(GetIndexesFromFilenames(fileNames)), destination,
-                CancellationToken.None, null, overwriteFiles);
+            lock (m_lock)
+            {
+                CheckDisposed();
+                ExtractFilesInternal(ConstructEntriesFromIndexes(GetIndexesFromFilenames(fileNames)), destination,
+                    CancellationToken.None, null, overwriteFiles);
+            }
         }
 
         /// <summary>
@@ -73,8 +82,11 @@ namespace Ba2Tools
         /// <param name="overwriteFiles">Overwrite files in destination folder?</param>
         public override void ExtractFiles(IEnumerable<int> indexes, string destination, bool overwriteFiles)
         {
-            CheckDisposed();
-            this.ExtractFilesInternal(ConstructEntriesFromIndexes(indexes), destination, CancellationToken.None, null, overwriteFiles);
+            lock (m_lock)
+            {
+                CheckDisposed();
+                ExtractFilesInternal(ConstructEntriesFromIndexes(indexes), destination, CancellationToken.None, null, overwriteFiles);
+            }
         }
 
         /// <summary>
@@ -95,8 +107,11 @@ namespace Ba2Tools
         public override void ExtractFiles(IEnumerable<int> indexes, string destination, bool overwriteFiles,
             CancellationToken cancellationToken, IProgress<int> progress)
         {
-            CheckDisposed();
-            this.ExtractFilesInternal(ConstructEntriesFromIndexes(indexes), destination, cancellationToken, progress, overwriteFiles);
+            lock (m_lock)
+            {
+                CheckDisposed();
+                ExtractFilesInternal(ConstructEntriesFromIndexes(indexes), destination, cancellationToken, progress, overwriteFiles);
+            }
         }
 
         /// <summary>
@@ -114,9 +129,12 @@ namespace Ba2Tools
         public override void ExtractFiles(IEnumerable<string> fileNames, string destination, bool overwriteFiles,
             CancellationToken cancellationToken, IProgress<int> progress)
         {
-            CheckDisposed();
-            this.ExtractFilesInternal(ConstructEntriesFromIndexes(GetIndexesFromFilenames(fileNames)), destination, cancellationToken,
-                progress, overwriteFiles);
+            lock (m_lock)
+            {
+                CheckDisposed();
+                ExtractFilesInternal(ConstructEntriesFromIndexes(GetIndexesFromFilenames(fileNames)), destination, cancellationToken,
+                    progress, overwriteFiles);
+            }
         }
 
         /// <summary>
@@ -131,17 +149,20 @@ namespace Ba2Tools
         /// </exception>
         public override void Extract(string fileName, string destination, bool overwriteFile)
         {
-            CheckDisposed();
-            if (fileName == null)
-                throw new ArgumentNullException(nameof(fileName));
-            if (destination == null)
-                throw new ArgumentNullException(nameof(destination));
+            lock (m_lock)
+            {
+                CheckDisposed();
+                if (fileName == null)
+                    throw new ArgumentNullException(nameof(fileName));
+                if (destination == null)
+                    throw new ArgumentNullException(nameof(destination));
 
-            int index = GetIndexFromFileName(fileName);
-            if (index == -1)
-                throw new BA2ExtractionException($"Cannot find file \"{ fileName }\" in archive.");
+                int index = GetIndexFromFileName(fileName);
+                if (index == -1)
+                    throw new BA2ExtractionException($"Cannot find file \"{ fileName }\" in archive.");
 
-            this.Extract(index, destination, overwriteFile);
+                Extract(index, destination, overwriteFile);
+            }
         }
 
         /// <summary>
@@ -157,25 +178,20 @@ namespace Ba2Tools
         /// <exception cref="BA2ExtractionException"></exception>
         public override void Extract(int index, string destination, bool overwriteFile)
         {
-            CheckDisposed();
-            if (index < 0 || index > this.TotalFiles)
-                throw new IndexOutOfRangeException(nameof(index));
-            if (destination == null)
-                throw new ArgumentNullException(nameof(destination));
-
-            BA2GeneralFileEntry entry = fileEntries[index];
-            string extractPath = CreateDirectoryAndGetPath(entry, destination, overwriteFile);
-
-            using (var stream = File.Create(extractPath, 4096, FileOptions.SequentialScan))
+            lock (m_lock)
             {
-                try
+                CheckDisposed();
+                if (index < 0 || index > this.TotalFiles)
+                    throw new IndexOutOfRangeException(nameof(index));
+                if (destination == null)
+                    throw new ArgumentNullException(nameof(destination));
+
+                BA2GeneralFileEntry entry = fileEntries[index];
+                string extractPath = CreateDirectoryAndGetPath(entry, destination, overwriteFile);
+
+                using (var stream = File.Create(extractPath, 4096, FileOptions.SequentialScan))
                 {
-                    accessSemaphore.Wait();
                     ExtractToStreamInternal(entry, stream);
-                }
-                finally
-                {
-                    accessSemaphore.Release();
                 }
             }
         }
@@ -193,26 +209,21 @@ namespace Ba2Tools
         /// </exception>
         public override bool ExtractToStream(string fileName, Stream stream)
         {
-            CheckDisposed();
-            if (fileName == null)
-                throw new ArgumentNullException(nameof(fileName));
-            if (stream == null)
-                throw new ArgumentNullException(nameof(stream));
-
-            int index = GetIndexFromFileName(fileName);
-            if (index == -1)
-                return false;
-
-            try
+            lock (m_lock)
             {
-                accessSemaphore.Wait();
+                CheckDisposed();
+                if (fileName == null)
+                    throw new ArgumentNullException(nameof(fileName));
+                if (stream == null)
+                    throw new ArgumentNullException(nameof(stream));
+
+                int index = GetIndexFromFileName(fileName);
+                if (index == -1)
+                    return false;
+
                 ExtractToStreamInternal(fileEntries[index], stream);
+                return true;
             }
-            finally
-            {
-                accessSemaphore.Release();
-            }
-            return true;
         }
 
         /// <summary>
@@ -231,22 +242,17 @@ namespace Ba2Tools
         /// </exception>
         public override bool ExtractToStream(int index, Stream stream)
         {
-            CheckDisposed();
-            if (index < 0 || index > this.TotalFiles)
-                throw new IndexOutOfRangeException(nameof(index));
-            if (stream == null)
-                throw new ArgumentNullException(nameof(stream));
+            lock (m_lock)
+            {
+                CheckDisposed();
+                if (index < 0 || index > this.TotalFiles)
+                    throw new IndexOutOfRangeException(nameof(index));
+                if (stream == null)
+                    throw new ArgumentNullException(nameof(stream));
 
-            try
-            {
-                accessSemaphore.Wait();
                 ExtractToStreamInternal(fileEntries[index], stream);
+                return true;
             }
-            finally
-            {
-                accessSemaphore.Release();
-            }
-            return true;
         }
 
         /// <summary>
@@ -258,13 +264,10 @@ namespace Ba2Tools
         /// <param name="reader">The reader.</param>
         internal override void PreloadData(BinaryReader reader)
         {
-            CheckDisposed();
-
-            try
+            lock (m_lock)
             {
-                accessSemaphore.Wait();
-
-                this.BuildFileList();
+                CheckDisposed();
+                BuildFileList();
 
                 m_archiveStream.Seek(BA2Loader.HeaderSize, SeekOrigin.Begin);
                 fileEntries = new BA2GeneralFileEntry[TotalFiles];
@@ -289,10 +292,6 @@ namespace Ba2Tools
 
                     fileEntries[i] = entry;
                 }
-            }
-            finally
-            {
-                accessSemaphore.Release();
             }
         }
 
@@ -341,51 +340,42 @@ namespace Ba2Tools
         private void ExtractFilesInternal(BA2GeneralFileEntry[] entries, string destination, CancellationToken cancellationToken,
             IProgress<int> progress, bool overwriteFiles)
         {
-            try
+            if (string.IsNullOrWhiteSpace(destination))
+                throw new ArgumentException(nameof(destination));
+
+            int totalEntries = entries.Count();
+
+            bool shouldUpdate = cancellationToken != null || progress != null;
+
+            int counter = 0;
+            int updateFrequency = Math.Max(1, totalEntries / 100);
+            int nextUpdate = updateFrequency;
+
+            BlockingCollection<string> readyFilenames = new BlockingCollection<string>(totalEntries);
+
+            Action createDirs = () =>
+                CreateDirectoriesForFiles(entries, readyFilenames, cancellationToken, destination, overwriteFiles);
+
+            if (IsMultithreaded)
+                Task.Run(createDirs, cancellationToken);
+            else
+                createDirs();
+
+            for (int i = 0; i < totalEntries; i++)
             {
-                accessSemaphore.Wait(cancellationToken);
-
-                if (string.IsNullOrWhiteSpace(destination))
-                    throw new ArgumentException(nameof(destination));
-
-                int totalEntries = entries.Count();
-
-                bool shouldUpdate = cancellationToken != null || progress != null;
-
-                int counter = 0;
-                int updateFrequency = Math.Max(1, totalEntries / 100);
-                int nextUpdate = updateFrequency;
-
-                BlockingCollection<string> readyFilenames = new BlockingCollection<string>(totalEntries);
-
-                Action createDirs = () =>
-                    CreateDirectoriesForFiles(entries, readyFilenames, cancellationToken, destination, overwriteFiles);
-
-                if (IsMultithreaded)
-                    Task.Run(createDirs, cancellationToken);
-                else
-                    createDirs();
-
-                for (int i = 0; i < totalEntries; i++)
+                BA2GeneralFileEntry entry = entries[i];
+                using (var stream = File.Create(readyFilenames.Take(), 4096, FileOptions.SequentialScan))
                 {
-                    BA2GeneralFileEntry entry = entries[i];
-                    using (var stream = File.Create(readyFilenames.Take(), 4096, FileOptions.SequentialScan))
-                    {
-                        ExtractToStreamInternal(entry, stream);
-                    }
-
-                    counter++;
-                    if (shouldUpdate && counter >= nextUpdate)
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                        progress?.Report(counter);
-                        nextUpdate += updateFrequency;
-                    }
+                    ExtractToStreamInternal(entry, stream);
                 }
-            }
-            finally
-            {
-                accessSemaphore.Release();
+
+                counter++;
+                if (shouldUpdate && counter >= nextUpdate)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    progress?.Report(counter);
+                    nextUpdate += updateFrequency;
+                }
             }
         }
 
@@ -407,16 +397,14 @@ namespace Ba2Tools
 
         #region Disposal
 
-        protected override void Dispose(bool disposeManagedResources)
+        public override void Dispose()
         {
-            if (disposeManagedResources)
+            lock (m_lock)
             {
                 fileEntries = null;
-                if (accessSemaphore != null)
-                    accessSemaphore.Dispose();
-            }
 
-            base.Dispose(disposeManagedResources);
+                base.Dispose();
+            }
         }
 
         #endregion

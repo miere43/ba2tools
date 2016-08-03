@@ -93,6 +93,21 @@ namespace Ba2ToolsTests
             }
         }
 
+        [Test(Description = "Check that it is safe to extract files from archive from several threads at once.")]
+        public void ExtractShouldWorkWithSeveralThreads()
+        {
+            BA2TextureArchive archive = BA2Loader.Load<BA2TextureArchive>(GetArchivePath("Fallout4 - Textures1.ba2"));
+            Assert.Greater(archive.TotalFiles, 4, "Archive should have at least 4 files in it to check for multiple threads access.");
+            Parallel.For(0, Math.Min(100, archive.TotalFiles), (fileIndex) =>
+            {
+                using (var stream = new MemoryStream())
+                {
+                    // overlapping threads will corrupt archive stream if no locks in there.
+                    archive.ExtractToStream((int)fileIndex, stream);
+                }
+            });
+        }
+
         #region Archive Info
 
         // Auto-generated Wednesday, 03 August 2016 (UTC)
