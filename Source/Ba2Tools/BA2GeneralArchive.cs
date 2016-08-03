@@ -300,6 +300,16 @@ namespace Ba2Tools
         #region Helper Methods
 
         /// <summary>
+        /// Returns size of file at specified file index. Returns 0 if fileIndex is out of bounds.
+        /// </summary>
+        public UInt32 GetSizeOfFile(int fileIndex)
+        {
+            if (fileIndex < 0 || fileIndex >= fileEntries.Length)
+                return 0;
+            return fileEntries[fileIndex].UnpackedLength;
+        }
+
+        /// <summary>
         /// Don't forget to wrap semaphore.
         /// </summary>
         /// <param name="entry"></param>
