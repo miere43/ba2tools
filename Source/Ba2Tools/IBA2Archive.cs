@@ -14,7 +14,7 @@ namespace Ba2Tools
         /// <summary>
         /// File paths in archive.
         /// </summary>
-        IReadOnlyList<string> FileList { get; }
+        Dictionary<string, int>.KeyCollection FileList { get; }
 
         /// <summary>
         /// Extract single file to specified directory.
@@ -110,6 +110,6 @@ namespace Ba2Tools
         /// </summary>
         /// <param name="fileName">Path to file in archive.</param>
         /// <returns>Index or -1 if not found.</returns>
-        int GetIndexFromFilename(string fileName);
+        int GetIndexFromFileName(string fileName);
     }
 }

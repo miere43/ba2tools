@@ -137,7 +137,7 @@ namespace Ba2Tools
             if (destination == null)
                 throw new ArgumentNullException(nameof(destination));
 
-            int index = GetIndexFromFilename(fileName);
+            int index = GetIndexFromFileName(fileName);
             if (index == -1)
                 throw new BA2ExtractionException($"Cannot find file \"{ fileName }\" in archive.");
 
@@ -199,7 +199,7 @@ namespace Ba2Tools
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
 
-            int index = GetIndexFromFilename(fileName);
+            int index = GetIndexFromFileName(fileName);
             if (index == -1)
                 return false;
 

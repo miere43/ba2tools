@@ -66,8 +66,8 @@ namespace Ba2ToolsTests
 
             var files = archive.FileList;
             Assert.AreEqual(2, files.Count);
-            Assert.AreEqual("test.txt", files[0]);
-            Assert.AreEqual("wazzup.bin", files[1]);
+            Assert.AreEqual("test.txt", files.ElementAt(0));
+            Assert.AreEqual("wazzup.bin", files.ElementAt(1));
 
             var folder = SharedData.CreateTempDirectory();
             archive.Extract("test.txt", folder, false);
@@ -75,8 +75,8 @@ namespace Ba2ToolsTests
             var testPath = Path.Combine(folder, "test.txt");
             Assert.IsTrue(File.Exists(testPath));
 
-            TestUtils.AssertExtractedTextFile(archive, archive.GetIndexFromFilename("test.txt"), "test text");
-            TestUtils.AssertExtractedTextFile(archive, archive.GetIndexFromFilename("wazzup.bin"), "wazzup dude bro?");
+            TestUtils.AssertExtractedTextFile(archive, archive.GetIndexFromFileName("test.txt"), "test text");
+            TestUtils.AssertExtractedTextFile(archive, archive.GetIndexFromFileName("wazzup.bin"), "wazzup dude bro?");
 
             // Assert.IsTrue(File.ReadAllLines)
         }
@@ -325,8 +325,8 @@ namespace Ba2ToolsTests
                 // These methods should not throw ObjectDisposedException
                 Assert.DoesNotThrow(() => {
                     var files = archive.FileList;
-                    archive.GetIndexFromFilename("test.txt");
-                    archive.GetIndexFromFilename("ajkkfajsdlkfjlkasdf");
+                    archive.GetIndexFromFileName("test.txt");
+                    archive.GetIndexFromFileName("ajkkfajsdlkfjlkasdf");
                     var total = archive.TotalFiles;
                     var header = archive.Header;
                 });

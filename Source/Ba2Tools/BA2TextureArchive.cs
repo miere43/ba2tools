@@ -41,9 +41,9 @@ namespace Ba2Tools
         /// cancellation token.
         /// </summary>
         /// <param name="destination">Directory where extracted files will be placed.</param>
-        /// <param name="cancellationToken">Cancellation token.</param>
         /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
-        public override void ExtractAll(string destination, CancellationToken cancellationToken, bool overwriteFiles)
+        /// <param name="cancellationToken">Cancellation token.</param>
+        public override void ExtractAll(string destination, bool overwriteFiles, CancellationToken cancellationToken)
         {
             CheckDisposed();
             this.ExtractFilesInternal(fileEntries, destination, cancellationToken, null, overwriteFiles);
@@ -368,7 +368,7 @@ namespace Ba2Tools
 
         private void ExtractFileInternal(BA2TextureFileEntry entry, string destinationFolder, bool overwriteFile)
         {
-            string filePath = m_fileList[entry.Index];
+            string filePath = m_fileNames.Keys.ElementAt(entry.Index);
 
             string extension = new string(entry.Extension).Trim('\0');
             string finalPath = Path.Combine(destinationFolder, filePath);
@@ -441,7 +441,7 @@ namespace Ba2Tools
         /// <returns>True if entry is found and populated, false otherwise.</returns>
         private bool TryGetEntryFromName(string fileName, out BA2TextureFileEntry entry)
         {
-            int index = GetIndexFromFilename(fileName);
+            int index = GetIndexFromFileName(fileName);
             if (index == -1)
             {
                 entry = null;

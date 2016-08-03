@@ -95,20 +95,22 @@ namespace Ba2ToolsTests
 
         #region Archive Info
 
-            // Auto-generated Tuesday, 26 April 2016 (UTC)
-            // filePath, signature, version, type, totalFiles, nameTableOffset
+        // Auto-generated Wednesday, 03 August 2016 (UTC)
+        // filePath, signature, version, type, totalFiles, nameTableOffset
         private static object[] archives = {
             new object[] { "DLCRobot - Main.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 6050U, 362911874UL },
             new object[] { "DLCRobot - Textures.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 68, 88, 49, 48 }, 353U, 218548977UL },
             new object[] { "DLCRobot - Voices_en.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 6112U, 122546078UL },
-            new object[] { "Fallout4 - Animations.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 29415U, 364671383UL },
-            new object[] { "Fallout4 - Interface.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 438U, 22813756UL },
+            new object[] { "DLCworkshop01 - Main.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 1263U, 55379162UL },
+            new object[] { "DLCworkshop01 - Textures.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 68, 88, 49, 48 }, 32U, 23232616UL },
+            new object[] { "Fallout4 - Animations.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 29706U, 368586410UL },
+            new object[] { "Fallout4 - Interface.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 445U, 24440610UL },
             new object[] { "Fallout4 - Materials.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 6887U, 1436230UL },
-            new object[] { "Fallout4 - Meshes.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 42322U, 1481362830UL },
+            new object[] { "Fallout4 - Meshes.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 42356U, 1481910396UL },
             new object[] { "Fallout4 - MeshesExtra.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 125837U, 1372108897UL },
-            new object[] { "Fallout4 - Misc.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 7867U, 11455074UL },
+            new object[] { "Fallout4 - Misc.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 7887U, 11640566UL },
             new object[] { "Fallout4 - Nvflex.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 32U, 6383680UL },
-            new object[] { "Fallout4 - Shaders.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 1U, 12239948UL },
+            new object[] { "Fallout4 - Shaders.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 1U, 12561088UL },
             new object[] { "Fallout4 - Sounds.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 8872U, 1579167914UL },
             new object[] { "Fallout4 - Startup.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 51U, 19468216UL },
             new object[] { "Fallout4 - Textures1.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 68, 88, 49, 48 }, 3539U, 2703418692UL },
@@ -120,7 +122,7 @@ namespace Ba2ToolsTests
             new object[] { "Fallout4 - Textures7.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 68, 88, 49, 48 }, 3539U, 545751391UL },
             new object[] { "Fallout4 - Textures8.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 68, 88, 49, 48 }, 3539U, 601929031UL },
             new object[] { "Fallout4 - Textures9.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 68, 88, 49, 48 }, 3530U, 864276682UL },
-            new object[] { "Fallout4 - Voices.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 116101U, 2599842887UL }
+            new object[] { "Fallout4 - Voices.ba2", new byte[] { 66, 84, 68, 88 }, 1U, new byte[] { 71, 78, 82, 76 }, 116101U, 2599842887UL },
         };
 
         #endregion

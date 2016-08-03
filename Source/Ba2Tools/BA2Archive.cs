@@ -15,21 +15,10 @@ namespace Ba2Tools
     /// </summary>
     public class BA2Archive : IBA2Archive, IDisposable
     {
-        protected List<string> m_fileList = null;
-
         protected bool m_disposed;
 
-        /// <summary>
-        /// Offset to table where all filenames are listed.
-        /// </summary>
-        protected internal UInt64 m_nameTableOffset { get { return Header.NameTableOffset; } }
+        protected Dictionary<string, int> m_fileNames;
 
-        /// <summary>
-        /// Gets the archive stream.
-        /// </summary>
-        /// <value>
-        /// The archive stream.
-        /// </value>
         internal Stream m_archiveStream;
 
         #region Public Properties
@@ -69,10 +58,10 @@ namespace Ba2Tools
         public bool IsMultithreaded { get; internal set; } = false;
 
         /// <summary>
-        /// List of files stored in archive.
+        /// List of file names that mapped to their index in archive.
         /// </summary>
-        /// <seealso cref="GetIndexFromFilename(string)"/>
-        public IReadOnlyList<string> FileList { get { return m_fileList; } }
+        /// <seealso cref="GetIndexFromFileName(string)"/>
+        public Dictionary<string, int>.KeyCollection FileList { get { return m_fileNames.Keys; } }
 
         #endregion
 
@@ -94,10 +83,10 @@ namespace Ba2Tools
         /// cancellation token.
         /// </summary>
         /// <param name="destination">Directory where extracted files will be placed.</param>
-        /// <param name="cancellationToken">Cancellation token.</param>
         /// <param name="overwriteFiles">Overwrite existing files in extraction directory?</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <exception cref="System.ObjectDisposedException" />
-        public virtual void ExtractAll(string destination, CancellationToken cancellationToken, bool overwriteFiles)
+        public virtual void ExtractAll(string destination, bool overwriteFiles, CancellationToken cancellationToken)
         {
             CheckDisposed();
             this.ExtractAll(destination, overwriteFiles, cancellationToken, null);
@@ -257,7 +246,7 @@ namespace Ba2Tools
         /// </remarks>
         public virtual bool ContainsFile(string fileName)
         {
-            return m_fileList.Contains(fileName, StringComparer.OrdinalIgnoreCase);
+            return m_fileNames.ContainsKey(fileName);
         }
 
         /// <summary>
@@ -279,15 +268,10 @@ namespace Ba2Tools
         /// </summary>
         /// <param name="fileName">Path to file in archive.</param>
         /// <returns>Index or -1 if not found.</returns>
-        public virtual int GetIndexFromFilename(string fileName)
+        public virtual int GetIndexFromFileName(string fileName)
         {
-            int length = m_fileList.Count;
-            for (int i = 0; i < length; i++)
-            {
-                if (m_fileList[i].Equals(fileName, StringComparison.OrdinalIgnoreCase))
-                    return i;
-            }
-            return -1;
+            int index;
+            return m_fileNames.TryGetValue(fileName, out index) ? index : -1;
         }
 
         /// <summary>
@@ -297,37 +281,39 @@ namespace Ba2Tools
         /// <exception cref="System.IO.InvalidDataException" />
         protected virtual void BuildFileList()
         {
-            if (this.m_fileList != null)
+            if (this.m_fileNames != null)
                 return;
 
             // Not valid name table offset was given
-            if (m_nameTableOffset < (UInt64)BA2Loader.HeaderSize)
+            if (Header.NameTableOffset < (UInt64)BA2Loader.HeaderSize)
                 throw new InvalidDataException("Invalid name table offset was providen.");
 
-            List<string> fileList = new List<string>((int)TotalFiles);
+            m_fileNames = new Dictionary<string, int>((int)TotalFiles, StringComparer.OrdinalIgnoreCase);
 
-            m_archiveStream.Seek((long)m_nameTableOffset, SeekOrigin.Begin);
+            m_archiveStream.Seek((long)Header.NameTableOffset, SeekOrigin.Begin);
             using (var reader = new BinaryReader(m_archiveStream, Encoding.ASCII, leaveOpen: true))
             {
-                long nameTableLength = m_archiveStream.Length - (long)m_nameTableOffset;
+                long nameTableLength = m_archiveStream.Length - (long)Header.NameTableOffset;
                 if (nameTableLength < 1)
                     throw new InvalidDataException("Invalid name table offset was providen.");
 
+                int i = 0;
                 while (m_archiveStream.Length - m_archiveStream.Position >= 2)
                 {
+                    if (i >= TotalFiles)
+                        throw new InvalidDataException($"File list is not valid: excepted { TotalFiles } entries, but got { i + 1 }");
                     int remainingBytes = (int)(m_archiveStream.Length - m_archiveStream.Position);
 
                     UInt16 stringLength = reader.ReadUInt16();
                     byte[] rawstring = reader.ReadBytes(stringLength > remainingBytes ? remainingBytes : stringLength);
 
-                    fileList.Add(Encoding.ASCII.GetString(rawstring));
+                    m_fileNames[Encoding.ASCII.GetString(rawstring)] = i;
+                    ++i;
                 }
+
+                if (TotalFiles != i)
+                    throw new InvalidDataException($"File list is not valid: excepted { TotalFiles } entries, but got { i + 1 }");
             }
-
-            if (TotalFiles != fileList.Count)
-                throw new InvalidDataException($"File list is not valid: excepted { TotalFiles } entries, but got { fileList.Count }");
-
-            this.m_fileList = fileList;
         }
 
         /// <summary>
@@ -348,7 +334,7 @@ namespace Ba2Tools
             IBA2FileEntry entry;
             int entriesLength = entries.Length;
 
-            if (m_fileList == null)
+            if (m_fileNames == null)
                 BuildFileList();
 
             for (int i = 0; i < entriesLength; i++)
@@ -371,7 +357,7 @@ namespace Ba2Tools
         protected string CreateDirectoryAndGetPath(IBA2FileEntry entry, string destination, bool overwriteFile)
         {
             string extension = new string(entry.Extension).Trim('\0');
-            string extractPath = Path.Combine(destination, m_fileList[entry.Index]);
+            string extractPath = Path.Combine(destination, m_fileNames.Keys.ElementAt(entry.Index));
 
             if (overwriteFile == false && File.Exists(extractPath))
                 throw new BA2ExtractionException($"File \"{ extractPath }\" already exists and overwrite is not permitted.");
@@ -399,7 +385,7 @@ namespace Ba2Tools
             int i = 0;
             foreach (string name in fileNames)
             {
-                int index = GetIndexFromFilename(name);
+                int index = GetIndexFromFileName(name);
                 if (index == -1)
                     throw new BA2ExtractionException($"File \"{name}\" is not found in archive");
 

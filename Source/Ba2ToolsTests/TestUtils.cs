@@ -15,7 +15,7 @@ namespace Ba2ToolsTests
         {
             using (var stream = new MemoryStream())
             {
-                Assert.IsTrue(archive.ExtractToStream(fileIndex, stream), $"Unable to extract file { archive.FileList[fileIndex] }.");
+                Assert.IsTrue(archive.ExtractToStream(fileIndex, stream), $"Unable to extract file { archive.FileList.ElementAt(fileIndex) }.");
                 AssertExtractedTextFile(stream, excepted);
             }
         }
@@ -37,7 +37,7 @@ namespace Ba2ToolsTests
             for (int i = 0; i < excepted.Count; i++)
             {
                 string exceptFile = excepted[i];
-                string actualFile = actual[i];
+                string actualFile = actual.ElementAt(i);
 
                 bool ok = exceptFile.Equals(actualFile, StringComparison.OrdinalIgnoreCase);
                 if (!ok)
