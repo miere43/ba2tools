@@ -121,15 +121,15 @@ namespace Ba2ToolsTests
         [Test]
         public void GeneralArchiveGetFileSizeTest()
         {
-            var a = BA2Loader.Load<BA2GeneralArchive>(GetArchivePath("Fallout4 - Sounds.ba2"));
-            GetFileSizeTest(0, a);
+            using (var a = BA2Loader.Load<BA2GeneralArchive>(GetArchivePath("Fallout4 - Sounds.ba2")))
+                GetFileSizeTest(0, a);
         }
 
         [Test]
         public void TextureArchiveGetFileSizeTest()
         {
-            var a = BA2Loader.Load<BA2TextureArchive>(GetArchivePath("Fallout4 - Textures1.ba2"));
-            GetFileSizeTest(0, a);
+            using (var a = BA2Loader.Load<BA2TextureArchive>(GetArchivePath("Fallout4 - Textures1.ba2")))
+                GetFileSizeTest(0, a);
         }
 
         #region Archive Info
