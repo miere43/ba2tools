@@ -19,7 +19,7 @@ namespace Ba2Tools
         /// <summary>
         /// File entries in archive. Length of array equals to header.TotalFiles.
         /// </summary>
-        private BA2TextureFileEntry[] fileEntries = null;
+        private BA2TextureFileEntry[] m_entries = null;
 
         private object m_lock = new object();
 
@@ -35,7 +35,7 @@ namespace Ba2Tools
             lock (m_lock)
             {
                 CheckDisposed();
-                this.ExtractFilesInternal(fileEntries, destination, CancellationToken.None, null, overwriteFiles);
+                this.ExtractFilesInternal(m_entries, destination, CancellationToken.None, null, overwriteFiles);
             }
         }
 
@@ -51,7 +51,7 @@ namespace Ba2Tools
             lock (m_lock)
             {
                 CheckDisposed();
-                this.ExtractFilesInternal(fileEntries, destination, cancellationToken, null, overwriteFiles);
+                this.ExtractFilesInternal(m_entries, destination, cancellationToken, null, overwriteFiles);
             }
         }
 
@@ -69,7 +69,7 @@ namespace Ba2Tools
             lock (m_lock)
             {
                 CheckDisposed();
-                this.ExtractFilesInternal(fileEntries, destination, cancellationToken, progress, overwriteFiles);
+                this.ExtractFilesInternal(m_entries, destination, cancellationToken, progress, overwriteFiles);
             }
         }
 
@@ -215,7 +215,7 @@ namespace Ba2Tools
                 if (stream == null)
                     throw new ArgumentException(nameof(stream));
 
-                ExtractToStreamInternal(fileEntries[index], stream);
+                ExtractToStreamInternal(m_entries[index], stream);
                 return true;
             }
         }
@@ -241,7 +241,7 @@ namespace Ba2Tools
                 if (string.IsNullOrWhiteSpace(destination))
                     throw new ArgumentException(nameof(destination));
 
-                BA2TextureFileEntry entry = fileEntries[index];
+                BA2TextureFileEntry entry = m_entries[index];
                 string extractPath = CreateDirectoryAndGetPath(entry, destination, overwriteFile);
 
                 using (var stream = File.Create(extractPath, 4096, FileOptions.SequentialScan))
@@ -292,7 +292,7 @@ namespace Ba2Tools
                 BuildFileList();
 
                 m_archiveStream.Seek(BA2Loader.HeaderSize, SeekOrigin.Begin);
-                fileEntries = new BA2TextureFileEntry[TotalFiles];
+                m_entries = new BA2TextureFileEntry[TotalFiles];
 
                 for (int i = 0; i < TotalFiles; i++)
                 {
@@ -314,7 +314,7 @@ namespace Ba2Tools
 
                     ReadChunksForEntry(reader, entry);
 
-                    fileEntries[i] = entry;
+                    m_entries[i] = entry;
                 }
             }
         }
@@ -329,9 +329,9 @@ namespace Ba2Tools
         public override UInt32 GetFileSize(int fileIndex)
         {
             CheckDisposed();
-            if (fileIndex < 0 || fileIndex >= fileEntries.Length)
+            if (fileIndex < 0 || fileIndex >= m_entries.Length)
                 return 0;
-            var entry = fileEntries[fileIndex];
+            var entry = m_entries[fileIndex];
             UInt32 result = Dds.DDS_HEADER_SIZE + 4;
             foreach (var chunk in entry.Chunks)
             {
@@ -464,7 +464,7 @@ namespace Ba2Tools
                 return false;
             }
 
-            entry = fileEntries[index];
+            entry = m_entries[index];
             return true;
         }
 
@@ -606,7 +606,7 @@ namespace Ba2Tools
             int i = 0;
             foreach (int index in indexes)
             {
-                entries[i] = fileEntries[index];
+                entries[i] = m_entries[index];
                 i++;
             }
 
@@ -617,13 +617,13 @@ namespace Ba2Tools
 
         #region Disposal
 
-        public override void Dispose()
+        public sealed override void Dispose()
         {
             lock (m_lock)
             {
                 if (m_disposed) return;
 
-                fileEntries = null;
+                m_entries = null;
 
                 base.Dispose();
             }

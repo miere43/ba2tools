@@ -18,12 +18,12 @@ namespace Ba2Tools
         /// <summary>
         /// Header size in bytes.
         /// </summary>
-        internal static readonly int HeaderSize = 24;
+        internal const int HeaderSize = 24;
 
         /// <summary>
         /// Excepted archive version.
         /// </summary>
-        internal static readonly int ArchiveVersion = 1;
+        internal const int ArchiveVersion = 1;
 
         /// <summary>
         /// Parses archive header from file. Throws BA2LoadException if this is not BA2 header.

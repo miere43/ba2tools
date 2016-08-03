@@ -9,11 +9,6 @@ namespace Ba2Tools.Internal
     internal class BA2GeneralFileEntry : IBA2FileEntry
     {
         /// <summary>
-        /// Size of structure.
-        /// </summary>
-        public readonly static int Size = 4 + 4 + 4 + 4 + 8 + 4 + 4 + 4;
-
-        /// <summary>
         /// Probably file hash.
         /// </summary>
         public UInt32 Unknown0 { get; internal set; }

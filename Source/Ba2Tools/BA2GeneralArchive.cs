@@ -18,7 +18,7 @@ namespace Ba2Tools
     /// </summary>
     public sealed class BA2GeneralArchive : BA2Archive
     {
-        private BA2GeneralFileEntry[] fileEntries = null;
+        private BA2GeneralFileEntry[] m_entries = null;
 
         private object m_lock = new object();
 
@@ -34,7 +34,7 @@ namespace Ba2Tools
             lock (m_lock)
             {
                 CheckDisposed();
-                ExtractFilesInternal(fileEntries, destination, CancellationToken.None, null, overwriteFiles);
+                ExtractFilesInternal(m_entries, destination, CancellationToken.None, null, overwriteFiles);
             }
         }
 
@@ -51,7 +51,7 @@ namespace Ba2Tools
             lock (m_lock)
             {
                 CheckDisposed();
-                ExtractFilesInternal(fileEntries, destination, cancellationToken, progress, overwriteFiles);
+                ExtractFilesInternal(m_entries, destination, cancellationToken, progress, overwriteFiles);
             }
         }
 
@@ -186,7 +186,7 @@ namespace Ba2Tools
                 if (destination == null)
                     throw new ArgumentNullException(nameof(destination));
 
-                BA2GeneralFileEntry entry = fileEntries[index];
+                BA2GeneralFileEntry entry = m_entries[index];
                 string extractPath = CreateDirectoryAndGetPath(entry, destination, overwriteFile);
 
                 using (var stream = File.Create(extractPath, 4096, FileOptions.SequentialScan))
@@ -221,7 +221,7 @@ namespace Ba2Tools
                 if (index == -1)
                     return false;
 
-                ExtractToStreamInternal(fileEntries[index], stream);
+                ExtractToStreamInternal(m_entries[index], stream);
                 return true;
             }
         }
@@ -250,7 +250,7 @@ namespace Ba2Tools
                 if (stream == null)
                     throw new ArgumentNullException(nameof(stream));
 
-                ExtractToStreamInternal(fileEntries[index], stream);
+                ExtractToStreamInternal(m_entries[index], stream);
                 return true;
             }
         }
@@ -270,7 +270,7 @@ namespace Ba2Tools
                 BuildFileList();
 
                 m_archiveStream.Seek(BA2Loader.HeaderSize, SeekOrigin.Begin);
-                fileEntries = new BA2GeneralFileEntry[TotalFiles];
+                m_entries = new BA2GeneralFileEntry[TotalFiles];
 
                 for (int i = 0; i < TotalFiles; i++)
                 {
@@ -290,7 +290,7 @@ namespace Ba2Tools
                     // 3131961357 = 0xBAADF00D as uint little-endian (0x0DF0ADBA)
                     // System.Diagnostics.Debug.Assert(entry.Unknown3 == 3131961357);
 
-                    fileEntries[i] = entry;
+                    m_entries[i] = entry;
                 }
             }
         }
@@ -305,9 +305,9 @@ namespace Ba2Tools
         public override UInt32 GetFileSize(int fileIndex)
         {
             CheckDisposed();
-            if (fileIndex < 0 || fileIndex >= fileEntries.Length)
+            if (fileIndex < 0 || fileIndex >= m_entries.Length)
                 return 0;
-            return fileEntries[fileIndex].UnpackedLength;
+            return m_entries[fileIndex].UnpackedLength;
         }
 
         /// <summary>
@@ -397,7 +397,7 @@ namespace Ba2Tools
             foreach (int index in indexes)
             {
                 // TODO throw new IndexOutOfRange
-                entries[i] = fileEntries[index];
+                entries[i] = m_entries[index];
                 i++;
             }
 
@@ -408,11 +408,11 @@ namespace Ba2Tools
 
         #region Disposal
 
-        public override void Dispose()
+        public sealed override void Dispose()
         {
             lock (m_lock)
             {
-                fileEntries = null;
+                m_entries = null;
 
                 base.Dispose();
             }

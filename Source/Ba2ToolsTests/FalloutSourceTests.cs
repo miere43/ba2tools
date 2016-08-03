@@ -15,7 +15,9 @@ namespace Ba2ToolsTests
     [Category("LongTests")]
     public class FalloutSourceTests
     {
-        private static string installPath = "";
+        private static string m_installPath = "";
+
+        private static object m_lock = new object();
 
         /// <summary>
         /// Rethieves Fallout 4 installation path from registry.
@@ -23,9 +25,9 @@ namespace Ba2ToolsTests
         /// <returns>Fallout 4 installation path or null if not found.</returns>
         public static bool DiscoverFallout4InstallPath()
         {
-            lock (installPath)
+            lock (m_lock)
             {
-                if (installPath != "")
+                if (m_installPath != "")
                     return true;
 
                 RegistryKey fonode;
@@ -37,17 +39,17 @@ namespace Ba2ToolsTests
                 if (fonode == null) return false;
 
                 object installedPath = fonode.GetValue("Installed Path");
-                installPath = installedPath as string;
-                if (!installPath.EndsWith("\\"))
-                    installPath = installPath + '\\';
+                m_installPath = installedPath as string;
+                if (!m_installPath.EndsWith("\\"))
+                    m_installPath = m_installPath + '\\';
                 return true;
             }
         }
 
         private static string GetArchivePath(string path)
         {
-            if (installPath == "") return "";
-            return Path.Combine(installPath, @"Data\", path);
+            if (m_installPath == "") return "";
+            return Path.Combine(m_installPath, @"Data\", path);
         }
 
         [OneTimeSetUp]
