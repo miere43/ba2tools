@@ -457,7 +457,7 @@ namespace Ba2Tools
         /// <returns>True if entry is found and populated, false otherwise.</returns>
         private bool TryGetEntryFromName(string fileName, out BA2TextureFileEntry entry)
         {
-            int index = GetIndexFromFileName(fileName);
+            int index = GetFileIndex(fileName);
             if (index == -1)
             {
                 entry = null;

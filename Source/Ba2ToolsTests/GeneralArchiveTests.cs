@@ -75,8 +75,8 @@ namespace Ba2ToolsTests
             var testPath = Path.Combine(folder, "test.txt");
             Assert.IsTrue(File.Exists(testPath));
 
-            TestUtils.AssertExtractedTextFile(archive, archive.GetIndexFromFileName("test.txt"), "test text");
-            TestUtils.AssertExtractedTextFile(archive, archive.GetIndexFromFileName("wazzup.bin"), "wazzup dude bro?");
+            TestUtils.AssertExtractedTextFile(archive, archive.GetFileIndex("test.txt"), "test text");
+            TestUtils.AssertExtractedTextFile(archive, archive.GetFileIndex("wazzup.bin"), "wazzup dude bro?");
 
             // Assert.IsTrue(File.ReadAllLines)
         }
@@ -326,8 +326,8 @@ namespace Ba2ToolsTests
                 // These methods should not throw ObjectDisposedException
                 Assert.DoesNotThrow(() => {
                     var files = archive.FileList;
-                    archive.GetIndexFromFileName("test.txt");
-                    archive.GetIndexFromFileName("ajkkfajsdlkfjlkasdf");
+                    archive.GetFileIndex("test.txt");
+                    archive.GetFileIndex("ajkkfajsdlkfjlkasdf");
                     var total = archive.TotalFiles;
                     var header = archive.Header;
                 });

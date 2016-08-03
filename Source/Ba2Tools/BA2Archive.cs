@@ -60,7 +60,7 @@ namespace Ba2Tools
         /// <summary>
         /// List of file names that mapped to their index in archive.
         /// </summary>
-        /// <seealso cref="GetIndexFromFileName(string)"/>
+        /// <seealso cref="GetFileIndex(string)"/>
         public Dictionary<string, int>.KeyCollection FileList { get { return m_fileNames.Keys; } }
 
         #endregion
@@ -226,7 +226,7 @@ namespace Ba2Tools
         /// <summary>
         /// Extracts file from archive, accessed by index.
         /// </summary>
-        /// <param name="fileIndex">File index. See <c>GetIndexFromFilename()</c>.</param>
+        /// <param name="fileIndex">File index. See <c>GetFileIndex()</c>.</param>
         /// <param name="destination">Destination directory where file will be extracted.</param>
         /// <param name="overwriteFile">Overwrite existing file with extracted one?</param>
         /// <exception cref="System.ObjectDisposedException" />
@@ -274,7 +274,7 @@ namespace Ba2Tools
         /// </summary>
         /// <param name="fileName">Path to file in archive.</param>
         /// <returns>Index or -1 if not found.</returns>
-        public virtual int GetIndexFromFileName(string fileName)
+        public virtual int GetFileIndex(string fileName)
         {
             int index;
             return m_fileNames.TryGetValue(fileName, out index) ? index : -1;
@@ -399,7 +399,7 @@ namespace Ba2Tools
             int i = 0;
             foreach (string name in fileNames)
             {
-                int index = GetIndexFromFileName(name);
+                int index = GetFileIndex(name);
                 if (index == -1)
                     throw new BA2ExtractionException($"File \"{name}\" is not found in archive");
 

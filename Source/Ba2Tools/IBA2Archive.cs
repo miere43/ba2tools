@@ -110,6 +110,6 @@ namespace Ba2Tools
         /// </summary>
         /// <param name="fileName">Path to file in archive.</param>
         /// <returns>Index or -1 if not found.</returns>
-        int GetIndexFromFileName(string fileName);
+        int GetFileIndex(string fileName);
     }
 }
