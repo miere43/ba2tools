@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Reflection;
 using NUnit.Framework;
 
 namespace Ba2ToolsTests
@@ -12,12 +13,12 @@ namespace Ba2ToolsTests
         /// <summary>
         /// Folder with test data.
         /// </summary>
-        public static string DataFolder = @"..\..\Data\";
+        public static string DataFolder = Path.GetDirectoryName(Path.GetDirectoryName(TestContext.CurrentContext.TestDirectory)) + @"\Data\";
 
         /// <summary>
         /// Folder to store temp data.
         /// </summary>
-        public static string TempFolder = @"..\..\Temp\";
+        public static string TempFolder = Path.GetDirectoryName(Path.GetDirectoryName(TestContext.CurrentContext.TestDirectory)) + @"\Temp\";
 
         /// <summary>
         /// BA2 archive magic.

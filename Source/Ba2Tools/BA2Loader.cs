@@ -26,6 +26,26 @@ namespace Ba2Tools
         internal static readonly int ArchiveVersion = 1;
 
         /// <summary>
+        /// Parses archive header from file. Throws BA2LoadException if this is not BA2 header.
+        /// </summary>
+        public static BA2Header LoadHeader(string filePath)
+        {
+            using (var stream = File.OpenRead(filePath)) {
+                return LoadHeader(stream);
+            }
+        }
+
+        /// <summary>
+        /// Parses archive header from stream. Throws BA2LoadException if this is not BA2 header. Doesn't close stream itself.
+        /// </summary>
+        public static BA2Header LoadHeader(Stream stream)
+        {
+            using (var reader = new BinaryReader(stream, Encoding.ASCII, leaveOpen: true)) {
+                return LoadHeader(reader);
+            }
+        }
+
+        /// <summary>
         /// Loads archive from file.
         /// </summary>
         /// <param name="filePath">Path to archive.</param>
@@ -38,15 +58,8 @@ namespace Ba2Tools
             if (String.IsNullOrWhiteSpace(filePath))
                 throw new ArgumentException(nameof(filePath));
 
-            try
-            {
-                var stream = File.OpenRead(filePath);
-                return Load(stream, flags);
-            }
-            catch (IOException e)
-            {
-                throw new BA2LoadException($"Cannot open file \"{filePath}\": {e.Message}", e);
-            }
+            var stream = File.OpenRead(filePath);
+            return Load(stream, flags);
         }
 
         /// <summary>
@@ -119,10 +132,6 @@ namespace Ba2Tools
             BA2Archive archive = null;
             try
             {
-                // file cannot be valid archive if header is less than HeaderSize
-                if (stream.Length - stream.Position < HeaderSize)
-                    throw new BA2LoadException("Given stream cannot be valid archive.");
-
                 using (BinaryReader reader = new BinaryReader(stream, Encoding.ASCII, leaveOpen: true))
                 {
                     BA2Header header = LoadHeader(reader);
@@ -177,13 +186,15 @@ namespace Ba2Tools
         /// <summary>
         /// Creates BA2Header from stream consumed by BinaryReader.
         /// </summary>
-        /// <param name="reader">BinaryReader instance.</param>
-        /// <returns>BA2Header instance.</returns>
         /// <exception cref="ArgumentNullException">Thrown when <c>reader</c> is null.</exception>
         private static BA2Header LoadHeader(BinaryReader reader)
         {
             if (reader == null)
                 throw new ArgumentNullException(nameof(reader));
+
+            // file cannot be valid archive if header is less than HeaderSize
+            if (reader.BaseStream.Length - reader.BaseStream.Position < HeaderSize)
+                throw new BA2LoadException("Given stream cannot be valid archive.");
 
             return new BA2Header()
             {

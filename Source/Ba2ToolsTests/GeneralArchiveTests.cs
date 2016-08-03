@@ -133,7 +133,7 @@ namespace Ba2ToolsTests
         [Test]
         public void LoadExceptionThrownWhenArchiveHasInvalidType()
         {
-            Assert.Throws<BA2LoadException>(() => BA2Loader.Load(SharedData.GetDataPath("GeneralHeaderOnlyInvalidType.ba2")));
+            Assert.Throws<BA2LoadException>(() => BA2Loader.Load(SharedData.GetDataPath("GeneralOneFileInvalidType.ba2")));
         }
 
         /// <summary>

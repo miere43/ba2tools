@@ -11,7 +11,6 @@ using NUnit.Framework;
 namespace Ba2ToolsTests
 {
     [TestFixture(Description = "Fallout 4 .ba2 archives required to run these tests.")]
-    [Explicit]
     [Category("Fallout4SourceTests")]
     [Category("LongTests")]
     public class FalloutSourceTests
@@ -66,14 +65,12 @@ namespace Ba2ToolsTests
             if (!File.Exists(archivePath))
                 Assert.Ignore("Archive {0} was not found. Skipping test.", archivePath);
 
-            using (var archive = BA2Loader.Load(archivePath, BA2LoaderFlags.None))
-            {
-                Assert.AreEqual(archive.Header.Signature, signature, "Signatures don't match.");
-                Assert.AreEqual(archive.Header.Version, version, "Versions don't match.");
-                Assert.AreEqual(archive.Header.ArchiveType, type, "Types don't match.");
-                Assert.AreEqual(archive.Header.TotalFiles, totalFiles, "Total files don't match.");
-                Assert.AreEqual(archive.Header.NameTableOffset, nameTableOffset, "Table offset don't match.");
-            }
+            var header = BA2Loader.LoadHeader(archivePath);
+            Assert.AreEqual(header.Signature, signature, "Signatures don't match.");
+            Assert.AreEqual(header.Version, version, "Versions don't match.");
+            Assert.AreEqual(header.ArchiveType, type, "Types don't match.");
+            Assert.AreEqual(header.TotalFiles, totalFiles, "Total files don't match.");
+            Assert.AreEqual(header.NameTableOffset, nameTableOffset, "Table offset don't match.");
         }
 
         [Test, TestCaseSource(nameof(archives))]
