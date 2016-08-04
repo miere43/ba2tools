@@ -384,7 +384,7 @@ namespace Ba2Tools
 
         private void ExtractFileInternal(BA2TextureFileEntry entry, string destinationFolder, bool overwriteFile)
         {
-            string filePath = m_fileNames.Keys.ElementAt(entry.Index);
+            string filePath = m_fileList[entry.Index];
 
             string extension = new string(entry.Extension).Trim('\0');
             string finalPath = Path.Combine(destinationFolder, filePath);
@@ -399,27 +399,6 @@ namespace Ba2Tools
             {
                 ExtractToStreamInternal(entry, fileStream);
             }
-        }
-
-        private BA2TextureFileEntry[] GetFileEntries(IEnumerable<string> fileNames)
-        {
-            if (fileNames == null)
-                throw new ArgumentNullException(nameof(fileNames));
-
-            BA2TextureFileEntry[] entries = new BA2TextureFileEntry[fileNames.Count()];
-            BA2TextureFileEntry entry;
-
-            int i = 0;
-            foreach (string name in fileNames)
-            {
-                if (!TryGetEntryFromName(name, out entry))
-                    throw new BA2ExtractionException($"File \"{name}\" is not found in archive");
-
-                entries[i] = entry;
-                i++;
-            }
-
-            return entries;
         }
 
         /// <summary>

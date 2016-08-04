@@ -61,7 +61,7 @@ namespace Ba2ToolsTests
 
         [Test, TestCaseSource(nameof(archives))]
         [Parallelizable(ParallelScope.Children)]
-        public void FalloutArchivesHeaderTest(string archiveName, byte[] signature, uint version, byte[] type, uint totalFiles, ulong nameTableOffset)
+        public void FalloutArchivesExtractTest(string archiveName, byte[] signature, uint version, byte[] type, uint totalFiles, ulong nameTableOffset)
         {
             var archivePath = GetArchivePath(archiveName);
             if (!File.Exists(archivePath))
@@ -73,15 +73,6 @@ namespace Ba2ToolsTests
             Assert.AreEqual(header.ArchiveType, type, "Types don't match.");
             Assert.AreEqual(header.TotalFiles, totalFiles, "Total files don't match.");
             Assert.AreEqual(header.NameTableOffset, nameTableOffset, "Table offset don't match.");
-        }
-
-        [Test, TestCaseSource(nameof(archives))]
-        [Parallelizable(ParallelScope.Children)]
-        public void FalloutArchivesExtractTest(string archiveName, byte[] signature, uint version, byte[] type, uint totalFiles, ulong nameTableOffset)
-        {
-            var archivePath = GetArchivePath(archiveName);
-            if (!File.Exists(archivePath))
-                Assert.Ignore("Archive {0} was not found. Skipping test.", archivePath);
 
             using (var archive = BA2Loader.Load(archivePath, BA2LoaderFlags.None))
             {
@@ -96,7 +87,7 @@ namespace Ba2ToolsTests
         public void ExtractShouldWorkWithSeveralThreads()
         {
             BA2TextureArchive archive = BA2Loader.Load<BA2TextureArchive>(GetArchivePath("Fallout4 - Textures1.ba2"));
-            Assert.Greater(archive.TotalFiles, 4, "Archive should have at least 4 files in it to check for multiple threads access.");
+            Assert.Greater(archive.TotalFiles, 100, "Archive should have at least 100 files in it to check for multiple threads access.");
             Parallel.For(0, Math.Min(100, archive.TotalFiles), (fileIndex) =>
             {
                 using (var stream = new MemoryStream())

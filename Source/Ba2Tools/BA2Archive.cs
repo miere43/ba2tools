@@ -19,6 +19,8 @@ namespace Ba2Tools
 
         protected Dictionary<string, int> m_fileNames;
 
+        protected IReadOnlyList<string> m_fileList;
+
         internal Stream m_archiveStream;
 
         #region Public Properties
@@ -61,7 +63,7 @@ namespace Ba2Tools
         /// List of file names that mapped to their index in archive.
         /// </summary>
         /// <seealso cref="GetFileIndex(string)"/>
-        public Dictionary<string, int>.KeyCollection FileList { get { return m_fileNames.Keys; } }
+        public IReadOnlyList<string> FileList { get { return m_fileList; } }
 
         #endregion
 
@@ -320,6 +322,8 @@ namespace Ba2Tools
                 if (TotalFiles != i)
                     throw new InvalidDataException($"File list is not valid: excepted { TotalFiles } entries, but got { i + 1 }");
             }
+
+            m_fileList = new List<string>(m_fileNames.Keys);
         }
 
         /// <summary>
@@ -371,7 +375,7 @@ namespace Ba2Tools
         protected string CreateDirectoryAndGetPath(IBA2FileEntry entry, string destination, bool overwriteFile)
         {
             string extension = new string(entry.Extension).Trim('\0');
-            string extractPath = Path.Combine(destination, m_fileNames.Keys.ElementAt(entry.Index));
+            string extractPath = Path.Combine(destination, m_fileList[entry.Index]);
 
             if (overwriteFile == false && File.Exists(extractPath))
                 throw new BA2ExtractionException($"File \"{ extractPath }\" already exists and overwrite is not permitted.");

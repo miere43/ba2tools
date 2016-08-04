@@ -14,7 +14,7 @@ namespace Ba2Tools
         /// <summary>
         /// File paths in archive.
         /// </summary>
-        Dictionary<string, int>.KeyCollection FileList { get; }
+        IReadOnlyList<string> FileList { get; }
 
         /// <summary>
         /// Extract single file to specified directory.
